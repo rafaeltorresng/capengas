@@ -305,6 +305,9 @@ export const tools: Tool[] = [
       if (!st.store) return { resultado: 'bloqueada', motivo: 'envio indisponível sem estado persistente; nada foi enviado' };
       const evidencias = motivosDaEvidencia(st.store, a.tender_id, a.item);
       if (!evidencias.has(a.motivo)) {
+        if (!st.store.getItems(a.tender_id).some(item => item.numero === a.item)) {
+          return { resultado: 'bloqueada', motivo: 'item do esclarecimento ausente no store' };
+        }
         const motivo = 'motivo do esclarecimento não confere com a evidência gravada';
         st.store.openEscalation({
           tender: a.tender_id, item: String(a.item), motivo,

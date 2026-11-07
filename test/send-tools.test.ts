@@ -161,6 +161,9 @@ test('motivo sem evidência chega à fila humana uma vez por item, sem POST', as
       const result: any = await tool('send_esclarecimento').run(args, ctx);
       assert.equal(result.resultado, 'escalada');
     }
+    ctx.state.drafts[TENDER + '#99'] = ctx.state.drafts[TENDER + '#40'];
+    const invalid: any = await tool('send_esclarecimento').run({ ...args, item: 99 }, ctx);
+    assert.equal(invalid.resultado, 'bloqueada');
     const model = createReadModel(store, { actions: () => store.getActions() });
     assert.deepEqual(model.escaladas().map(row => [row.tender, row.item]), [[TENDER, '40']]);
     assert.equal(store.events().filter(event => event.tipo === 'escalada_aberta').length, 1);
