@@ -248,6 +248,11 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
         : db.prepare('SELECT * FROM decisions ORDER BY tender_id, item, produto').all();
       return rows.map((r: any) => ({ tenderId: r.tender_id, item: Number(r.item), produto: r.produto, estado: r.estado, motivos: JSON.parse(r.motivos), precoProposto: r.preco_proposto == null ? null : Number(r.preco_proposto) }));
     },
+    getFits(tenderId: string) {
+      return db.prepare('SELECT * FROM fits WHERE tender_id = ? ORDER BY item, produto').all(tenderId).map((r: any) => ({
+        tenderId: r.tender_id, item: Number(r.item), produto: r.produto, fit: r.fit, atributos: JSON.parse(r.atributos),
+      }));
+    },
     getDossie(tenderId) {
       const r: any = db.prepare('SELECT json FROM dossies WHERE tender_id = ?').get(tenderId);
       return r ? JSON.parse(r.json) : undefined;

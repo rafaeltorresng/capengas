@@ -167,6 +167,8 @@ export interface Store {
   /** Exigências do edital gravadas na análise (base do calendário do cofre). */
   getRequirements(tenderId: string): RequirementRow[];
   getDecisions(tenderId?: string): DecisionRow[];
+  /** Encaixes gravados na análise. O envio lê a evidência daqui e não a regrava. */
+  getFits(tenderId: string): FitRow[];
   /** Ações para contar envios confirmados e deduplicar por key (pedido do Dev 2, #2). */
   getActions(o?: { tenderId?: string; desde?: string; status?: ActionStatus }): Action[];
   getDossie(tenderId: string): unknown | undefined;
