@@ -1,0 +1,30 @@
+{
+ "medicao": "Turno ponta a ponta com o modelo real em 3 pregões reais abertos (formato do spike, antes da política v2)",
+ "coletadoEm": "2026-11-07",
+ "script": "scripts/turno.ts",
+ "modelo": "moonshotai/Kimi-K2.6",
+ "resultado": {
+  "fase1Segundos": 752,
+  "fase2Segundos": 100,
+  "tokensEntrada": 744418,
+  "tokensSaida": 23863,
+  "custoRealUsd": 0.223,
+  "chamadasOk": 85,
+  "chamadasComErro": 5,
+  "exigenciasRegistradas": 9,
+  "encaixesRegistrados": 15,
+  "decisoes": {
+   "ofertar_com_pendencia": 12,
+   "escalar": 1
+  },
+  "sinaisRestritivos": 9,
+  "esclarecimentosRedigidos": 2,
+  "envios": 2
+ },
+ "ressalvas": [
+  "envios no portal sandbox, não em órgãos reais",
+  "aprovação feita pelo script no papel do humano",
+  "a lista de itens limitada a 25 fez o agente perder 2 produtos (corrigido depois pelo Dev 2)",
+  "enviou para pregão suspenso (motivou o recheque)"
+ ]
+}

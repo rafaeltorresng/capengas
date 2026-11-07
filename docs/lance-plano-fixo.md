@@ -141,7 +141,7 @@ Portal sandbox ◄── envio + verificação     Tela (React): linha do tempo,
 | 16–21% dos itens de saúde fracassam, contra 4,6% em escritório | Compras.gov.br, abr/2026 |
 | O preço não explica o fracasso (backtest de 494 itens) | Medição própria |
 | 5.513 distribuidoras de material médico; 145 com sanção vigente | Fornecedores + CEIS |
-| Encaixe técnico 18/18; exigências 78–89%; código × descrição 13/18 | Evals (Kimi-K2.6, 3 repetições) |
+| Encaixe técnico 18/18 (6 pares × 3, fichas sintéticas); exigências 78–89%; código × descrição 13/18 | Evals (Kimi-K2.6, 3 repetições) |
 | Turno real US$ 0,22; todos os evals US$ 0,77 | Custo real da API |
 
 ## 10. Riscos e resposta já decidida

@@ -68,6 +68,20 @@ O gerador escreve `fixtures/estado-exemplo.json` com o formato da tela (`hoje`, 
 
 ## Fronteiras e pendências
 
+### Turno de análise persistido
+
+`scripts/analisar.ts` executa o modelo com ferramentas somente de análise e grava as decisões, dossiês, eventos e escaladas no SQLite. Requer bases locais (`npm run setup`), `pdftotext` e chave Featherless configurada. Exemplo em shell POSIX, usando banco separado:
+
+```bash
+LANCE_DB=data/turno-validacao.db node --env-file-if-exists=.env scripts/analisar.ts 77816510000166/2026/348
+```
+
+O comando limita a análise a três itens relevantes por instrução, com limites de passos e tokens. O limite de itens é uma instrução ao modelo, não uma quota garantida pelo código. A empresa continua fictícia; as fontes do pregão são reais. O comando não expõe ferramentas de envio e não substitui o fluxo de ações com política/recheque. Não versionar o banco gerado.
+
+`decide_item` usa agora preço pela estimativa, documentos e regularização do contrato novo. Cobertura técnica não verificada escala; preço desconhecido permanece nulo. Campos de saída legados são mantidos temporariamente para os consumidores do spike. As funções legadas de `rules.ts` ainda são usadas por testes e não devem ser removidas sem migrá-los.
+
+O turno real foi executado: 3 decisões, dossiê e 3 escaladas, 292 segundos e US$ 0,062826164 informados pela API. O snapshot e os comandos para restaurar o SQLite sem gastar modelo estão em `fixtures/execucoes/README.md`. Nesta etapa, 202 testes locais passaram. A bateria ao vivo antiga ainda contém expectativas do fluxo legado e precisa ser atualizada antes da validação completa.
+
 Implementação própria: `tools.ts`, `dossie.ts`, `read-model.ts`, gerador/amostra, ajustes dos scripts de turno/evals e testes correspondentes. A entrega foi integrada sobre os commits do Dev 1 na `main`, preservando contratos, regras, store, política, recheque, dados e testes já publicados por ele; essas mudanças não são autoria do Dev 2.
 
 Ainda faltam: migrar `decide_item` ao contrato novo e persistir seu fluxo; conectar geração de dossiê/eventos ao turno; integrar política, recheque e idempotência nas ações; inventário de exigências técnicas e cobertura; avaliações distintas do modelo, relatório de prova e medição de latência. Cobertura técnica não verificada deve ser passada ao novo decisor como `fit: 'desconhecido'`, conforme alinhamento na #2.

@@ -1,0 +1,74 @@
+{
+ "medicao": "Situação final dos itens em pregões eletrônicos encerrados, por categoria",
+ "coletadoEm": "2026-11-07",
+ "fonte": "PNCP: /api/search (status=encerradas, páginas 8–15) + /api/pncp/v1/.../itens",
+ "script": "scripts/pesquisa/fracasso.ts",
+ "ressalvas": [
+  "amostra na ordem da busca do PNCP, não aleatória",
+  "itens \"Em andamento\" fora do denominador",
+  "maioria dos pregões de plataformas municipais (sem código de catálogo)",
+  "fracasso do item ≠ desclassificação de uma proposta específica"
+ ],
+ "categorias": {
+  "saude": {
+   "busca": "material hospitalar",
+   "pregoes": 70,
+   "itens": 8383,
+   "itensConcluidos": 7812,
+   "situacao": {
+    "Homologado": 7064,
+    "Fracassado": 464,
+    "Deserto": 202,
+    "Em andamento": 571,
+    "Anulado/Revogado/Cancelado": 82
+   },
+   "fracassadoPct": 5.9,
+   "desertoPct": 2.6,
+   "pregoesComFracassoOuDeserto": 42,
+   "valorTotal": 344792060,
+   "valorFracassadoOuDesertoPct": 1.8,
+   "publicacaoDe": "2024-08-28",
+   "publicacaoAte": "2026-11-05"
+  },
+  "saude_equip": {
+   "busca": "equipamentos hospitalares",
+   "pregoes": 70,
+   "itens": 6956,
+   "itensConcluidos": 6511,
+   "situacao": {
+    "Homologado": 5771,
+    "Fracassado": 328,
+    "Deserto": 266,
+    "Em andamento": 445,
+    "Anulado/Revogado/Cancelado": 146
+   },
+   "fracassadoPct": 5.0,
+   "desertoPct": 4.1,
+   "pregoesComFracassoOuDeserto": 30,
+   "valorTotal": 221945285,
+   "valorFracassadoOuDesertoPct": 3.1,
+   "publicacaoDe": "2024-05-13",
+   "publicacaoAte": "2026-11-04"
+  },
+  "controle": {
+   "busca": "material de expediente",
+   "pregoes": 41,
+   "itens": 6264,
+   "itensConcluidos": 5810,
+   "situacao": {
+    "Homologado": 5455,
+    "Deserto": 75,
+    "Fracassado": 270,
+    "Anulado/Revogado/Cancelado": 10,
+    "Em andamento": 454
+   },
+   "fracassadoPct": 4.6,
+   "desertoPct": 1.3,
+   "pregoesComFracassoOuDeserto": 20,
+   "valorTotal": 82064866,
+   "valorFracassadoOuDesertoPct": 1.6,
+   "publicacaoDe": "2024-09-30",
+   "publicacaoAte": "2026-10-27"
+  }
+ }
+}
