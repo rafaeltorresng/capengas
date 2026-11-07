@@ -182,7 +182,24 @@
           "historicoPrecos": 29,
           "anvisa": "VIGENTE"
         }
-      ]
+      ],
+      "semaforoFiscal": {
+        "status": "verde",
+        "resumo": "Despesa com pessoal em 45,91% da RCL (2º quadrimestre de 2026), abaixo do alerta de 48,6% da LRF.",
+        "dtpPct": 45.91,
+        "limites": {
+          "alerta": 48.6,
+          "prudencial": 51.3,
+          "maximo": 54
+        },
+        "periodo": {
+          "exercicio": 2026,
+          "periodicidade": "Q",
+          "periodo": 2
+        },
+        "fonte": "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rgf?an_exercicio=2026&in_periodicidade=Q&nr_periodo=2&co_tipo_demonstrativo=RGF&no_anexo=RGF-Anexo%2001&co_esfera=M&co_poder=E&id_ente=4108403",
+        "ente": "Francisco Beltrão/PR"
+      }
     },
     {
       "id": "00394452000103/2026/22617",
@@ -288,7 +305,11 @@
           "historicoPrecos": 60,
           "anvisa": "VIGENTE"
         }
-      ]
+      ],
+      "semaforoFiscal": {
+        "status": "sem_dado",
+        "resumo": "O CNPJ do órgão não é de município ou estado no SICONFI (órgão federal ou entidade sem RGF próprio)."
+      }
     },
     {
       "id": "00394429000100/2026/2941",
@@ -388,7 +409,11 @@
           "historicoPrecos": 46,
           "anvisa": "VIGENTE"
         }
-      ]
+      ],
+      "semaforoFiscal": {
+        "status": "sem_dado",
+        "resumo": "O CNPJ do órgão não é de município ou estado no SICONFI (órgão federal ou entidade sem RGF próprio)."
+      }
     }
   ],
   "evento": {
@@ -407,7 +432,24 @@
         "caracteres": 0
       }
     ],
-    "motivo": "edital sem texto legível (ZIP ou escaneado)"
+    "motivo": "edital sem texto legível (ZIP ou escaneado)",
+    "semaforoFiscal": {
+      "status": "verde",
+      "resumo": "Despesa com pessoal em 48,35% da RCL (2º quadrimestre de 2026), abaixo do alerta de 48,6% da LRF.",
+      "dtpPct": 48.35,
+      "limites": {
+        "alerta": 48.6,
+        "prudencial": 51.3,
+        "maximo": 54
+      },
+      "periodo": {
+        "exercicio": 2026,
+        "periodicidade": "Q",
+        "periodo": 2
+      },
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rgf?an_exercicio=2026&in_periodicidade=Q&nr_periodo=2&co_tipo_demonstrativo=RGF&no_anexo=RGF-Anexo%2001&co_esfera=M&co_poder=E&id_ente=4107652",
+      "ente": "Fazenda Rio Grande/PR"
+    }
   },
   "avisos": []
 }
