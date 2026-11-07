@@ -165,6 +165,8 @@ export interface Store {
   setReavaliar(tenderId: string, flag: boolean): void;
   getItems(tenderId: string): ItemRow[];
   getDecisions(tenderId?: string): DecisionRow[];
+  /** Encaixes gravados na análise. O envio lê a evidência daqui e não a regrava. */
+  getFits(tenderId: string): FitRow[];
   /** Ações para contar envios confirmados e deduplicar por key (pedido do Dev 2, #2). */
   getActions(o?: { tenderId?: string; desde?: string; status?: ActionStatus }): Action[];
   getDossie(tenderId: string): unknown | undefined;
