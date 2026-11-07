@@ -99,7 +99,10 @@ export function createReadModel(store: ReadStore, options: {
       ? calls.reduce((sum, c) => sum + c.custoUsd!, 0) : null;
     const cofre = !options.cofre?.length || !store.getTenders || !store.getRequirements ? [] : calendarioCofre(options.cofre,
       store.getTenders().filter(t => t.abertura).map(t => ({ tenderId: t.id, sessao: t.abertura!.slice(0, 10),
-        exigencias: store.getRequirements!(t.id).map(r => ({ tipo: r.tipo, citacao: r.citacao })) })), day);
+        exigencias: store.getRequirements!(t.id).map(r => ({ tipo: r.tipo, citacao: r.citacao })) })), day).map(alerta => ({
+      ...alerta,
+      pregoes: alerta.pregoes.map(pregao => dossie(pregao.tenderId) ? { ...pregao, dossie: true } : pregao),
+    }));
     return { data: day, pregoes: new Set(decisions.map(d => d.tenderId)).size, itens: decisions.length,
       disputar: counts.get('disputar') ?? 0, pendencias: counts.get('disputar_com_pendencia') ?? 0,
       envios: confirmed.length, escaladasAbertas: store.openEscalations().length, custoUsd,

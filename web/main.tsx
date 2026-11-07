@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { ApiResponse, DeadlineKind, Decision, Dossier, Escalation, Item, Proof, QueueItem, SavedDecision, Source, Today, Trace } from '../src/server/contract.ts';
+import type { ApiResponse, CofreAlert, DeadlineKind, Decision, Dossier, Escalation, Item, Proof, QueueItem, SavedDecision, Source, Today, Trace } from '../src/server/contract.ts';
 import './style.css';
 
 const fortaleza = 'America/Fortaleza';
@@ -114,6 +114,21 @@ function Metrics({ items }: { items: [string, string | number][] }) {
     <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>;
 }
 
+function CofreAlerts({ alerts }: { alerts: CofreAlert[] }) {
+  return <section className="panel cofre" aria-labelledby="cofre-title">
+    <h2 id="cofre-title">Calendário do cofre</h2>
+    <ul className="cofre-alerts">{alerts.map(alert => <li key={alert.documento ?? alert.exigencia}>
+      <p>{alert.resumo}</p>
+      <ul>{alert.pregoes.map(pregao => <li key={pregao.tenderId}>
+        {pregao.dossie
+          ? <Internal path={dossierPath(pregao.tenderId)}>Dossiê do pregão {pregao.tenderId}</Internal>
+          : <span>Pregão {pregao.tenderId}</span>}
+        {' · '}<time dateTime={pregao.sessao}>Sessão em {day.format(new Date(pregao.sessao + 'T12:00:00-03:00'))}</time>
+      </li>)}</ul>
+    </li>)}</ul>
+  </section>;
+}
+
 function TodayScreen({ data }: { data: Today }) {
   return <>
     <Heading title="Hoje" detail={day.format(new Date(data.data + 'T12:00:00-03:00'))} />
@@ -121,6 +136,7 @@ function TodayScreen({ data }: { data: Today }) {
       ['Pregões', data.pregoes], ['Itens', data.itens], ['Disputar', data.disputar],
       ['Pendências', data.pendencias], ['Escaladas abertas', data.escaladasAbertas], ['Custo', money(data.custoUsd, 'USD')],
     ]} />
+    {data.cofre?.length ? <CofreAlerts alerts={data.cofre} /> : null}
     <section className="journal">
       <div className="section-title"><h2>Linha do tempo</h2><span>Horário de Fortaleza</span></div>
       {data.eventos.length === 0 && <p>Nenhum evento registrado neste dia.</p>}

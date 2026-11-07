@@ -31,12 +31,15 @@ export type Escalation = {
   id: string; tender: string; item?: string; pregao: string; motivo: string;
   recomendacao: string; prazo: string | null; prazoTipo?: DeadlineKind; dossie?: boolean;
 };
+export type CofreAlert = Omit<AlertaCofre, 'pregoes'> & {
+  pregoes: (AlertaCofre['pregoes'][number] & { dossie?: boolean })[];
+};
 export type Today = {
   data: string; pregoes: number; itens: number; disputar: number; pendencias: number;
   envios: number; escaladasAbertas: number; custoUsd: number | null;
   porDecisao: { estado: string; quantidade: number }[]; eventos: Event[];
   /** Documentos do cofre que derrubam algum pregão com sessão futura. Lista vazia quando não há calendário. */
-  cofre: AlertaCofre[];
+  cofre: CofreAlert[];
 };
 export type Proof = {
   fonte: string; avaliacoes: { nome: string; valor: string }[];
