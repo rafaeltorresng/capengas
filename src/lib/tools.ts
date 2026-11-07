@@ -33,7 +33,7 @@ const tenderItem = async (st: LanceState, tid: string, n: number) => {
 };
 const key = (tid: string, n: number) => `${tid}#${n}`;
 
-function motivosDaEvidencia(store: LanceStore, tenderId: string, item: number) {
+export function motivosDaEvidencia(store: LanceStore, tenderId: string, item: number) {
   const motivos = new Set<'nao_informado' | 'variante_nao_coberta' | 'marca_referencia'>();
   for (const fit of store.getFits(tenderId)) {
     if (fit.item !== item) continue;

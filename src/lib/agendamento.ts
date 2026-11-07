@@ -1,8 +1,10 @@
-// Turno chamado pelo agendador: escolhe os pregões, monta o estado do agente, roda a análise e grava a foto.
-// Não envia nada. O agente (modelo) é injetado; os eventos turno_inicio/turno_fim são do agendador.
-import { newState, type LanceState } from './tools.ts';
+// Turno chamado pelo agendador: escolhe os pregões, monta o estado do agente, roda a análise, grava a foto e,
+// na fase de ações, o código envia pela porta (executarAcao) o que a evidência e a política permitem.
+// O modelo não chama envio. O agente é injetado; os eventos turno_inicio/turno_fim são do agendador.
+import { newState, motivosDaEvidencia, type LanceState } from './tools.ts';
 import { runAnalysisTurn, type AnalysisExecution } from './turn.ts';
 import { parseId } from './recheck.ts';
+import { executarAcao, type ActDeps, type ResultadoAcao } from './act.ts';
 import type { Recheque, TenderRow } from './contracts.ts';
 import type { LanceStore } from './store.ts';
 import type { TurnContext } from './scheduler.ts';
@@ -30,6 +32,63 @@ function tenderRef(id: string, base: PregaoDemo | TenderRow | undefined) {
   };
 }
 
+type Contagem = Partial<Record<ResultadoAcao['resultado'], number>>;
+export type ResumoAcoes = { esclarecimentos: Contagem; propostas: Contagem; bloqueados: number };
+
+/** Mais específico primeiro: marca de referência e variante pesam mais que "não informado". */
+const ORDEM_MOTIVO = ['marca_referencia', 'variante_nao_coberta', 'nao_informado'] as const;
+const SEM_EVIDENCIA = 'rascunho de esclarecimento sem evidência gravada no encaixe: conferir antes de enviar';
+
+export async function executarAcoesDoTurno(d: {
+  store: LanceStore; company: any; state: LanceState; ids: string[]; sandboxUrl: string;
+  recheck: NonNullable<ActDeps['recheck']>; enviar?: ActDeps['enviar']; consultar?: ActDeps['consultar']; now?: () => Date;
+}): Promise<ResumoAcoes> {
+  const now = d.now ?? (() => new Date());
+  const r: ResumoAcoes = { esclarecimentos: {}, propostas: {}, bloqueados: 0 };
+  const conta = (c: Contagem, k: ResultadoAcao['resultado']) => { c[k] = (c[k] ?? 0) + 1; };
+  const deps: ActDeps = { store: d.store, politica: d.company.politica, sandboxUrl: d.sandboxUrl, empresa: d.company.empresa?.nome ?? '',
+    catalogo: d.company.catalogo ?? [], now, recheck: d.recheck, enviar: d.enviar, consultar: d.consultar };
+  for (const id of d.ids) {
+    const t = d.store.getTender(id);
+    if (!t?.arquivosHash || t.reavaliar === true) {
+      r.bloqueados++;
+      d.store.logEvent({ tipo: 'bloqueio', resumo: 'ações do turno suspensas: foto da análise ausente ou pregão marcado pelo monitor; reavaliar antes de agir', tender: id });
+      continue;
+    }
+    for (const [k, draft] of Object.entries(d.state.drafts)) {
+      if (!k.startsWith(id + '#') || !draft?.texto) continue;
+      const item = Number(k.split('#')[1]);
+      const evidencias = motivosDaEvidencia(d.store, id, item);
+      const motivo = ORDEM_MOTIVO.find(m => evidencias.has(m));
+      if (!motivo) {
+        if (!d.store.openEscalations().some(e => e.tender === id && e.item === String(item) && e.motivo === SEM_EVIDENCIA)) {
+          d.store.openEscalation({ tender: id, item: String(item), motivo: SEM_EVIDENCIA, recomendacao: 'Conferir o rascunho do modelo e a evidência do item antes de enviar.',
+            prazo: draft.prazo ? `${draft.prazo}T17:00:00-03:00` : new Date(now().getTime() + 864e5).toISOString() });
+        }
+        conta(r.esclarecimentos, 'escalada');
+        continue;
+      }
+      conta(r.esclarecimentos, (await executarAcao({ tipo: 'enviar_esclarecimento', tenderId: id, item, texto: draft.texto, motivo }, deps)).resultado);
+    }
+    const disputar = [...new Set(d.store.getDecisions(id).filter(x => x.estado === 'disputar').map(x => x.item))];
+    if (disputar.length) conta(r.propostas, (await executarAcao({ tipo: 'enviar_proposta', tenderId: id, itens: disputar }, deps)).resultado);
+  }
+  return r;
+}
+
+const ROTULO: Record<ResultadoAcao['resultado'], [string, string]> = {
+  confirmada: ['confirmado', 'confirmada'], escalada: ['escalado', 'escalada'], bloqueada: ['bloqueado', 'bloqueada'],
+  reconciliar: ['a reconciliar', 'a reconciliar'], falhou: ['com falha', 'com falha'],
+};
+const plural = (n: number, s: string) => n === 1 ? s : s.split(' ').map(w => w === 'a' || w === 'com' ? w : w + 's').join(' ');
+export function textoAcoes(r: ResumoAcoes): string {
+  const partes: string[] = [];
+  for (const [k, n] of Object.entries(r.esclarecimentos) as [ResultadoAcao['resultado'], number][]) partes.push(`${n} ${plural(n, `esclarecimento ${ROTULO[k][0]}`)}`);
+  for (const [k, n] of Object.entries(r.propostas) as [ResultadoAcao['resultado'], number][]) partes.push(`${n} ${plural(n, `proposta ${ROTULO[k][1]}`)}`);
+  if (r.bloqueados) partes.push(`${r.bloqueados} ${plural(r.bloqueados, 'pregão bloqueado')}`);
+  return partes.length ? `ações: ${partes.join('; ')}` : 'ações: nenhuma';
+}
+
 export function createAnalysisTurn(d: {
   store: LanceStore;
   company: any;
@@ -39,6 +98,8 @@ export function createAnalysisTurn(d: {
   analisar: (state: LanceState, ids: string[]) => Promise<AnalysisExecution>;
   snapshot: (tenderId: string, store: LanceStore) => Promise<unknown>;
   recheck: (tenderId: string, store: LanceStore) => Promise<Recheque>;
+  /** Fase de ações depois da análise e da foto (executarAcoesDoTurno). Sem ela, o turno só analisa. */
+  agir?: (state: LanceState, ids: string[]) => Promise<ResumoAcoes>;
   now?: () => Date;
 }) {
   const now = d.now ?? (() => new Date());
@@ -53,6 +114,7 @@ export function createAnalysisTurn(d: {
     const porId = new Map(d.demo.pregoes.concat(d.demo.editalIlegivel ?? []).map(p => [p.id, p]));
     for (const id of ids) state.tenders[id] = tenderRef(id, porId.get(id) ?? d.store.getTender(id));
     const r = await runAnalysisTurn({ store: d.store, state, origem: ctx.origem, run: () => d.analisar(state, ids), snapshot: d.snapshot });
-    return { resumo: `${ids.join(', ')}: ${r.resumo}` };
+    const acoes = d.agir ? `; ${textoAcoes(await d.agir(state, ids))}` : '';
+    return { resumo: `${ids.join(', ')}: ${r.resumo}${acoes}` };
   };
 }
