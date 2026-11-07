@@ -23,7 +23,7 @@ function setup(o: { reavaliar?: boolean; estado?: string; preco?: number | null;
   store.upsertDecision({ tenderId: T, item: 40, produto: 'P1', estado: (o.estado ?? 'escalar') as any, motivos: ['m'], precoProposto: o.preco === undefined ? 50 : o.preco });
   const state = newState(company, 'http://sandbox', agora);
   state.fits[`${T}#40`] = { product_id: 'P1' };
-  state.decisions[`${T}#40`] = { estado: o.estado ?? 'escalar' };
+  state.decisions[`${T}#40`] = { estado: o.estado ?? 'escalar', produto: 'P1' };
   const posts: { url: string; body: any }[] = [];
   const deps = {
     store, company, sandboxUrl: 'http://sandbox', now: () => agora, recheck: async () => ok,
@@ -123,6 +123,14 @@ describe('executarAcoesDoTurno: só age sobre o que a análise atual produziu', 
     assert.equal(posts.length, 0);
     assert.equal(r.esclarecimentos.escalada, 1);
     assert.ok(store.openEscalations().some(e => e.tender === T && e.item === '40'));
+  });
+  test('encaixe do turno de um produto e decisão de outro: escala, zero POST', async () => {
+    const { state, posts, deps } = setup();
+    state.decisions[`${T}#40`] = { estado: 'esclarecer', produto: 'P2' };
+    state.drafts[`${T}#40`] = { texto: TEXTO, prazo: '2026-11-18' };
+    const r = await executarAcoesDoTurno({ ...deps, state, ids: [T] });
+    assert.equal(posts.length, 0);
+    assert.equal(r.esclarecimentos.escalada, 1);
   });
   test('reavaliar + reanálise que só lista itens: zero POST e o pregão continua pendente de reavaliação', async () => {
     const { store, posts, deps } = setup({ estado: 'disputar', reavaliar: true });
