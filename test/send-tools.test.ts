@@ -2,6 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { pncp } from '../src/lib/data.ts';
+import { createReadModel } from '../src/lib/read-model.ts';
 import { tools, newState } from '../src/lib/tools.ts';
 import { openStore } from '../src/lib/store.ts';
 import { persistAnalysis } from '../src/lib/persist-analysis.ts';
@@ -148,4 +150,59 @@ test('pregão marcado pelo monitor não é enviado', async () => {
   assert.equal(store.getTender(TENDER)?.arquivosHash, 'foto-analise');
   store.close();
   sbx.close();
+});
+
+test('motivo sem evidência chega à fila humana uma vez por item, sem POST', async () => {
+  const sbx = await startSandbox(0);
+  const { store, ctx } = cenario(sbx.url);
+  try {
+    const args = { tender_id: TENDER, item: 40, motivo: 'nao_informado' };
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const result: any = await tool('send_esclarecimento').run(args, ctx);
+      assert.equal(result.resultado, 'escalada');
+    }
+    const model = createReadModel(store, { actions: () => store.getActions() });
+    assert.deepEqual(model.escaladas().map(row => [row.tender, row.item]), [[TENDER, '40']]);
+    assert.equal(store.events().filter(event => event.tipo === 'escalada_aberta').length, 1);
+    assert.equal(sbx.esclarecimentos.length, 0);
+  } finally {
+    store.close();
+    sbx.close();
+  }
+});
+
+test('verifica proposta e esclarecimento no portal usando o store, mesmo em uma nova sessão', async t => {
+  const sbx = await startSandbox(0);
+  const { store, state, ctx } = cenario(sbx.url);
+  t.mock.method(pncp, 'compra', async () => ({
+    situacaoCompraNome: 'Divulgada no PNCP', dataEncerramentoProposta: '2026-12-15T10:00:00',
+  }));
+  try {
+    store.upsertFit({ tenderId: TENDER, item: 40, produto: 'P1', fit: 'nao_informado',
+      atributos: { attributes: [{ atributo: 'embalagem', veredito: 'nao_informado' }] } });
+    const proposal: any = await tool('submit_proposal').run({ tender_id: TENDER, itens: [40] }, ctx);
+    const question: any = await tool('send_esclarecimento').run({ tender_id: TENDER, item: 40, motivo: 'nao_informado' }, ctx);
+    assert.equal(proposal.resultado, 'confirmada');
+    assert.equal(question.resultado, 'confirmada');
+
+    const freshState = newState(company, sbx.url, state.now);
+    freshState.store = store;
+    const fresh = { approvals: new Set<string>(), state: freshState };
+    for (const result of [proposal, question]) {
+      const verified: any = await tool('verify_submission').run({ tender_id: TENDER, protocolo: result.protocolo }, fresh);
+      assert.equal(verified.portal_confere, true);
+      assert.equal(verified.ok, true);
+    }
+
+    sbx.propostas.get(proposal.protocolo).itens[0].quantidade = 999;
+    const mismatch: any = await tool('verify_submission').run({ tender_id: TENDER, protocolo: proposal.protocolo }, fresh);
+    assert.equal(mismatch.portal_confere, false);
+    const wrongTender: any = await tool('verify_submission').run({ tender_id: '11111111000111/2026/1', protocolo: question.protocolo }, fresh);
+    assert.equal(wrongTender.ok, false);
+    assert.equal(sbx.propostas.size, 1);
+    assert.equal(sbx.esclarecimentos.length, 1);
+  } finally {
+    store.close();
+    sbx.close();
+  }
 });

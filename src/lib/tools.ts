@@ -3,7 +3,9 @@ import type { Tool, Ctx } from './agent.ts';
 import { pncp, compras, anvisa, pdf, catmat } from './data.ts';
 import { checkAnvisa, priceStats, brandConcentration, priceCheck, checkDocs, verifyQuote, esclarecimentoDeadline, decideItem } from './rules.ts';
 import { executarAcao, type ActDeps, type PedidoAcao } from './act.ts';
-import { recheckTender } from './recheck.ts';
+import { recheckTender, situacao } from './recheck.ts';
+import { consultarProtocolo } from './portal.ts';
+import { isDeepStrictEqual } from 'node:util';
 import { inventarioCobertura } from './cobertura.ts';
 import type { LanceStore } from './store.ts';
 import { randomUUID } from 'node:crypto';
@@ -302,21 +304,45 @@ export const tools: Tool[] = [
       if (!dr?.texto) return { resultado: 'bloqueada', motivo: 'esclarecimento sem rascunho; nada foi enviado' };
       if (!st.store) return { resultado: 'bloqueada', motivo: 'envio indisponível sem estado persistente; nada foi enviado' };
       const evidencias = motivosDaEvidencia(st.store, a.tender_id, a.item);
-      if (!evidencias.has(a.motivo)) return { resultado: 'escalada', motivo: 'motivo do esclarecimento não confere com a evidência gravada' };
+      if (!evidencias.has(a.motivo)) {
+        const motivo = 'motivo do esclarecimento não confere com a evidência gravada';
+        st.store.openEscalation({
+          tender: a.tender_id, item: String(a.item), motivo,
+          recomendacao: 'Revisar a evidência e o rascunho antes de enviar o esclarecimento.',
+          prazo: new Date(st.now.getTime() + 864e5).toISOString(),
+        }, { reuseOpen: true });
+        return { resultado: 'escalada', motivo };
+      }
       return enviarPelaPorta(st, { tipo: 'enviar_esclarecimento', tenderId: a.tender_id, item: a.item, texto: dr.texto, motivo: a.motivo });
     },
   },
   {
-    name: 'verify_submission', description: 'Confere no portal que a proposta foi registrada como aprovada e, no PNCP, que o pregão segue aberto.',
+    name: 'verify_submission', description: 'Consulta a proposta ou o esclarecimento no portal pelo protocolo persistido e verifica se o pregão segue aberto.',
     parameters: { type: 'object', required: ['protocolo', 'tender_id'], properties: { protocolo: { type: 'string' }, tender_id: { type: 'string' } } },
     async run(a, ctx) {
-      const st = S(ctx); const sub = st.submissions.find(s => s.protocolo === a.protocolo);
-      const r = await fetch(`${st.sandboxUrl}/api/propostas/${a.protocolo}`); if (r.status !== 200) return { ok: false, motivo: 'protocolo não encontrado no portal' };
-      const got = await r.json();
-      const same = JSON.stringify(got.itens) === JSON.stringify(sub?.itens);
-      const { cnpj, ano, seq } = parseId(a.tender_id); const c = await pncp.compra(cnpj, ano, seq);
-      const fim = String(c.dataEncerramentoProposta ?? ''); const aberto = fim > st.now.toISOString();
-      return { ok: same && aberto, portal_confere: same, pncp_aberto: aberto, encerramento_propostas: fim, situacao: c.situacaoCompraNome };
+      const st = S(ctx);
+      const actions = st.store?.getActions({ tenderId: a.tender_id }).filter(row => row.protocolo === a.protocolo) ?? [];
+      if (!a.protocolo || actions.length !== 1) return { ok: false, motivo: 'protocolo sem ação única neste pregão no store' };
+      const [action] = actions;
+      const consulta = await consultarProtocolo(st.sandboxUrl, action.tipo, a.protocolo);
+      if (!consulta.encontrado) return { ok: false, portal_confere: false, motivo: consulta.erro ?? 'protocolo não encontrado no portal' };
+      const got = consulta.registro as { protocolo?: unknown; tender?: unknown; empresa?: unknown; itens?: unknown; item?: unknown; texto?: unknown } | null;
+      const expected = action.payload as { empresa?: unknown; itens?: unknown; texto?: unknown } | null;
+      const same = got != null && got.protocolo === a.protocolo && got.tender === a.tender_id
+        && (action.tipo === 'proposta'
+          ? Array.isArray(expected?.itens) && got.empresa === expected.empresa && isDeepStrictEqual(got.itens, expected.itens)
+          : typeof expected?.texto === 'string' && got.item === action.item && got.texto === expected.texto);
+
+      const { cnpj, ano, seq } = parseId(a.tender_id);
+      try {
+        const c = await pncp.compra(cnpj, ano, seq, { fresh: true });
+        const fim = String(c.dataEncerramentoProposta ?? '');
+        const timestamp = /^\d{4}-\d\d-\d\dT\d\d:\d\d(?::\d\d(?:\.\d+)?)?$/.test(fim) ? fim + '-03:00' : fim;
+        const aberto = situacao(c.situacaoCompraNome) === 'aberto' && Date.parse(timestamp) > st.now.getTime();
+        return { ok: same && aberto, portal_confere: same, pncp_aberto: aberto, encerramento_propostas: fim, situacao: c.situacaoCompraNome };
+      } catch {
+        return { ok: false, portal_confere: same, pncp_aberto: null, motivo: 'PNCP indisponível para verificar a situação atual' };
+      }
     },
   },
 ];
