@@ -5,10 +5,11 @@ import { promisify } from 'node:util';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { fetchJson } from './http.ts';
 
 // Raiz do projeto; CACHE guarda respostas HTTP e bancos SQLite, DATA guarda as bases baixadas (npm run setup).
-const ROOT = new URL('../..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 export const CACHE = process.env.LANCE_CACHE_DIR ?? join(ROOT, 'cache');
 export const DATA = process.env.LANCE_DATA_DIR ?? join(ROOT, 'data');
 const FRESH = { ttlMs: 0, allowStale: false, retries: 3 };
