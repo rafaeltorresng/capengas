@@ -1,5 +1,6 @@
 // Agendador do Lance: dispara turnos nos horários da política (America/Recife) e o monitor a cada
-// monitorMinutos, sem clique. Trava: nunca dois turnos ao mesmo tempo, e o monitor não roda durante um turno.
+// monitorMinutos, sem clique. Trava única: enquanto um monitor ou um turno roda, nenhum outro começa
+// (vale para tick e runNext). Os eventos turno_inicio/turno_fim são do agendador; runTurn não os grava.
 // Um horário não roda duas vezes, nem depois de reiniciar (consulta os eventos turno_inicio no store).
 // Ao ligar fora de horário, roda só o turno mais recente que já passou no dia. Política inválida bloqueia tudo.
 import { validatePolitica } from './policy.ts';
@@ -7,7 +8,8 @@ import { runMonitor as defaultMonitor, type MonitorResult } from './monitor.ts';
 import type { Politica } from './contracts.ts';
 import type { LanceStore } from './store.ts';
 
-export type TurnContext = { motivo: 'agendado' | 'demo'; horario?: string };
+/** origem 'agendador': quem grava turno_inicio/turno_fim é o agendador, não o runTurn. */
+export type TurnContext = { motivo: 'agendado' | 'demo'; horario?: string; origem: 'agendador' };
 export type SchedulerDeps = {
   store: LanceStore;
   politica: Politica | undefined;
@@ -34,7 +36,8 @@ export function createScheduler(d: SchedulerDeps) {
   const erros = validatePolitica(d.politica);
   const turnos = erros.length ? [] : [...d.politica!.turnos].sort();
   const rodados = new Set<string>();
-  let rodando = false, bloqueioRegistrado = false, timer: ReturnType<typeof setInterval> | null = null;
+  // ocupado: trava única (monitor ou turno em execução). rodando: há um turno em execução (para o status).
+  let ocupado = false, rodando = false, bloqueioRegistrado = false, timer: ReturnType<typeof setInterval> | null = null;
   let ultimoMonitor: number | undefined, ultimoTurno: string | undefined;
 
   const jaRodou = (slot: string) =>
@@ -49,6 +52,7 @@ export function createScheduler(d: SchedulerDeps) {
     return jaRodou(slot) ? null : slot;
   };
 
+  /** Só é chamado com a trava `ocupado` já adquirida. */
   async function executar(ctx: TurnContext): Promise<'concluido' | 'falhou'> {
     rodando = true;
     if (ctx.horario) rodados.add(ctx.horario);
@@ -72,31 +76,36 @@ export function createScheduler(d: SchedulerDeps) {
       if (!bloqueioRegistrado) { d.store.logEvent({ tipo: 'bloqueio', resumo: `agendador parado: política inválida (${erros.join('; ')})` }); bloqueioRegistrado = true; }
       return { turno: 'bloqueado', monitor: 'bloqueado' };
     }
-    let m: TickResult['monitor'] = 'nenhum';
-    if (rodando) m = 'pulado';
-    else if (ultimoMonitor === undefined || now().getTime() - ultimoMonitor >= d.politica!.monitorMinutos * 60e3) {
-      ultimoMonitor = now().getTime();
-      try { await monitor(d.store); m = 'rodou'; } catch { m = 'falhou'; }
+    if (ocupado) return { turno: 'ocupado', monitor: 'pulado' };
+    ocupado = true;
+    try {
+      let m: TickResult['monitor'] = 'nenhum';
+      if (ultimoMonitor === undefined || now().getTime() - ultimoMonitor >= d.politica!.monitorMinutos * 60e3) {
+        ultimoMonitor = now().getTime();
+        try { await monitor(d.store); m = 'rodou'; } catch { m = 'falhou'; }
+      }
+      const slot = devido();
+      if (!slot) return { turno: 'nenhum', monitor: m };
+      return { turno: await executar({ motivo: 'agendado', horario: slot, origem: 'agendador' }), monitor: m };
+    } finally {
+      ocupado = false;
     }
-    if (rodando) return { turno: 'ocupado', monitor: m };
-    const slot = devido();
-    if (!slot) return { turno: 'nenhum', monitor: m };
-    return { turno: await executar({ motivo: 'agendado', horario: slot }), monitor: m };
   }
 
   /** Modo demo: roda um turno daqui a `delayMs`, respeitando a trava. */
   async function runNext(delayMs: number): Promise<'concluido' | 'falhou' | 'ocupado' | 'bloqueado'> {
     if (erros.length) return 'bloqueado';
     await new Promise(r => setTimeout(r, delayMs));
-    if (rodando) return 'ocupado';
-    return executar({ motivo: 'demo' });
+    if (ocupado) return 'ocupado';
+    ocupado = true;
+    try { return await executar({ motivo: 'demo', origem: 'agendador' }); } finally { ocupado = false; }
   }
 
   function status() {
     const { data, hm } = local(now());
     const hoje = turnos.find(t => t > hm);
     const proximoTurno = turnos.length ? (hoje ? `${data} ${hoje}` : `${proximoDia(data)} ${turnos[0]}`) : undefined;
-    return { rodando, proximoTurno, ultimoTurno, ultimoMonitor: ultimoMonitor === undefined ? undefined : new Date(ultimoMonitor).toISOString(), bloqueado: erros.length > 0 };
+    return { rodando, ocupado, proximoTurno, ultimoTurno, ultimoMonitor: ultimoMonitor === undefined ? undefined : new Date(ultimoMonitor).toISOString(), bloqueado: erros.length > 0 };
   }
 
   return {

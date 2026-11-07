@@ -102,6 +102,53 @@ describe('monitor periódico', () => {
   });
 });
 
+describe('trava única entre monitor e turno (regressão do PR #5, achada pelo Dev 2)', () => {
+  function comMonitorPendente(start: string) {
+    const c = clock(start);
+    const store = openStore(':memory:', { now: c.now });
+    const ordem: string[] = [];
+    const m = deferred();
+    const s = createScheduler({
+      store, politica, now: c.now,
+      runTurn: async () => { ordem.push('turno_inicio'); },
+      runMonitor: async () => { ordem.push('monitor_inicio'); await m.p; ordem.push('monitor_fim'); return { verificados: 0, mudancas: 0, falhas: 0, ignorados: 0 }; },
+    });
+    return { s, ordem, m };
+  }
+  test('segundo tick com monitor ainda rodando não inicia turno', async () => {
+    const { s, ordem, m } = comMonitorPendente('2026-11-08T07:00:00-03:00');
+    const primeiro = s.tick();
+    await new Promise(r => setImmediate(r));
+    const segundo = await s.tick();
+    assert.deepEqual(segundo, { turno: 'ocupado', monitor: 'pulado' });
+    assert.deepEqual(ordem, ['monitor_inicio']);
+    m.resolve(); await primeiro;
+    assert.deepEqual(ordem, ['monitor_inicio', 'monitor_fim', 'turno_inicio']);
+  });
+  test('runNext com monitor rodando → ocupado, sem turno', async () => {
+    const { s, ordem, m } = comMonitorPendente('2026-11-08T13:00:00-03:00');
+    const primeiro = s.tick();
+    await new Promise(r => setImmediate(r));
+    assert.equal(await s.runNext(0), 'ocupado');
+    assert.equal(ordem.includes('turno_inicio'), false);
+    m.resolve(); await primeiro;
+  });
+  test('tick durante um turno de demonstração → ocupado', async () => {
+    const d = deferred();
+    const { s } = setup('2026-11-08T13:00:00-03:00', { runTurn: async () => { await d.p; } });
+    const demo = s.runNext(0);
+    await new Promise(r => setTimeout(r, 5));
+    assert.equal((await s.tick()).turno, 'ocupado');
+    d.resolve(); await demo;
+  });
+  test('o contexto avisa que os eventos de turno são do agendador', async () => {
+    let ctx: any;
+    const { s } = setup('2026-11-08T07:00:00-03:00', { runTurn: async (c?: any) => { ctx = c; } });
+    await s.tick();
+    assert.equal(ctx.origem, 'agendador');
+  });
+});
+
 describe('falha segura e modo demo', () => {
   test('política inválida → nenhum turno nem monitor, um evento de erro', async () => {
     const { s, store, calls } = setup('2026-11-08T07:00:00-03:00', { politica: { ...politica, turnos: ['7h'] } });
