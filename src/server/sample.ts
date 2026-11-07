@@ -1,13 +1,15 @@
-import type { DemoStore, Dossier, Escalation, Event, Item, Proof, QueueItem, SavedDecision, Today } from './contract.ts';
+import type { DemoStore, Dossier, Escalation, Event, Item, Pauta, Proof, QueueItem, SavedDecision, Today } from './contract.ts';
 import seed from '../../fixtures/dev3-amostra.json' with { type: 'json' };
 
 export type SampleState = {
   hoje: Today; fila: QueueItem[]; itens: Item[]; dossies: Dossier[];
   escaladas: Escalation[]; prova: Proof;
+  /** A amostra do Dev 3 ainda não traz pauta; sem ela, a pauta vem vazia. */
+  pauta?: Pauta;
 };
 
 export function createSampleStore(initial: SampleState = seed): DemoStore {
-  const { hoje, fila, itens, dossies, escaladas, prova } = structuredClone(initial);
+  const { hoje, fila, itens, dossies, escaladas, prova, pauta } = structuredClone(initial as SampleState);
   const eventos: Event[] = hoje.eventos;
   const decisoes = new Map<string, SavedDecision>();
 
@@ -27,6 +29,7 @@ export function createSampleStore(initial: SampleState = seed): DemoStore {
     dossie: tender => dossies.find(entry => entry.tender === tender),
     escaladas: abertas,
     prova: () => prova,
+    pauta: () => pauta ?? { data: hoje.data, linhas: [], contagem: { acionaveis: 0, informativas: 0 } },
     decidir(id, decision) {
       const escalada = escaladas.find(entry => entry.id === id);
       if (!escalada) return { status: 'ausente' };

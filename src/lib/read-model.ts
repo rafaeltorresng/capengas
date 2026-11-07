@@ -1,11 +1,15 @@
 // Adapta leituras persistidas à API do Dev 3. Não executa regras, modelo ou envios.
 import type { Action, AnvisaCheck, CofreDoc, Decision, DecisionRow, Store } from './contracts.ts';
 import { calendarioCofre } from './cofre.ts';
+import { montarPauta } from './pauta.ts';
+import type { DiffErrata } from './errata.ts';
+import type { EntePregao, Sancao } from './carteira.ts';
+import type { SemaforoFiscal } from './siconfi.ts';
 import type { buildDossie, DossierSource } from './dossie.ts';
 import type { EvidenceValidation } from '../server/contract.ts';
 
 export type ReadStore = Pick<Store, 'events' | 'openEscalations' | 'getTender' | 'getItems' | 'getDecisions' | 'getDossie' | 'resolveEscalation'>
-  & Partial<Pick<Store, 'getTenders' | 'getRequirements'>>;
+  & Partial<Pick<Store, 'getTenders' | 'getRequirements'>> & { getErrataDiff?(tenderId: string): DiffErrata | undefined };
 export type Proof = {
   fonte: string; avaliacoes: { nome: string; valor: string }[]; cenarios: { nome: string; resultado: string }[];
   concordancia: number | null; custoUsd: number | null; duracaoMs: number | null;
@@ -25,6 +29,10 @@ export function createReadModel(store: ReadStore, options: {
   actions: () => Action[]; now?: () => Date; proof?: () => Proof; origem?: 'amostra' | 'integrado';
   /** Cofre da empresa. Sem ele, ou sem getTenders/getRequirements, Hoje devolve cofre vazio. */
   cofre?: CofreDoc[];
+  /** Pauta: sanções do cliente no CEIS (null = não consultado), ente e semáforo fiscal por pregão. */
+  sancoes?: Sancao[] | null;
+  entes?: Record<string, EntePregao>;
+  semaforos?: Record<string, SemaforoFiscal>;
 }) {
   if (typeof options.actions !== 'function') throw new Error('forneça a leitura das ações confirmadas');
   const now = options.now ?? (() => new Date());
@@ -98,6 +106,21 @@ export function createReadModel(store: ReadStore, options: {
     return store.openEscalations().map(e => ({ ...e, pregao: e.tender, prazo: timestamp(e.prazo), prazoTipo: 'decisao_humana' as const, dossie: !!dossie(e.tender),
       itemDisponivel: e.item ? itemDisponivel(e.tender, e.item) : false }));
   }
+  function alertasCofre(day: string) {
+    return !options.cofre?.length || !store.getTenders || !store.getRequirements ? [] : calendarioCofre(options.cofre,
+      store.getTenders().filter(t => t.abertura).map(t => ({ tenderId: t.id, sessao: t.abertura!.slice(0, 10),
+        exigencias: store.getRequirements!(t.id).map(r => ({ tipo: r.tipo, citacao: r.citacao })) })), day);
+  }
+  function pauta() {
+    const day = localDay(now());
+    const tenders = store.getTenders?.() ?? [];
+    const p = montarPauta({ hoje: day, cofre: alertasCofre(day), sancoes: options.sancoes,
+      pregoes: tenders.map(tender => ({ tender, decisoes: selectedDecisions(tender.id), requisitos: store.getRequirements?.(tender.id) ?? [],
+        diff: store.getErrataDiff?.(tender.id) ?? null, ente: options.entes?.[tender.id], semaforo: options.semaforos?.[tender.id] ?? null })) });
+    return { ...p, linhas: p.linhas.map(l => ({ ...l,
+      ...(l.tenderId ? { dossie: !!dossie(l.tenderId) } : {}),
+      ...(l.tenderId && l.item !== undefined ? { itemDisponivel: itemDisponivel(l.tenderId, String(l.item)) } : {}) })) };
+  }
   function hoje() {
     const day = localDay(now());
     const start = Date.parse(`${day}T00:00:00-03:00`); const end = start + 86400_000;
@@ -114,9 +137,7 @@ export function createReadModel(store: ReadStore, options: {
     const calls = events.flatMap(e => e.rastro ?? []).filter(t => t.ferramenta === 'llm' || t.ferramenta.startsWith('llm:'));
     const custoUsd = calls.length && calls.every(c => typeof c.custoUsd === 'number' && Number.isFinite(c.custoUsd))
       ? calls.reduce((sum, c) => sum + c.custoUsd!, 0) : null;
-    const cofre = !options.cofre?.length || !store.getTenders || !store.getRequirements ? [] : calendarioCofre(options.cofre,
-      store.getTenders().filter(t => t.abertura).map(t => ({ tenderId: t.id, sessao: t.abertura!.slice(0, 10),
-        exigencias: store.getRequirements!(t.id).map(r => ({ tipo: r.tipo, citacao: r.citacao })) })), day).map(alerta => ({
+    const cofre = alertasCofre(day).map(alerta => ({
       ...alerta,
       pregoes: alerta.pregoes.map(pregao => dossie(pregao.tenderId) ? { ...pregao, dossie: true } : pregao),
     }));
@@ -130,7 +151,7 @@ export function createReadModel(store: ReadStore, options: {
     };
   }
   return {
-    origem: options.origem ?? 'integrado', hoje, fila, item, dossie, escaladas,
+    origem: options.origem ?? 'integrado', hoje, fila, item, dossie, escaladas, pauta,
     prova: (): Proof => options.proof ? structuredClone(options.proof()) : {
       fonte: 'Nenhum relatório de avaliação foi integrado a esta execução.', avaliacoes: [], cenarios: [],
       concordancia: null, custoUsd: null, duracaoMs: null,

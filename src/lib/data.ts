@@ -41,10 +41,11 @@ export const pncp = {
     const { data } = await http(`https://pncp.gov.br/api/consulta/v1/orgaos/${cnpj}/compras/${ano}/${seq}`, o.fresh ? FRESH : { ttlMs: 10 * 60e3 });
     return data;
   },
-  async items(cnpj: string, ano: number, seq: number): Promise<TenderItem[]> {
+  /** fresh: usado pelo monitor para comparar os itens publicados agora com os da análise. */
+  async items(cnpj: string, ano: number, seq: number, o: { fresh?: boolean } = {}): Promise<TenderItem[]> {
     const out: TenderItem[] = [];
     for (let p = 1; p <= 20; p++) {
-      const { data } = await http(`https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${seq}/itens?pagina=${p}&tamanhoPagina=100`);
+      const { data } = await http(`https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${seq}/itens?pagina=${p}&tamanhoPagina=100`, o.fresh ? FRESH : {});
       const arr = Array.isArray(data) ? data : [];
       for (const i of arr) out.push({
         numero: i.numeroItem, descricao: i.descricao ?? '', quantidade: i.quantidade, valorEstimado: i.valorUnitarioEstimado || null,

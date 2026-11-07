@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { DATA } from './data.ts';
+import type { DiffErrata } from './errata.ts';
 import type {
   Store, TenderRow, ItemRow, FitRow, RequirementRow, DecisionRow, Action, ActionStatus,
   Escalation, Decision, DecisionResult, Event,
@@ -16,6 +17,9 @@ export type StoreOptions = {
 };
 
 export type LanceStore = Store & {
+  /** Diff de errata calculado pelo monitor (fase 1 da #25). Guarda o histórico; a leitura devolve o mais recente. */
+  saveErrataDiff(d: DiffErrata): void;
+  getErrataDiff(tenderId: string): DiffErrata | undefined;
   close(): void;
   /** Auxiliares de teste e diagnóstico. */
   _count(table: string): number;
@@ -54,9 +58,12 @@ CREATE TABLE IF NOT EXISTS events (
   resumo TEXT NOT NULL, detalhe TEXT, tender TEXT, item TEXT, dossie INTEGER, rastro TEXT);
 CREATE INDEX IF NOT EXISTS ix_events_horario ON events(horario);
 CREATE INDEX IF NOT EXISTS ix_actions_status ON actions(status);
+CREATE TABLE IF NOT EXISTS errata_diffs (
+  seq INTEGER PRIMARY KEY AUTOINCREMENT, tender_id TEXT NOT NULL, json TEXT NOT NULL, criado_em TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_errata_diffs_tender ON errata_diffs(tender_id, seq);
 `;
 
-const TABLES = new Set(['tenders', 'items', 'fits', 'requirements', 'decisions', 'dossies', 'actions', 'escalations', 'events']);
+const TABLES = new Set(['tenders', 'items', 'fits', 'requirements', 'decisions', 'dossies', 'actions', 'escalations', 'events', 'errata_diffs']);
 const json = (v: unknown) => (v === undefined ? null : JSON.stringify(v));
 const parse = (s: unknown) => (s == null ? undefined : JSON.parse(String(s)));
 
@@ -263,6 +270,13 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
     },
     getDossie(tenderId) {
       const r: any = db.prepare('SELECT json FROM dossies WHERE tender_id = ?').get(tenderId);
+      return r ? JSON.parse(r.json) : undefined;
+    },
+    saveErrataDiff(d: DiffErrata) {
+      db.prepare('INSERT INTO errata_diffs (tender_id, json, criado_em) VALUES (?,?,?)').run(d.tenderId, JSON.stringify(d), iso());
+    },
+    getErrataDiff(tenderId: string) {
+      const r: any = db.prepare('SELECT json FROM errata_diffs WHERE tender_id = ? ORDER BY seq DESC LIMIT 1').get(tenderId);
       return r ? JSON.parse(r.json) : undefined;
     },
 

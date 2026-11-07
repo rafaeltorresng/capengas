@@ -10,5 +10,10 @@
 | `search_mh.json`, `preco_631440.json`, `preco_632751.json` | Respostas reais das APIs | Tudo | — |
 | `afe.pdf` | Documento público baixado | Tudo (usado só para testar a extração de texto) | — |
 
+**Errata da fase 1 (#25).** `scripts/errata-sintetica.ts` aplica a um pregão real já analisado uma errata
+**sintética** que só muda a quantidade de um item. O diff e cada linha da pauta saem com `sintetico: true`, e a tela
+mostra "Errata sintética de teste". Isso existe porque a busca de 07/11 não achou uma retificação real com impacto
+conhecido. Não apresentar como retificação acontecida no PNCP.
+
 **Regra:** número de produto, preço ou decisão que vem de `company.json` é sintético e nunca deve ser apresentado
 como dado de uma empresa real.
