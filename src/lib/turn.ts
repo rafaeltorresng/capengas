@@ -13,12 +13,23 @@ export async function runAnalysisTurn(o: {
   state: LanceState;
   origem: AnalysisOrigin;
   run: () => Promise<AnalysisExecution>;
+  /** Foto para o recheque. Sem ela, recheckTender bloqueia por arquivos_mudaram. Falha da foto não apaga a análise. */
+  snapshot?: (tenderId: string, store: LanceStore) => Promise<unknown>;
 }): Promise<AnalysisResult> {
   const direto = o.origem !== 'agendador';
   if (direto) o.store.logEvent({ tipo: 'turno_inicio', resumo: 'Turno de análise iniciado; ferramentas de envio indisponíveis.' });
   try {
     const result = await o.run();
     const saved = persistAnalysis(o.state, o.store);
+    if (o.snapshot) {
+      for (const tenderId of Object.keys(o.state.tenders)) {
+        if (!o.state.items[tenderId]?.length) continue;
+        try { await o.snapshot(tenderId, o.store); }
+        catch (error: any) {
+          o.store.logEvent({ tipo: 'erro_fonte', resumo: `foto da análise não gravada (${String(error?.message ?? error).slice(0, 120)}); o recheque bloqueia até haver foto`, tender: tenderId });
+        }
+      }
+    }
     const resumo = `Análise encerrada: ${result.stopped}; ${saved.decisoes} decisões persistidas.`;
     if (direto) o.store.logEvent({ tipo: 'turno_fim', resumo });
     return { resumo, decisoes: saved.decisoes, stopped: result.stopped, ms: result.ms, usage: result.usage };

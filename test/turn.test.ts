@@ -53,6 +53,21 @@ test('falha no caminho direto registra o fim e segue sem evento quando vem do ag
   agendado.store.close();
 });
 
+test('a foto da análise é pedida depois de persistir e a falha dela não apaga a decisão', async () => {
+  const ok = prepared();
+  const fotos: string[] = [];
+  await runAnalysisTurn({ store: ok.store, state: ok.state, origem: 'direto', run: async () => ({ stopped: 'final' }), snapshot: async tenderId => { fotos.push(tenderId); } });
+  assert.deepEqual(fotos, [id]);
+  ok.store.close();
+
+  const falha = prepared();
+  await runAnalysisTurn({ store: falha.store, state: falha.state, origem: 'direto', run: async () => ({ stopped: 'final' }), snapshot: async () => { throw new Error('PNCP fora'); } });
+  assert.equal(falha.store.getDecisions(id).length, 1);
+  assert.match(falha.store.events().find(event => event.tipo === 'erro_fonte')?.resumo ?? '', /foto da análise não gravada/);
+  assert.equal(falha.store.events().filter(event => event.tipo === 'turno_fim').length, 1);
+  falha.store.close();
+});
+
 test('o agendador e o turno juntos deixam um único par de eventos', async () => {
   const { store, state, now } = prepared();
   const scheduler = createScheduler({

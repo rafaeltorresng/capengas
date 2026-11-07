@@ -86,7 +86,7 @@ Implementação própria: `tools.ts`, `dossie.ts`, `read-model.ts`, gerador/amos
 
 Já na `main`: `decide_item` no contrato novo, persistência do turno de análise, dossiê, projeção e o snapshot `fixtures/execucoes/analise-2026-11-07.json`. O PR #3 foi integrado. Cobertura técnica não verificada continua indo para `decideItem` como `fit: 'desconhecido'`.
 
-`executarAcao` aplica a ordem da #2: recheque, `evaluate`, `recordIntent`, POST no sandbox, `consultarProtocolo` e `updateAction`. Sem `recheck` injetado, a função bloqueia. Timeout ou consulta falha depois do POST não gera outro envio. O modelo ainda não recebe `submit_proposal` nem `send_esclarecimento`.
+`executarAcao` aplica a ordem da #2: recheque, `evaluate`, `recordIntent`, POST no sandbox, `consultarProtocolo` e `updateAction`. O pedido só informa pregão e números de item (e o texto do esclarecimento). Quantidade, decisão, `precoProposto` e o prazo legal saem do store e de `esclarecimentoDeadline`. Sem `recheck` injetado, a função bloqueia. Timeout ou consulta falha depois do POST não gera outro envio. O `runAnalysisTurn` grava a foto com `snapshotTender` quando o chamador passa `snapshot`; falha da foto não apaga a análise, e sem foto o recheque continua bloqueando. O modelo ainda não recebe `submit_proposal` nem `send_esclarecimento`.
 
 `runAnalysisTurn` (`src/lib/turn.ts`) persiste a análise. Com `origem: 'direto'`, grava `turno_inicio` e `turno_fim`. Com `origem: 'agendador'`, não grava esses dois eventos: o `createScheduler` já os grava, e o teste conjunto garante um único par. O `scripts/analisar.ts` usa a origem direta. As ferramentas de envio continuam fora do modelo.
 
