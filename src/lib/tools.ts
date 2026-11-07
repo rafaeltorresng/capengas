@@ -13,9 +13,10 @@ export type LanceState = {
   tenders: Record<string, any>; items: Record<string, any[]>; editais: Record<string, string>;
   requirements: any[]; fits: Record<string, any>; restrictive: Record<string, any>; decisions: Record<string, any>;
   drafts: Record<string, any>; approvals: Record<string, any>; submissions: any[];
+  editalSources?: Record<string, { nome: string; url: string; texto: string }[]>;
 };
 export const newState = (company: any, sandboxUrl: string, now = new Date()): LanceState =>
-  ({ company, now, sandboxUrl, tenders: {}, items: {}, editais: {}, requirements: [], fits: {}, restrictive: {}, decisions: {}, drafts: {}, approvals: {}, submissions: [] });
+  ({ company, now, sandboxUrl, tenders: {}, items: {}, editais: {}, requirements: [], fits: {}, restrictive: {}, decisions: {}, drafts: {}, approvals: {}, submissions: [], editalSources: {} });
 
 const product = (st: LanceState, id: string) => { const p = st.company.catalogo.find((p: any) => p.id === id); if (!p) throw new Error(`produto ${id} não existe no catálogo`); return p; };
 const tenderItem = async (st: LanceState, tid: string, n: number) => {
@@ -23,6 +24,13 @@ const tenderItem = async (st: LanceState, tid: string, n: number) => {
   const it = st.items[tid].find(i => i.numero === n); if (!it) throw new Error(`item ${n} não existe no pregão ${tid}`); return it;
 };
 const key = (tid: string, n: number) => `${tid}#${n}`;
+
+// Somente medidas exatas e isoladas. Faixas, tolerâncias e descrições compostas
+// continuam como julgamento do modelo; este bloqueio não é um validador semântico geral.
+const exactLength = (text: string) => {
+  const m = /^(?:(?:comprimento|largura|altura|diametro|espessura|tamanho)\s*:?\s*)?(\d+(?:[.,]\d+)?)\s*(mm|cm|m)\.?$/.exec(norm(text).trim());
+  return m ? Number(m[1].replace(',', '.')) * ({ mm: 1, cm: 10, m: 1000 }[m[2]]!) : null;
+};
 
 export const tools: Tool[] = [
   {
@@ -37,15 +45,30 @@ export const tools: Tool[] = [
     },
   },
   {
-    name: 'get_tender_items', description: 'Lista itens de um pregão. Use keywords para filtrar pregões grandes (máx. 25 itens retornados).',
-    parameters: { type: 'object', required: ['tender_id'], properties: { tender_id: { type: 'string' }, keywords: { type: 'array', items: { type: 'string' } } } },
+    name: 'get_tender_items', description: 'Lista resumos de itens por página (até 25). Filtra keywords antes de paginar. Continue em proxima_pagina; se descricao_truncada, leia get_tender_item antes de comparar.',
+    parameters: { type: 'object', required: ['tender_id'], properties: { tender_id: { type: 'string' }, keywords: { type: 'array', items: { type: 'string' } }, page: { type: 'integer' }, page_size: { type: 'integer' } } },
     async run(a, ctx) {
+      const page = a.page ?? 1; const size = a.page_size ?? 25;
+      if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(size) || size < 1 || size > 25) return { erro: 'página deve ser um inteiro positivo; page_size deve estar entre 1 e 25' };
       const st = S(ctx); const { cnpj, ano, seq } = parseId(a.tender_id);
       st.items[a.tender_id] ??= await pncp.items(cnpj, ano, seq);
-      const kws = (a.keywords ?? []).map(norm);
+      const kws = (a.keywords ?? []).map((k: string) => norm(k).trim()).filter(Boolean);
       const all = st.items[a.tender_id];
       const hit = kws.length ? all.filter(i => kws.some((k: string) => norm(i.descricao).includes(k))) : all;
-      return { total_itens: all.length, filtrados: hit.length, itens: hit.slice(0, 25).map(i => ({ numero: i.numero, descricao: i.descricao.slice(0, 900), quantidade: i.quantidade, valor_estimado: i.valorEstimado, catalog_code: i.catalogCode, beneficio: i.beneficio })) };
+      const start = (page - 1) * size;
+      return { total_itens: all.length, filtrados: hit.length, pagina: page, tamanho_pagina: size, proxima_pagina: start + size < hit.length ? page + 1 : null,
+        itens: hit.slice(start, start + size).map(i => ({ numero: i.numero, descricao: i.descricao.slice(0, 240), descricao_truncada: i.descricao.length > 240, quantidade: i.quantidade, valor_estimado: i.valorEstimado, catalog_code: i.catalogCode, beneficio: i.beneficio })) };
+    },
+  },
+  {
+    name: 'get_tender_item', description: 'Lê a descrição de um item em partes de até 6000 caracteres. Continue com offset=proximo_offset até null, antes de concluir o encaixe.',
+    parameters: { type: 'object', required: ['tender_id', 'item'], properties: { tender_id: { type: 'string' }, item: { type: 'integer' }, offset: { type: 'integer' } } },
+    async run(a, ctx) {
+      const offset = a.offset ?? 0;
+      if (!Number.isSafeInteger(offset) || offset < 0) return { erro: 'offset deve ser um inteiro não negativo' };
+      const it = await tenderItem(S(ctx), a.tender_id, a.item);
+      return { ...it, descricao: it.descricao.slice(offset, offset + 6000), caracteres_descricao: it.descricao.length,
+        offset, proximo_offset: offset + 6000 < it.descricao.length ? offset + 6000 : null };
     },
   },
   {
@@ -67,9 +90,11 @@ export const tools: Tool[] = [
         const { cnpj, ano, seq } = parseId(a.tender_id);
         const files = (await pncp.files(cnpj, ano, seq)).filter(f => /edital|termo de refer/i.test(f.tipo + ' ' + f.titulo));
         let text = ''; const kinds: string[] = [];
-        for (const f of files.slice(0, 2)) { const r = await pdf.fromUrl(f.url); kinds.push(`${f.titulo}: ${r.kind}`); if (r.text) text += '\n' + r.text; }
+        const sources: { nome: string; url: string; texto: string }[] = [];
+        for (const f of files.slice(0, 2)) { const r = await pdf.fromUrl(f.url); kinds.push(`${f.titulo}: ${r.kind}`); if (r.text) { text += '\n' + r.text; sources.push({ nome: f.titulo || f.tipo, url: f.url, texto: r.text }); } }
         if (!text) return { erro: 'nenhum edital legível (ZIP, escaneado ou ausente)', arquivos: kinds };
         st.editais[a.tender_id] = text.replace(/\s+/g, ' ');
+        (st.editalSources ??= {})[a.tender_id] = sources;
       }
       const flat = st.editais[a.tender_id]; const nf = norm(flat);
       const out: any[] = [];
@@ -88,7 +113,11 @@ export const tools: Tool[] = [
       if (!txt) return { erro: 'leia o edital (read_edital) antes de registrar exigências' };
       const v = verifyQuote(a.quote, txt);
       if (!v.found) return { aceito: false, motivo: `citação rejeitada: ${v.reason}. Copie o trecho literal do edital.` };
-      st.requirements.push({ tender_id: a.tender_id, requirement: a.requirement, quote: a.quote });
+      const source = st.editalSources?.[a.tender_id]?.find(s => verifyQuote(a.quote, s.texto).found);
+      if (!st.requirements.some(r => r.tender_id === a.tender_id && r.requirement === a.requirement && r.quote === a.quote)) {
+        st.requirements.push({ tender_id: a.tender_id, requirement: a.requirement, quote: a.quote,
+          ...(source ? { fonte: { nome: source.nome, url: source.url, citacao: a.quote } } : {}) });
+      }
       return { aceito: true };
     },
   },
@@ -127,16 +156,29 @@ export const tools: Tool[] = [
         veredito: { type: 'string', enum: ['atende', 'nao_atende', 'nao_informado'] }, citacao_item: { type: 'string' }, citacao_ficha: { type: 'string' } } } } } },
     async run(a, ctx) {
       const st = S(ctx); const it = await tenderItem(st, a.tender_id, a.item); const p = product(st, a.product_id);
+      // Uma nova análise não pode deixar a decisão anterior utilizável por engano.
+      delete st.fits[key(a.tender_id, a.item)];
+      delete st.decisions[key(a.tender_id, a.item)];
       const errors: string[] = [];
+      if (!Array.isArray(a.attributes) || !a.attributes.length) return { aceito: false, erros: ['informe pelo menos um atributo exigido pelo item'] };
+      const names = new Set<string>();
       for (const at of a.attributes) {
+        const name = norm(at.atributo ?? '').trim();
+        if (!name || names.has(name)) errors.push('atributo vazio ou duplicado');
+        names.add(name);
         if (!verifyQuote(at.citacao_item, it.descricao, 8).found) errors.push(`${at.atributo}: citacao_item não encontrada no item`);
         if (at.veredito !== 'nao_informado' && !verifyQuote(at.citacao_ficha ?? '', p.ficha, 8).found) errors.push(`${at.atributo}: citacao_ficha não encontrada na ficha`);
+        if (at.veredito === 'atende') {
+          const required = exactLength(at.citacao_item ?? ''); const offered = exactLength(at.citacao_ficha ?? '');
+          if (required !== null && offered !== null && Math.abs(required - offered) > 1e-9) errors.push(`${at.atributo}: medidas exatas incompatíveis; corrija o veredito`);
+        }
       }
       if (errors.length) return { aceito: false, erros: errors, instrucao: 'corrija as citações copiando trechos literais e chame record_fit de novo' };
       const v = a.attributes.map((x: any) => x.veredito);
       const overall = v.includes('nao_atende') ? 'nao_atende' : v.includes('nao_informado') ? 'nao_informado' : 'atende';
-      st.fits[key(a.tender_id, a.item)] = { product_id: a.product_id, overall, attributes: a.attributes };
-      return { aceito: true, resultado: overall };
+      const validacao = { citacoes: 'conferidas', cobertura: 'nao_verificada', semantica: 'julgamento_modelo' };
+      st.fits[key(a.tender_id, a.item)] = { product_id: a.product_id, overall, attributes: a.attributes, validacao };
+      return { aceito: true, resultado: overall, validacao };
     },
   },
   {

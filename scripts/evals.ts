@@ -39,7 +39,7 @@ for (const g of gold.extract) for (let i = 0; i < reps; i++) {
 for (const g of gold.fit) for (let i = 0; i < reps; i++) {
   const s = state();
   try {
-    const r = await runAgent({ llm, tools: pick(['get_tender_items', 'get_product_sheet', 'record_fit']), system: SYS, maxSteps: 10, state: s as any,
+    const r = await runAgent({ llm, tools: pick(['get_tender_items', 'get_tender_item', 'get_product_sheet', 'record_fit']), system: SYS, maxSteps: 10, state: s as any,
       user: `Compare o item ${g.item} do pregão ${g.tender} com o produto ${g.product} do catálogo, atributo a atributo. Use get_tender_items com keywords se precisar e get_product_sheet. Registre com record_fit (citações literais; use nao_informado quando a ficha não diz). Se o produto for de outro tipo, registre o atributo "tipo de produto" como nao_atende. Termine com uma frase de conclusão.` });
     const fit = s.fits[`${g.tender}#${g.item}`]?.overall ?? null;
     results.fit.push({ id: g.id, run: i, verdict: fit, accept: g.accept, ok: g.accept.includes(fit), ...stat(r) });

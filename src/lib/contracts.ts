@@ -89,7 +89,7 @@ export type AvaliacaoPolitica = { permitido: boolean; escalar: boolean; motivo: 
 
 export type Recheque =
   | { status: 'ok'; situacao: string; arquivosHash: string; em: string }
-  | { status: 'bloquear'; motivo: 'suspenso' | 'revogado' | 'anulado' | 'cancelado' | 'arquivos_mudaram' | 'fonte_indisponivel'; em: string };
+  | { status: 'bloquear'; motivo: 'suspenso' | 'revogado' | 'anulado' | 'cancelado' | 'prazo_encerrado' | 'arquivos_mudaram' | 'fonte_indisponivel'; em: string };
 
 export type ActionStatus = 'intencao' | 'enviada' | 'confirmada' | 'falhou' | 'reconciliar';
 export type Action = {
@@ -132,6 +132,8 @@ export type DecisionResult =
 export type TenderRow = {
   id: string; orgao: string; uf: string; abertura: string | null; situacao: string;
   plataforma: string; arquivosHash: string | null; ultimoCheck: string | null;
+  /** true quando o monitor viu mudança desde a análise; a foto (arquivosHash) só muda na reanálise. */
+  reavaliar?: boolean;
 };
 export type ItemRow = {
   tenderId: string; numero: number; descricao: string; catalogCode: number | null;
@@ -159,6 +161,8 @@ export interface Store {
   events(o?: { desde?: string; limite?: number }): Event[];
   openEscalations(): Escalation[];
   getTender(id: string): TenderRow | undefined;
+  getTenders(o?: { reavaliar?: boolean }): TenderRow[];
+  setReavaliar(tenderId: string, flag: boolean): void;
   getItems(tenderId: string): ItemRow[];
   getDecisions(tenderId?: string): DecisionRow[];
   /** Ações para contar envios confirmados e deduplicar por key (pedido do Dev 2, #2). */

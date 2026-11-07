@@ -11,10 +11,11 @@ import { fetchJson } from './http.ts';
 const ROOT = new URL('../..', import.meta.url).pathname;
 export const CACHE = process.env.LANCE_CACHE_DIR ?? join(ROOT, 'cache');
 export const DATA = process.env.LANCE_DATA_DIR ?? join(ROOT, 'data');
+const FRESH = { ttlMs: 0, allowStale: false, retries: 3 };
 const http = (url: string, extra: object = {}) => fetchJson(url, { cacheDir: CACHE, retries: 5, baseDelayMs: 800, timeoutMs: 45000, ...extra });
 
 export type Tender = { cnpj: string; ano: number; seq: number; abertura: string; objeto: string; orgao: string; uf: string; municipio: string; modalidade: string; url: string };
-export type TenderItem = { numero: number; descricao: string; quantidade: number; valorEstimado: number | null; catalogCode: number | null; beneficio: string; criterio: string; temResultado: boolean };
+export type TenderItem = { numero: number; descricao: string; quantidade: number; valorEstimado: number | null; catalogCode: number | null; beneficio: string; criterio: string; temResultado: boolean; sigiloso: boolean };
 
 export const pncp = {
   async searchOpen(q: string, page = 1, size = 20) {
@@ -28,8 +29,9 @@ export const pncp = {
     }));
     return { total: Number(data.total ?? 0), items };
   },
-  async compra(cnpj: string, ano: number, seq: number) {
-    const { data } = await http(`https://pncp.gov.br/api/consulta/v1/orgaos/${cnpj}/compras/${ano}/${seq}`, { ttlMs: 10 * 60e3 });
+  /** fresh: lê na hora, sem cache e sem cache vencido (falha se a fonte não responder). Usado pelo recheque. */
+  async compra(cnpj: string, ano: number, seq: number, o: { fresh?: boolean } = {}) {
+    const { data } = await http(`https://pncp.gov.br/api/consulta/v1/orgaos/${cnpj}/compras/${ano}/${seq}`, o.fresh ? FRESH : { ttlMs: 10 * 60e3 });
     return data;
   },
   async items(cnpj: string, ano: number, seq: number): Promise<TenderItem[]> {
@@ -40,14 +42,14 @@ export const pncp = {
       for (const i of arr) out.push({
         numero: i.numeroItem, descricao: i.descricao ?? '', quantidade: i.quantidade, valorEstimado: i.valorUnitarioEstimado || null,
         catalogCode: i.catalogoCodigoItem ? Number(i.catalogoCodigoItem) : null, beneficio: i.tipoBeneficioNome ?? '',
-        criterio: i.criterioJulgamentoNome ?? '', temResultado: !!i.temResultado,
+        criterio: i.criterioJulgamentoNome ?? '', temResultado: !!i.temResultado, sigiloso: !!i.orcamentoSigiloso,
       });
       if (arr.length < 100) break;
     }
     return out;
   },
-  async files(cnpj: string, ano: number, seq: number) {
-    const { data } = await http(`https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${seq}/arquivos`);
+  async files(cnpj: string, ano: number, seq: number, o: { fresh?: boolean } = {}) {
+    const { data } = await http(`https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${seq}/arquivos`, o.fresh ? FRESH : {});
     return (Array.isArray(data) ? data : []).map((f: any) => ({ seq: f.sequencialDocumento, titulo: f.titulo ?? '', tipo: f.tipoDocumentoNome ?? '', url: f.url ?? f.uri }));
   },
   async download(url: string) {

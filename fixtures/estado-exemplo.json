@@ -1,0 +1,286 @@
+{
+  "_meta": {
+    "versao": 1,
+    "origem": "amostra",
+    "aviso": "Amostra sintética de integração, não é resultado de um turno do agente. Nenhum envio foi realizado.",
+    "reais": [
+      "Identificação do pregão e descrições/estimativas dos itens copiadas das fixtures públicas existentes."
+    ],
+    "sinteticos": [
+      "Empresa, fichas, documentos, decisões e exigência de certidão ilustrativa."
+    ],
+    "naoExecutados": [
+      "Extração do edital",
+      "Consulta Anvisa",
+      "Política e recheque",
+      "Modelo Featherless",
+      "Envio",
+      "Agendador",
+      "Monitor"
+    ]
+  },
+  "hoje": {
+    "data": "2026-11-07",
+    "pregoes": 1,
+    "itens": 2,
+    "disputar": 0,
+    "pendencias": 1,
+    "envios": 0,
+    "escaladasAbertas": 1,
+    "custoUsd": null,
+    "porDecisao": [
+      {
+        "estado": "Escalar",
+        "quantidade": 1
+      },
+      {
+        "estado": "Não disputar",
+        "quantidade": 1
+      }
+    ],
+    "eventos": [
+      {
+        "id": "amostra-gerada",
+        "horario": "2026-11-07T18:00:00.000Z",
+        "tipo": "Amostra",
+        "resumo": "Amostra de integração preparada; nenhum turno ou envio executado.",
+        "detalhe": "Horário ilustrativo. Consultas, decisões e métricas de produção não foram executadas pelo gerador.",
+        "rastro": []
+      }
+    ]
+  },
+  "fila": [
+    {
+      "tender": "77816510000166/2026/348",
+      "pregao": "77816510000166/2026/348",
+      "item": "4",
+      "descricao": "Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4 CABO DE BISTURI Nº4 13 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+      "orgao": "MUNICIPIO DE FRANCISCO BELTRAO",
+      "prazo": "2026-11-23T09:00:00-03:00",
+      "estado": "Escalar",
+      "motivo": "Ficha sintética não comprova a característica longo; documentação e regularização precisam de conferência."
+    },
+    {
+      "tender": "77816510000166/2026/348",
+      "pregao": "77816510000166/2026/348",
+      "item": "40",
+      "descricao": "Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, tipo ponta: ponta reta TESOURA METZENBAUM RETA 20CM - AÇO INOX – AUTOCLAVÁVEL  - CONFORME DESCRIÇÃO DO EDITAL ",
+      "orgao": "MUNICIPIO DE FRANCISCO BELTRAO",
+      "prazo": "2026-11-23T09:00:00-03:00",
+      "estado": "Não disputar",
+      "motivo": "O item exige haste reta; o produto fictício tem haste curva."
+    }
+  ],
+  "itens": [
+    {
+      "tender": "77816510000166/2026/348",
+      "pregao": "77816510000166/2026/348",
+      "item": "4",
+      "descricao": "Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4 CABO DE BISTURI Nº4 13 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+      "orgao": "MUNICIPIO DE FRANCISCO BELTRAO",
+      "prazo": "2026-11-23T09:00:00-03:00",
+      "estado": "Escalar",
+      "motivo": "Ficha sintética não comprova a característica longo; documentação e regularização precisam de conferência.",
+      "encaixe": [
+        {
+          "atributo": "material",
+          "exigido": "material: aço inoxidável",
+          "ofertado": "Material: aço inoxidável AISI 420",
+          "resultado": "Atende",
+          "fonte": {
+            "nome": "Item no PNCP — snapshot da fixture",
+            "url": "https://pncp.gov.br/app/editais/77816510000166/2026/348",
+            "citacao": "material: aço inoxidável"
+          },
+          "citacaoFicha": "Material: aço inoxidável AISI 420"
+        },
+        {
+          "atributo": "característica adicional longo",
+          "exigido": "características adicionais: longo",
+          "ofertado": "Não informado na ficha sintética",
+          "resultado": "Não informado",
+          "fonte": {
+            "nome": "Item no PNCP — snapshot da fixture",
+            "url": "https://pncp.gov.br/app/editais/77816510000166/2026/348",
+            "citacao": "características adicionais: longo"
+          },
+          "citacaoFicha": null
+        }
+      ],
+      "fontes": [
+        {
+          "nome": "Publicação do pregão no PNCP",
+          "url": "https://pncp.gov.br/app/editais/77816510000166/2026/348"
+        }
+      ],
+      "anvisa": "Não verificada nesta amostra; números do catálogo não comprovam cobertura do modelo.",
+      "preco": null,
+      "estimativa": 126.97,
+      "rastro": [],
+      "dossie": true
+    },
+    {
+      "tender": "77816510000166/2026/348",
+      "pregao": "77816510000166/2026/348",
+      "item": "40",
+      "descricao": "Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, tipo ponta: ponta reta TESOURA METZENBAUM RETA 20CM - AÇO INOX – AUTOCLAVÁVEL  - CONFORME DESCRIÇÃO DO EDITAL ",
+      "orgao": "MUNICIPIO DE FRANCISCO BELTRAO",
+      "prazo": "2026-11-23T09:00:00-03:00",
+      "estado": "Não disputar",
+      "motivo": "O item exige haste reta; o produto fictício tem haste curva.",
+      "encaixe": [
+        {
+          "atributo": "haste",
+          "exigido": "haste: haste reta",
+          "ofertado": "Haste curva, ponta romba",
+          "resultado": "Não atende",
+          "fonte": {
+            "nome": "Item no PNCP — snapshot da fixture",
+            "url": "https://pncp.gov.br/app/editais/77816510000166/2026/348",
+            "citacao": "haste: haste reta"
+          },
+          "citacaoFicha": "Haste curva, ponta romba"
+        }
+      ],
+      "fontes": [
+        {
+          "nome": "Publicação do pregão no PNCP",
+          "url": "https://pncp.gov.br/app/editais/77816510000166/2026/348"
+        }
+      ],
+      "anvisa": "Não verificada nesta amostra; números do catálogo não comprovam cobertura do modelo.",
+      "preco": null,
+      "estimativa": 424.47,
+      "rastro": [],
+      "dossie": true
+    }
+  ],
+  "dossies": [
+    {
+      "tender": "77816510000166/2026/348",
+      "pregao": "77816510000166/2026/348",
+      "versao": "1",
+      "geradoEm": "2026-11-07T18:00:00.000Z",
+      "orgao": "MUNICIPIO DE FRANCISCO BELTRAO",
+      "sessao": "2026-11-23T09:00",
+      "empresa": "Distribuidora Modelo Ltda (fictícia)",
+      "checklist": [
+        {
+          "exigencia": "certidoes",
+          "documento": "CND Federal — exemplo sintético",
+          "estado": "vence_antes_sessao",
+          "status": "Vence antes da sessão",
+          "detalhe": "Vence antes da sessão. Validade: 2026-11-15. Sessão: 2026-11-23T09:00.",
+          "citacao": "Exemplo sintético: apresentar certidão de regularidade fiscal."
+        }
+      ],
+      "pendencias": [
+        "CND Federal — exemplo sintético: Vence antes da sessão (certidoes).",
+        "Item 4: cobertura das exigências técnicas não verificada.",
+        "Item 40: cobertura das exigências técnicas não verificada."
+      ],
+      "documentos": [],
+      "exigencias": [
+        {
+          "tender_id": "77816510000166/2026/348",
+          "requirement": "certidoes",
+          "quote": "Exemplo sintético: apresentar certidão de regularidade fiscal."
+        }
+      ],
+      "itens": [
+        {
+          "item": 4,
+          "descricao": "Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4 CABO DE BISTURI Nº4 13 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+          "estado": "escalar",
+          "motivos": [
+            "Ficha sintética não comprova a característica longo; documentação e regularização precisam de conferência."
+          ],
+          "produto": {
+            "id": "P1",
+            "nome": "Cabo de bisturi nº 4",
+            "marca": "Allplan",
+            "registroAnvisa": "80243520033"
+          },
+          "quantidade": 20,
+          "precoUnitario": null,
+          "estimativa": 126.97,
+          "valorTotal": null,
+          "resultadoEncaixe": "nao_informado",
+          "atributos": [
+            {
+              "atributo": "material",
+              "veredito": "atende",
+              "citacao_item": "material: aço inoxidável",
+              "citacao_ficha": "Material: aço inoxidável AISI 420"
+            },
+            {
+              "atributo": "característica adicional longo",
+              "veredito": "nao_informado",
+              "citacao_item": "características adicionais: longo"
+            }
+          ],
+          "validacao": {
+            "citacoes": "conferidas",
+            "cobertura": "nao_verificada",
+            "semantica": "julgamento_modelo"
+          },
+          "anvisa": null
+        },
+        {
+          "item": 40,
+          "descricao": "Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, tipo ponta: ponta reta TESOURA METZENBAUM RETA 20CM - AÇO INOX – AUTOCLAVÁVEL  - CONFORME DESCRIÇÃO DO EDITAL ",
+          "estado": "nao_ofertar",
+          "motivos": [
+            "O item exige haste reta; o produto fictício tem haste curva."
+          ],
+          "produto": {
+            "id": "P2",
+            "nome": "Tesoura Metzenbaum curva 20 cm",
+            "marca": "Professional",
+            "registroAnvisa": "10150470165"
+          },
+          "quantidade": 25,
+          "precoUnitario": null,
+          "estimativa": 424.47,
+          "valorTotal": null,
+          "resultadoEncaixe": "nao_atende",
+          "atributos": [
+            {
+              "atributo": "haste",
+              "veredito": "nao_atende",
+              "citacao_item": "haste: haste reta",
+              "citacao_ficha": "Haste curva, ponta romba"
+            }
+          ],
+          "validacao": {
+            "citacoes": "conferidas",
+            "cobertura": "nao_verificada",
+            "semantica": "julgamento_modelo"
+          },
+          "anvisa": null
+        }
+      ],
+      "envioAutomaticoLiberado": false
+    }
+  ],
+  "escaladas": [
+    {
+      "id": "amostra-cnd",
+      "tender": "77816510000166/2026/348",
+      "item": "4",
+      "pregao": "77816510000166/2026/348",
+      "motivo": "Pendência sintética de ficha e documento.",
+      "recomendacao": "Conferir ficha do fabricante e CND antes de recalcular a decisão.",
+      "prazo": "2026-11-23T09:00:00-03:00",
+      "dossie": true
+    }
+  ],
+  "prova": {
+    "fonte": "Esta amostra não executa avaliações do modelo nem representa um turno real. Regressões locais em test/tools.test.ts e test/dossie.test.ts.",
+    "avaliacoes": [],
+    "cenarios": [],
+    "concordancia": null,
+    "custoUsd": null,
+    "duracaoMs": null
+  }
+}
