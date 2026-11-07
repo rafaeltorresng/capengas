@@ -2,7 +2,8 @@
 import type { Tool, Ctx } from './agent.ts';
 import { pncp, compras, anvisa, pdf, catmat } from './data.ts';
 import { checkAnvisa, priceStats, brandConcentration, priceCheck, checkDocs, verifyQuote, esclarecimentoDeadline, decideItem } from './rules.ts';
-import { executarAcao, type ActDeps, type PedidoAcao } from './act.ts';
+import { executarAcao, prazoEsclarecimentoAberto, type ActDeps, type PedidoAcao } from './act.ts';
+import { leituraDoEdital } from './edital.ts';
 import { recheckTender } from './recheck.ts';
 import { inventarioCobertura } from './cobertura.ts';
 import type { LanceStore } from './store.ts';
@@ -127,11 +128,22 @@ export const tools: Tool[] = [
       if (!st.editais[a.tender_id]) {
         const { cnpj, ano, seq } = parseId(a.tender_id);
         const files = (await pncp.files(cnpj, ano, seq)).filter(f => /edital|termo de refer/i.test(f.tipo + ' ' + f.titulo));
-        let text = ''; const kinds: string[] = [];
+        const kinds: string[] = [];
         const sources: { nome: string; url: string; texto: string }[] = [];
-        for (const f of files.slice(0, 2)) { const r = await pdf.fromUrl(f.url); kinds.push(`${f.titulo}: ${r.kind}`); if (r.text) { text += '\n' + r.text; sources.push({ nome: f.titulo || f.tipo, url: f.url, texto: r.text }); } }
-        if (!text) return { erro: 'nenhum edital legível (ZIP, escaneado ou ausente)', arquivos: kinds };
-        st.editais[a.tender_id] = text.replace(/\s+/g, ' ');
+        const anexos: { titulo: string; texto: string }[] = [];
+        for (const f of files.slice(0, 2)) {
+          const r = await pdf.fromUrl(f.url); kinds.push(`${f.titulo}: ${r.kind}`);
+          anexos.push({ titulo: f.titulo, texto: r.text ?? '' });
+          if (r.text) sources.push({ nome: f.titulo || f.tipo, url: f.url, texto: r.text });
+        }
+        const leitura = leituraDoEdital(anexos);
+        if (!leitura.legivel) {
+          if (st.store && !st.store.openEscalations().some(e => e.tender === a.tender_id && e.motivo === leitura.motivo)) {
+            st.store.openEscalation({ tender: a.tender_id, motivo: leitura.motivo, recomendacao: 'Ler o anexo manualmente ou aguardar um PDF com texto.', prazo: new Date(st.now.getTime() + 864e5).toISOString() });
+          }
+          return { erro: leitura.motivo, arquivos: kinds, escalar: true };
+        }
+        st.editais[a.tender_id] = leitura.texto.replace(/\s+/g, ' ');
         (st.editalSources ??= {})[a.tender_id] = sources;
       }
       const flat = st.editais[a.tender_id]; const nf = norm(flat);
@@ -215,8 +227,9 @@ export const tools: Tool[] = [
       const v = a.attributes.map((x: any) => x.veredito);
       const overall = v.includes('nao_atende') ? 'nao_atende' : v.includes('nao_informado') ? 'nao_informado' : 'atende';
       const inventario = inventarioCobertura(it.descricao ?? '', a.attributes);
+      const varianteNaoCoberta = a.attributes.some((at: { atributo?: string; veredito?: string }) => at.veredito === 'nao_atende' && norm(at.atributo ?? '').includes('variante'));
       const validacao = { citacoes: 'conferidas', cobertura: inventario.cobertura, semantica: 'julgamento_modelo', lacunas: inventario.lacunas };
-      st.fits[key(a.tender_id, a.item)] = { product_id: a.product_id, overall, attributes: a.attributes, validacao };
+      st.fits[key(a.tender_id, a.item)] = { product_id: a.product_id, overall, attributes: a.attributes, varianteNaoCoberta, validacao };
       return { aceito: true, resultado: overall, validacao, lacunas: inventario.lacunas,
         instrucao: inventario.cobertura === 'conferida' ? 'todos os campos nomeados do item foram citados' : 'cada campo "nome: valor" do item precisa da própria citação literal; o que faltar continua não verificado' };
     },
@@ -257,10 +270,11 @@ export const tools: Tool[] = [
       catch { an = { regularizacao: 'nao_verificado' as const, cobertura: 'nao_comprovada' as const, classe: null, detentor: null, validUntil: null }; }
       const requirements = st.requirements.filter(r => r.tender_id === a.tender_id);
       const docs = checkDocs(st.company.cofre, requirements.map(r => ({ tipo: r.requirement, citacao: r.quote })), raw.slice(0, 10));
-      // Sem extração explícita do prazo, não inferir autorização de esclarecimento.
+      const prazo = prazoEsclarecimentoAberto(raw, st.now);
+      const varianteNaoCoberta = fit.varianteNaoCoberta === true || (fit.attributes ?? []).some((at: { atributo?: string; veredito?: string }) => at.veredito === 'nao_atende' && norm(at.atributo ?? '').includes('variante'));
       const d = decideItem({ fit: fit.validacao?.cobertura === 'conferida' ? fit.overall : 'desconhecido', regularizacao: an.regularizacao,
-        cobertura: an.cobertura, preco: price, docs, restritivo: !!st.restrictive[k], varianteNaoCoberta: false,
-        prazoEsclarecimentoAberto: null, venceAntesEntrega: 'venceAntesEntrega' in an && an.venceAntesEntrega === true });
+        cobertura: an.cobertura, preco: price, docs, restritivo: !!st.restrictive[k], varianteNaoCoberta,
+        prazoEsclarecimentoAberto: prazo.prazo ? prazo.aberto : null, venceAntesEntrega: 'venceAntesEntrega' in an && an.venceAntesEntrega === true });
       const legacy: Record<string, string> = { disputar: 'ofertar', disputar_com_pendencia: 'ofertar_com_pendencia', nao_disputar: 'nao_ofertar', esclarecer: 'escalar', escalar: 'escalar' };
       const dec = { ...d, tenderId: a.tender_id, item: a.item, produto: a.product_id, product_id: a.product_id,
         precoProposto: price.precoProposto, preco_sugerido: price.precoProposto, preco: price, anvisa: an, docs,
@@ -302,7 +316,14 @@ export const tools: Tool[] = [
       if (!dr?.texto) return { resultado: 'bloqueada', motivo: 'esclarecimento sem rascunho; nada foi enviado' };
       if (!st.store) return { resultado: 'bloqueada', motivo: 'envio indisponível sem estado persistente; nada foi enviado' };
       const evidencias = motivosDaEvidencia(st.store, a.tender_id, a.item);
-      if (!evidencias.has(a.motivo)) return { resultado: 'escalada', motivo: 'motivo do esclarecimento não confere com a evidência gravada' };
+      if (!evidencias.has(a.motivo)) {
+        const motivo = 'motivo do esclarecimento não confere com a evidência gravada';
+        if (!st.store.openEscalations().some(e => e.tender === a.tender_id && e.item === String(a.item) && e.motivo === motivo)) {
+          st.store.openEscalation({ tender: a.tender_id, item: String(a.item), motivo, recomendacao: 'Conferir o rascunho e a evidência do item antes de enviar.',
+            prazo: dr.prazo ? `${dr.prazo}T17:00:00-03:00` : new Date(st.now.getTime() + 864e5).toISOString() });
+        }
+        return { resultado: 'escalada', motivo };
+      }
       return enviarPelaPorta(st, { tipo: 'enviar_esclarecimento', tenderId: a.tender_id, item: a.item, texto: dr.texto, motivo: a.motivo });
     },
   },

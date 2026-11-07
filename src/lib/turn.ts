@@ -24,6 +24,11 @@ export async function runAnalysisTurn(o: {
     if (o.snapshot) {
       for (const tenderId of Object.keys(o.state.tenders)) {
         if (!o.state.items[tenderId]?.length) continue;
+        const decidiu = Object.keys(o.state.decisions).some(key => key.startsWith(tenderId + '#') && o.state.decisions[key]?.estado);
+        if (!decidiu) {
+          o.store.logEvent({ tipo: 'bloqueio', resumo: 'análise sem decisão nova: a foto não foi renovada e o pregão continua pendente de reavaliação', tender: tenderId });
+          continue;
+        }
         try { await o.snapshot(tenderId, o.store); }
         catch (error: any) {
           o.store.logEvent({ tipo: 'erro_fonte', resumo: `foto da análise não gravada (${String(error?.message ?? error).slice(0, 120)}); o recheque bloqueia até haver foto`, tender: tenderId });
