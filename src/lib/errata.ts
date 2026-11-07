@@ -3,6 +3,7 @@
 // volta ao agente. Estados combinados na #25: reaproveitada, recalculada, reavaliada (fase 2), citacao_orfa, ilegivel.
 import { priceCheck, verifyQuote } from './rules.ts';
 import { prazosDoPregao, type Prazo } from './prazos.ts';
+import { instanteAbertura } from './act.ts';
 import type { DecisionRow, FitRow, ItemRow, Politica, RequirementRow } from './contracts.ts';
 
 export type EstadoDiff = 'reaproveitada' | 'recalculada' | 'reavaliada' | 'citacao_orfa' | 'ilegivel';
@@ -11,8 +12,9 @@ export type DiffItem = {
   item: number;
   mudancas: { campo: CampoItem; antes: unknown; depois: unknown }[];
   novo?: true; removido?: true;
-  /** Estado da evidência técnica; null quando o item não tem encaixe gravado. */
-  evidencia: EstadoDiff | null;
+  /** Estado da evidência técnica; null quando o item não tem encaixe gravado. `pendente_agente`: a citação
+   *  não está no texto novo (ou não havia citação): não é reaproveitada nem órfã, o agente relê o item. */
+  evidencia: EstadoDiff | 'pendente_agente' | null;
   motivo?: string;
   preco: null | { estado: 'reaproveitada' | 'recalculada'; produto: string; antes: number | null; depois: number | null;
     quantidade: number; total: number | null; viavel: boolean | null; motivo: string };
@@ -20,7 +22,8 @@ export type DiffItem = {
 export type DiffExigencia = { tipo: string; citacao: string; estado: 'reaproveitada' | 'citacao_orfa' | 'ilegivel'; fonte?: { nome: string; url: string } };
 export type DiffErrata = {
   tenderId: string; sintetico: boolean;
-  abertura: { antes: string | null; depois: string | null; estado: 'estavel' | 'mudou' };
+  /** Estável é o mesmo dia em Recife (o art. 164 conta dias). Hora diferente no mesmo dia é só informativa. */
+  abertura: { antes: string | null; depois: string | null; estado: 'estavel' | 'mudou' | 'desconhecida'; horaMudou: boolean };
   itens: DiffItem[];
   exigencias: DiffExigencia[];
   /** Total dos itens em disputa com os preços recalculados; null se algum preço é desconhecido. */
@@ -28,6 +31,8 @@ export type DiffErrata = {
   contagem: Record<EstadoDiff, number>;
   /** Art. 55, §1º: errata que mexe em quantidade ou especificação sem a abertura andar. Decisão do humano. */
   prazoNaoReaberto: null | { artigo: 'art. 55, §1º'; itens: number[]; prazo: Prazo; acionavel: boolean };
+  /** Itens afetados quando a abertura é desconhecida: não há prazo sustentado, a linha fica aguardando. */
+  semAberturaConhecida: number[];
 };
 export type ItemPublicado = { numero: number; descricao: string; quantidade: number; valorEstimado: number | null; sigiloso: boolean };
 export type TextoEdital = { nome: string; url: string; texto: string };
@@ -45,7 +50,13 @@ const EM_DISPUTA = new Set(['disputar', 'disputar_com_pendencia']);
 const MUDA_PROPOSTA = new Set<CampoItem>(['quantidade', 'descricao']);
 const centavos = (n: number) => Math.round(n * 100) / 100;
 
-/** Mesma abertura: compara data e hora quando as duas têm hora; senão, só a data. */
+const diaRecife = (raw: string | null) => {
+  const d = instanteAbertura(raw);
+  return d ? new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife' }).format(d) : null;
+};
+const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+/** Mesmo instante publicado (data e hora quando as duas têm hora). O monitor usa para notar a mudança. */
 export function mesmaAbertura(a: string | null, b: string | null) {
   if (!a || !b) return a === b;
   const na = a.replace(' ', 'T'), nb = b.replace(' ', 'T');
@@ -77,15 +88,21 @@ export function diffErrata(e: EntradaDiff): DiffErrata {
     if (a.descricao !== d.descricao) mudancas.push({ campo: 'descricao', antes: a.descricao, depois: d.descricao });
     if (a.sigiloso !== d.sigiloso) mudancas.push({ campo: 'sigiloso', antes: a.sigiloso, depois: d.sigiloso });
 
-    let evidencia: EstadoDiff | null = null, motivo: string | undefined;
+    // Reaproveitar exige as duas coisas: descrição igual e cada citação ainda no texto (mínimo de 8 caracteres,
+    // o mesmo do record_fit). Órfã é a citação que continua no texto com a descrição mudada.
+    let evidencia: DiffItem['evidencia'] = null, motivo: string | undefined;
     if (fits.length) {
-      if (a.descricao === d.descricao) evidencia = 'reaproveitada';
-      else {
+      const igual = normal(a.descricao) === normal(d.descricao);
+      const citacoes = fits.flatMap(citacoesDoEncaixe);
+      const achadas = citacoes.filter(q => verifyQuote(q, d.descricao, 8).found);
+      if (igual && citacoes.length && achadas.length === citacoes.length) evidencia = 'reaproveitada';
+      else if (!igual && achadas.length) {
         evidencia = 'citacao_orfa';
-        const sumiu = fits.flatMap(citacoesDoEncaixe).filter(q => !verifyQuote(q, d.descricao, 8).found);
-        motivo = sumiu.length
-          ? `citação do encaixe sumiu da descrição: "${sumiu[0]}"`
-          : 'a descrição mudou e a citação antiga ainda aparece: reavaliar só este item com o trecho novo';
+        motivo = 'a descrição mudou e a citação antiga ainda aparece: reavaliar só este item com o trecho novo';
+      } else {
+        evidencia = 'pendente_agente';
+        motivo = citacoes.length ? `citação do encaixe não está no texto novo ("${citacoes.find(q => !achadas.includes(q))}")`
+          : 'não há citação gravada para reaproveitar';
       }
     }
 
@@ -123,12 +140,14 @@ export function diffErrata(e: EntradaDiff): DiffErrata {
 
   const contagem: Record<EstadoDiff, number> = { reaproveitada: 0, recalculada: 0, reavaliada: 0, citacao_orfa: 0, ilegivel: 0 };
   for (const i of itens) {
-    if (i.evidencia) contagem[i.evidencia]++;
+    if (i.evidencia && i.evidencia !== 'pendente_agente') contagem[i.evidencia]++;
     if (i.preco?.estado === 'recalculada') contagem.recalculada++;
   }
   for (const x of exigencias) contagem[x.estado]++;
 
-  const estado = mesmaAbertura(e.antes.abertura, e.depois.abertura) ? 'estavel' as const : 'mudou' as const;
+  const diaAntes = diaRecife(e.antes.abertura), diaDepois = diaRecife(e.depois.abertura);
+  const estado = !diaAntes || !diaDepois ? 'desconhecida' as const : diaAntes === diaDepois ? 'estavel' as const : 'mudou' as const;
+  const horaMudou = estado === 'estavel' && !mesmaAbertura(e.antes.abertura, e.depois.abertura);
   const afetados = itens.filter(i => i.novo || i.removido || i.mudancas.some(m => MUDA_PROPOSTA.has(m.campo))).map(i => i.item);
   let prazoNaoReaberto: DiffErrata['prazoNaoReaberto'] = null;
   if (estado === 'estavel' && afetados.length) {
@@ -138,8 +157,8 @@ export function diffErrata(e: EntradaDiff): DiffErrata {
 
   return {
     tenderId: e.tenderId, sintetico: e.sintetico === true,
-    abertura: { antes: e.antes.abertura, depois: e.depois.abertura, estado },
+    abertura: { antes: e.antes.abertura, depois: e.depois.abertura, estado, horaMudou },
     itens, exigencias, proposta: { total, limite, excedeLimite: total === null ? null : total > limite },
-    contagem, prazoNaoReaberto,
+    contagem, prazoNaoReaberto, semAberturaConhecida: estado === 'desconhecida' ? afetados : [],
   };
 }

@@ -79,12 +79,27 @@ function entradaPassada() {
 }
 
 describe('outras linhas', () => {
+  test('hora da sessão mudou: linha informativa publicada; abertura desconhecida: linha aguardando sem data', () => {
+    const base = { tenderId: T, hoje, politica, custos: { P1: 6 },
+      antes: { abertura: tender.abertura, itens: [{ tenderId: T, numero: 4, descricao: DESC, catalogCode: null, quantidade: 100, estimativa: 12, sigiloso: false }], fits: [], decisoes: [decisao], requisitos: [] },
+      depois: { abertura: '2026-11-23T14:00', itens: [{ numero: 4, descricao: DESC, quantidade: 150, valorEstimado: 12, sigiloso: false }], textos: [] } };
+    const hora = montarPauta({ hoje, pregoes: [pregao({ diff: diffErrata(base) })], sancoes: [] }).linhas.find(l => /Horário/.test(l.oQueMudou))!;
+    assert.equal(hora.origem, 'publicado');
+    assert.equal(hora.acionavel, false);
+    const sem = diffErrata({ ...base, antes: { ...base.antes, abertura: null }, depois: { ...base.depois, abertura: null } });
+    const p = montarPauta({ hoje, pregoes: [pregao({ tender: { ...tender, abertura: null }, diff: sem })], sancoes: [] });
+    const l = p.linhas.find(x => /abertura não é conhecida/.test(x.oQueMudou))!;
+    assert.equal(l.origem, 'aguardando');
+    assert.equal(l.ate, null);
+    assert.equal(l.acionavel, false);
+    assert.equal(p.linhas.some(x => x.prazo?.artigo === 'art. 164'), false);
+  });
   test('citação órfã: o Lance reavalia só aquele item', () => {
     const d = diffErrata({ tenderId: T, hoje, politica, custos: { P1: 6 },
       antes: { abertura: tender.abertura, itens: [{ tenderId: T, numero: 4, descricao: DESC, catalogCode: null, quantidade: 100, estimativa: 12, sigiloso: false }],
         fits: [{ tenderId: T, item: 4, produto: 'P1', fit: 'atende', atributos: { attributes: [{ atributo: 'material', veredito: 'atende', citacao_item: 'material: aço inoxidável' }] } }],
         decisoes: [decisao], requisitos: [] },
-      depois: { abertura: tender.abertura, itens: [{ numero: 4, descricao: DESC.replace('aço inoxidável', 'titânio'), quantidade: 100, valorEstimado: 12, sigiloso: false }], textos: [] } });
+      depois: { abertura: tender.abertura, itens: [{ numero: 4, descricao: DESC + ', material: titânio', quantidade: 100, valorEstimado: 12, sigiloso: false }], textos: [] } });
     const l = montarPauta({ hoje, pregoes: [pregao({ diff: d })], sancoes: [] }).linhas.find(x => x.estado === 'citacao_orfa')!;
     assert.equal(l.papel, 'lance');
     assert.equal(l.item, 4);

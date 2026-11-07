@@ -91,11 +91,27 @@ describe('citação órfã: só esse item volta ao agente', () => {
     assert.match(d.itens[0].motivo ?? '', /ainda aparece/);
     assert.ok(d.prazoNaoReaberto, 'especificação mudou sem a abertura andar');
   });
-  test('citação do encaixe sumiu da descrição', () => {
-    const nova = DESC.replace('material: aço inoxidável', 'material: titânio');
+  test('citação do encaixe sumiu do texto: nem reaproveitada nem órfã, o agente relê o item (revisão do #27)', () => {
+    const nova = 'Cabo Bisturi longo em titânio, tamanho grande';
     const d = diffErrata(entrada({ depois: { itens: [{ numero: 4, descricao: nova, quantidade: 100, valorEstimado: 12, sigiloso: false }] } }));
-    assert.equal(d.itens[0].evidencia, 'citacao_orfa');
-    assert.match(d.itens[0].motivo ?? '', /sumiu/);
+    assert.equal(d.itens[0].evidencia, 'pendente_agente');
+    assert.match(d.itens[0].motivo ?? '', /não está no texto novo/);
+    assert.equal(d.contagem.citacao_orfa, 0);
+    assert.equal(d.contagem.reaproveitada, 1);   // só a exigência
+  });
+  test('descrição igual mas citação que não está no texto: não reaproveita', () => {
+    const d = diffErrata(entrada({ antes: { fits: [{ tenderId: T, item: 4, produto: 'P1', fit: 'atende', atributos: { attributes: [
+      { atributo: 'cor', veredito: 'atende', citacao_item: 'cor: azul royal' }] } }] } }));
+    assert.equal(d.itens[0].evidencia, 'pendente_agente');
+  });
+  test('encaixe sem citação gravada: não reaproveita', () => {
+    const d = diffErrata(entrada({ antes: { fits: [{ tenderId: T, item: 4, produto: 'P1', fit: 'atende', atributos: { attributes: [] } }] } }));
+    assert.equal(d.itens[0].evidencia, 'pendente_agente');
+    assert.match(d.itens[0].motivo ?? '', /não há citação/);
+  });
+  test('diferença só de espaço e caixa não muda a descrição', () => {
+    const d = diffErrata(entrada({ depois: { itens: [{ numero: 4, descricao: DESC.toUpperCase().replace(', ', ',  '), quantidade: 100, valorEstimado: 12, sigiloso: false }] } }));
+    assert.equal(d.itens[0].evidencia, 'reaproveitada');
   });
   test('exigência cuja citação não está no texto novo fica órfã; texto ilegível fica ilegível', () => {
     const sem = diffErrata(entrada({ depois: { textos: [{ nome: 'Edital', url: 'u', texto: 'outro texto qualquer do edital' }] } }));
@@ -107,6 +123,18 @@ describe('citação órfã: só esse item volta ao agente', () => {
 });
 
 describe('abertura, itens novos e removidos', () => {
+  test('hora mudou no mesmo dia: abertura estável, art. 55 continua, hora informativa (revisão do #27)', () => {
+    const d = diffErrata(entrada({ depois: { abertura: '2026-11-23T14:00', itens: [{ numero: 4, descricao: DESC, quantidade: 150, valorEstimado: 12, sigiloso: false }] } }));
+    assert.equal(d.abertura.estado, 'estavel');
+    assert.equal(d.abertura.horaMudou, true);
+    assert.equal(d.prazoNaoReaberto?.prazo.data, '2026-11-17');
+  });
+  test('abertura ausente dos dois lados: desconhecida, sem art. 55 e sem data (revisão do #27)', () => {
+    const d = diffErrata(entrada({ antes: { abertura: null }, depois: { abertura: null, itens: [{ numero: 4, descricao: DESC, quantidade: 150, valorEstimado: 12, sigiloso: false }] } }));
+    assert.equal(d.abertura.estado, 'desconhecida');
+    assert.equal(d.prazoNaoReaberto, null);
+    assert.deepEqual(d.semAberturaConhecida, [4]);
+  });
   test('abertura que andou: sem linha do art. 55, §1º', () => {
     const d = diffErrata(entrada({ depois: { abertura: '2026-12-07T09:00', itens: [{ numero: 4, descricao: DESC, quantidade: 150, valorEstimado: 12, sigiloso: false }] } }));
     assert.equal(d.abertura.estado, 'mudou');

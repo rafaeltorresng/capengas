@@ -21,7 +21,7 @@ export type LinhaPauta = {
   ate: string | null; urgencia: Urgencia | null;
   origem: Origem; acionavel: boolean;
   fonte?: { nome: string; url: string; citacao?: string };
-  prazo?: Prazo; estado?: EstadoDiff;
+  prazo?: Prazo; estado?: EstadoDiff | 'pendente_agente';
   /** A errata que gerou a linha foi montada à mão (caso de teste), não aconteceu no PNCP. */
   sintetico?: boolean;
   /** Preenchidos pela leitura (read-model): há dossiê do pregão e decisão do item para abrir. */
@@ -59,7 +59,8 @@ export function montarPauta(e: { hoje: string; pregoes: PregaoPauta[]; cofre?: A
   for (const p of e.pregoes) {
     const t = p.tender, id = t.id;
     const abertura = t.abertura?.slice(0, 10) ?? null;
-    if (!abertura || abertura < e.hoje) continue;
+    // Sessão passada sai da pauta da manhã. Sem abertura, só entra se houver errata a mostrar.
+    if (abertura ? abertura < e.hoje : !p.diff) continue;
     const url = pncpUrl(id);
     const fonte = url ? { nome: 'Publicação do pregão no PNCP', url } : undefined;
     const prazos = prazosDoPregao({ abertura: t.abertura, hoje: e.hoje, ataSessao: p.ataSessao,
@@ -91,6 +92,15 @@ export function montarPauta(e: { hoje: string; pregoes: PregaoPauta[]; cofre?: A
         .map(([k, v]) => `${v} ${NOME_ESTADO[k][v > 1 ? 1 : 0]}`);
       add({ tipo: 'errata', chave: 'resumo', tenderId: id, papel: 'lance', origem: 'publicado', ate: null, acionavel: false, fonte, ...sintetico,
         oQueMudou: `Errata conferida sem modelo: ${partes.join(', ') || 'nenhuma evidência a conferir'}`, acao: 'Nada a fazer: registro do que foi reaproveitado' });
+      if (diff.abertura.horaMudou) {
+        add({ tipo: 'errata', chave: 'hora', tenderId: id, papel: 'analista', origem: 'publicado', ate: null, acionavel: false, fonte, ...sintetico,
+          oQueMudou: `Horário da sessão mudou no mesmo dia: ${diff.abertura.antes} → ${diff.abertura.depois}`, acao: 'Dado publicado: os prazos do art. 164 não mudam' });
+      }
+      if (diff.semAberturaConhecida.length) {
+        add({ tipo: 'errata', chave: 'sem-abertura', tenderId: id, papel: 'juridico', origem: 'aguardando', ate: null, acionavel: false, fonte, ...sintetico,
+          oQueMudou: `Errata mudou o${diff.semAberturaConhecida.length > 1 ? 's itens' : ' item'} ${diff.semAberturaConhecida.join(', ')} e a abertura não é conhecida`,
+          acao: 'Sem prazo sustentado para esclarecer ou impugnar até a abertura ser publicada' });
+      }
       if (diff.abertura.estado === 'mudou') {
         add({ tipo: 'errata', chave: 'abertura', tenderId: id, papel: 'analista', origem: 'publicado', ate: abertura, acionavel: false, fonte, ...sintetico,
           oQueMudou: `Abertura mudou: ${diff.abertura.antes ?? 'sem data'} → ${diff.abertura.depois ?? 'sem data'}`, acao: 'Prazos recalculados pela nova data' });
@@ -108,6 +118,8 @@ export function montarPauta(e: { hoje: string; pregoes: PregaoPauta[]; cofre?: A
       for (const i of diff.itens) {
         if (i.evidencia === 'citacao_orfa') add({ tipo: 'errata', chave: 'orfa', tenderId: id, item: i.item, papel: 'lance', origem: 'publicado', estado: 'citacao_orfa',
           ate: abertura, acionavel: true, fonte, ...sintetico, oQueMudou: `Item ${i.item}: ${i.motivo}`, acao: `Reavaliar o encaixe do item ${i.item} com o trecho novo` });
+        if (i.evidencia === 'pendente_agente') add({ tipo: 'errata', chave: 'pendente', tenderId: id, item: i.item, papel: 'lance', origem: 'aguardando', estado: 'pendente_agente',
+          ate: abertura, acionavel: true, fonte, ...sintetico, oQueMudou: `Item ${i.item}: ${i.motivo}`, acao: `Reanalisar o item ${i.item} no texto novo` });
         if (i.removido) add({ tipo: 'errata', chave: 'removido', tenderId: id, item: i.item, papel: 'analista', origem: 'publicado', ate: null, acionavel: false, fonte, ...sintetico,
           oQueMudou: `Item ${i.item} removido do pregão`, acao: 'A decisão anterior deste item não vale mais' });
         if (i.novo) add({ tipo: 'errata', chave: 'novo', tenderId: id, item: i.item, papel: 'lance', origem: 'publicado', ate: abertura, acionavel: true, fonte, ...sintetico,
