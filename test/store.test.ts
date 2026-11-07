@@ -152,3 +152,22 @@ describe('store: escaladas', () => {
     assert.equal(s.events().some(x => x.tipo === 'escalada_decidida'), false);
   });
 });
+
+describe('store: dois processos no mesmo banco (agendador + servidor integrado)', () => {
+  test('gravação espera a trava do outro processo em vez de falhar com "database is locked"', async () => {
+    const path = join(mkdtempSync(join(tmpdir(), 'lance-lock-')), 'lance.db');
+    const s = openStore(path);
+    const { spawn } = await import('node:child_process');
+    const filho = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', '-e', `
+      const { DatabaseSync } = require('node:sqlite');
+      const db = new DatabaseSync(${JSON.stringify(path)});
+      db.exec('BEGIN IMMEDIATE'); console.log('travado');
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
+      db.exec('COMMIT'); db.close();`]);
+    await new Promise<void>((ok, erro) => { filho.stdout.on('data', d => { if (String(d).includes('travado')) ok(); }); filho.on('error', erro); });
+    assert.doesNotThrow(() => s.logEvent({ tipo: 'analise_item', resumo: 'grava durante a trava do outro processo' }));
+    await new Promise(r => filho.on('close', r));
+    assert.equal(s.events().filter(e => e.resumo === 'grava durante a trava do outro processo').length, 1);
+    s.close();
+  });
+});
