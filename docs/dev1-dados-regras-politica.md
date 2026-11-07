@@ -42,7 +42,7 @@ Primeiro o que é **regra pura** (mais valor, sem dependência, fácil de testar
 |---|---|---|---|
 | **1** | ✅ Portar o núcleo para o repositório (feito em 07/11) | 30 min | Base de tudo; os testes provam que nada quebrou |
 | **2** | ✅ Regras novas: preço pela estimativa, cofre × sessão, estados de decisão (dfa525f) | 45 min | Corrige a decisão com o que aprendemos hoje |
-| **3** | `policy.ts`: a política da empresa | 1 h | É o coração da autonomia; função pura |
+| **3** | ✅ `policy.ts`: a política da empresa | 1 h | É o coração da autonomia; função pura |
 | **4** | ✅ `store.ts`: estado em SQLite | 45 min | Necessário para recheque, monitor e agendador |
 | **5** | Recheque antes de agir + verificação de esclarecimento | 1 h | Corrige as duas falhas reais do turno |
 | **6** | `monitor.ts`: detectar mudança nos pregões acompanhados | 1 h | Reação a eventos reais |
