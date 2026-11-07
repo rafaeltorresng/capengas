@@ -11,6 +11,7 @@ import { createReadModel } from '../lib/read-model.ts';
 const store = openStore();
 const projection = createReadModel(store, {
   actions: () => store.getActions(),
+  cofre: company.cofre, // hoje().cofre; sem o cofre a lista vem vazia
   // proof: () => relatorioDaExecucao, // opcional; ausência mantém métricas null
 });
 

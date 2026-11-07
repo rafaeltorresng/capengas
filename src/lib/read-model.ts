@@ -1,8 +1,10 @@
 // Adapta leituras persistidas à API do Dev 3. Não executa regras, modelo ou envios.
-import type { Action, Decision, DecisionRow, Store } from './contracts.ts';
+import type { Action, CofreDoc, Decision, DecisionRow, Store } from './contracts.ts';
+import { calendarioCofre } from './cofre.ts';
 import type { buildDossie, DossierSource } from './dossie.ts';
 
-export type ReadStore = Pick<Store, 'events' | 'openEscalations' | 'getTender' | 'getItems' | 'getDecisions' | 'getDossie' | 'resolveEscalation'>;
+export type ReadStore = Pick<Store, 'events' | 'openEscalations' | 'getTender' | 'getItems' | 'getDecisions' | 'getDossie' | 'resolveEscalation'>
+  & Partial<Pick<Store, 'getTenders' | 'getRequirements'>>;
 export type Proof = {
   fonte: string; avaliacoes: { nome: string; valor: string }[]; cenarios: { nome: string; resultado: string }[];
   concordancia: number | null; custoUsd: number | null; duracaoMs: number | null;
@@ -20,6 +22,8 @@ function timestamp(raw: string | null | undefined) {
 export function createReadModel(store: ReadStore, options: {
   // Leitura explícita: não supor zero envios quando não há acesso a ações.
   actions: () => Action[]; now?: () => Date; proof?: () => Proof; origem?: 'amostra' | 'integrado';
+  /** Cofre da empresa. Sem ele, ou sem getTenders/getRequirements, Hoje devolve cofre vazio. */
+  cofre?: CofreDoc[];
 }) {
   if (typeof options.actions !== 'function') throw new Error('forneça a leitura das ações confirmadas');
   const now = options.now ?? (() => new Date());
@@ -93,11 +97,14 @@ export function createReadModel(store: ReadStore, options: {
     const calls = events.flatMap(e => e.rastro ?? []).filter(t => t.ferramenta === 'llm' || t.ferramenta.startsWith('llm:'));
     const custoUsd = calls.length && calls.every(c => typeof c.custoUsd === 'number' && Number.isFinite(c.custoUsd))
       ? calls.reduce((sum, c) => sum + c.custoUsd!, 0) : null;
+    const cofre = !options.cofre?.length || !store.getTenders || !store.getRequirements ? [] : calendarioCofre(options.cofre,
+      store.getTenders().filter(t => t.abertura).map(t => ({ tenderId: t.id, sessao: t.abertura!.slice(0, 10),
+        exigencias: store.getRequirements!(t.id).map(r => ({ tipo: r.tipo, citacao: r.citacao })) })), day);
     return { data: day, pregoes: new Set(decisions.map(d => d.tenderId)).size, itens: decisions.length,
       disputar: counts.get('disputar') ?? 0, pendencias: counts.get('disputar_com_pendencia') ?? 0,
       envios: confirmed.length, escaladasAbertas: store.openEscalations().length, custoUsd,
       porDecisao: [...counts].map(([estado, quantidade]) => ({ estado: labels[estado] ?? estado, quantidade })),
-      eventos: [...events].sort((a, b) => Date.parse(a.horario) - Date.parse(b.horario)),
+      eventos: [...events].sort((a, b) => Date.parse(a.horario) - Date.parse(b.horario)), cofre,
     };
   }
   return {
