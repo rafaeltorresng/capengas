@@ -34,10 +34,10 @@ const tenderItem = async (st: LanceState, tid: string, n: number) => {
 };
 const key = (tid: string, n: number) => `${tid}#${n}`;
 
-export function motivosDaEvidencia(store: LanceStore, tenderId: string, item: number) {
+export function motivosDaEvidencia(store: LanceStore, tenderId: string, item: number, produto?: string) {
   const motivos = new Set<'nao_informado' | 'variante_nao_coberta' | 'marca_referencia'>();
   for (const fit of store.getFits(tenderId)) {
-    if (fit.item !== item) continue;
+    if (fit.item !== item || (produto !== undefined && fit.produto !== produto)) continue;
     const atributos = fit.atributos as { attributes?: { atributo?: string; veredito?: string }[]; restritivo?: unknown; varianteNaoCoberta?: boolean } | null;
     for (const atributo of atributos?.attributes ?? []) {
       if (atributo.veredito === 'nao_informado') motivos.add('nao_informado');
@@ -315,7 +315,8 @@ export const tools: Tool[] = [
       const st = S(ctx); const dr = st.drafts[key(a.tender_id, a.item)];
       if (!dr?.texto) return { resultado: 'bloqueada', motivo: 'esclarecimento sem rascunho; nada foi enviado' };
       if (!st.store) return { resultado: 'bloqueada', motivo: 'envio indisponível sem estado persistente; nada foi enviado' };
-      const evidencias = motivosDaEvidencia(st.store, a.tender_id, a.item);
+      const decisoes = st.store.getDecisions(a.tender_id).filter(d => d.item === a.item);
+      const evidencias = decisoes.length === 1 ? motivosDaEvidencia(st.store, a.tender_id, a.item, decisoes[0].produto) : new Set<string>();
       if (!evidencias.has(a.motivo)) {
         const motivo = 'motivo do esclarecimento não confere com a evidência gravada';
         if (!st.store.openEscalations().some(e => e.tender === a.tender_id && e.item === String(a.item) && e.motivo === motivo)) {
