@@ -65,6 +65,13 @@ describe('executarAcoesDoTurno', () => {
     assert.deepEqual(posts[0].body.itens.map((i: any) => [i.numero, i.precoUnitario, i.quantidade]), [[40, 50, 10]]);
     assert.equal(r.propostas.confirmada, 1);
   });
+  test('item em disputar com registro ANVISA de outra marca: a porta bloqueia, zero POST', async () => {
+    const { store, state, posts, deps } = setup({ estado: 'disputar', preco: 50, quantidade: 10 });
+    const r = await executarAcoesDoTurno({ ...deps, state, ids: [T], anvisa: () => ({ NOME_COMERCIAL: 'Cabo de bisturi', NOME_FABRICANTE: 'PRISMA', DETENTOR_REGISTRO_CADASTRO: 'PRISMA', VALIDADE_REGISTRO_CADASTRO: 'VIGENTE' }) });
+    assert.equal(posts.length, 0);
+    assert.equal(r.propostas.bloqueada, 1);
+    assert.ok(store.events().some(e => e.tipo === 'bloqueio' && /não aparece no registro ANVISA/.test(e.resumo)));
+  });
   test('item em disputar acima do limite: escala, zero POST', async () => {
     const { store, state, posts, deps } = setup({ estado: 'disputar', preco: 90, quantidade: 1000 });
     const r = await executarAcoesDoTurno({ ...deps, state, ids: [T] });

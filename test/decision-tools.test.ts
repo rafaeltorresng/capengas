@@ -57,3 +57,29 @@ test('orçamento sigiloso não produz preço', async () => {
   assert.equal(d.precoProposto, null);
   assert.equal(d.estado, 'escalar');
 });
+const straumed = { NUMERO_REGISTRO_CADASTRO: '82936150004', NOME_TECNICO: 'Cabos', NOME_COMERCIAL: 'CABO DE BISTURI STRAUMED', CLASSE_RISCO: 'I',
+  NOME_FABRICANTE: 'STRAUMED INSTRUMENTOS CIRURGICOS LTDA', DETENTOR_REGISTRO_CADASTRO: 'STRAUMED INSTRUMENTOS CIRURGICOS LTDA', VALIDADE_REGISTRO_CADASTRO: 'VIGENTE' };
+function setupConferido(row: Record<string, string>) {
+  const ctx = setup();
+  mock.method(anvisa, 'byRegistro', () => row);
+  ctx.state.company.catalogo.find((p: any) => p.id === 'P1').coberturaDeclarada = true;
+  ctx.state.items[tid] = [{ numero: 1, descricao: 'material: aço', quantidade: 2, valorEstimado: 10, sigiloso: false }];
+  ctx.state.fits[tid + '#1'] = { product_id: 'P1', overall: 'atende', validacao: { cobertura: 'conferida' }, attributes: [{ atributo: 'material', veredito: 'atende' }] };
+  return ctx;
+}
+test('decide_item disputa quando o registro ANVISA é da marca do catálogo', async () => {
+  const d: any = await tools.find(t => t.name === 'decide_item')!.run({ tender_id: tid, item: 1, product_id: 'P1' }, setupConferido(straumed));
+  assert.equal(d.estado, 'disputar');
+  assert.equal(d.anvisa.conferencia.status, 'confere');
+});
+test('decide_item escala quando o registro ANVISA é de outra marca', async () => {
+  const prisma = { ...straumed, NOME_COMERCIAL: 'Cabo de bisturi', NOME_FABRICANTE: 'PRISMA INSTRUMENTOS ODONTOLÓGICOS LTDA - ME', DETENTOR_REGISTRO_CADASTRO: 'PRISMA INSTRUMENTOS ODONTOLÓGICOS LTDA - ME' };
+  const d: any = await tools.find(t => t.name === 'decide_item')!.run({ tender_id: tid, item: 1, product_id: 'P1' }, setupConferido(prisma));
+  assert.equal(d.estado, 'escalar');
+  assert.ok(d.motivos.some((m: string) => /marca "Straumed" não aparece no registro ANVISA/.test(m)));
+});
+test('check_anvisa devolve fabricante e a conferência da marca, lidos da base na hora', async () => {
+  const r: any = await tools.find(t => t.name === 'check_anvisa')!.run({ tender_id: tid, product_id: 'P1' }, setupConferido(straumed));
+  assert.equal(r.fabricante, 'STRAUMED INSTRUMENTOS CIRURGICOS LTDA');
+  assert.equal(r.conferencia.status, 'confere');
+});

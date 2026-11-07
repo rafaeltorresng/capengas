@@ -44,3 +44,10 @@
 
 ## Depois da demo (opcional)
 - Snapshot sem segredos para reproduzir a tela: `node scripts/banco-demo.ts exportar data/domingo.db out/domingo.json`.
+
+## Base oficial da ANVISA e catálogo
+
+- `npm run setup -- --atualizar` baixa de novo `TA_PRODUTO_SAUDE_SITE.csv` de dados.anvisa.gov.br. Se o arquivo vier inválido, a base antiga fica. A base SQLite é refeita quando o CSV é mais novo.
+- `npm run catalogo:anvisa` confere cada produto de `fixtures/company.json` com a base oficial (registro, validade e marca). Sai com código 1 se algum produto diverge.
+- `npm run catalogo:anvisa -- --buscar "cabo bisturi"` lista registros vigentes para escolher um registro novo.
+- Na decisão, um registro de outra marca rebaixa `disputar` para `escalar`. Na porta de envio, a proposta é bloqueada sem POST.

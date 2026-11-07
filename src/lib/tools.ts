@@ -2,6 +2,7 @@
 import type { Tool, Ctx } from './agent.ts';
 import { pncp, compras, anvisa, pdf, catmat } from './data.ts';
 import { checkAnvisa, priceStats, brandConcentration, priceCheck, checkDocs, verifyQuote, decideItem } from './rules.ts';
+import { conferirRegistro, type ConferenciaRegistro } from './catalogo.ts';
 import { executarAcao, instanteAbertura, prazoEsclarecimentoAberto, type ActDeps, type PedidoAcao } from './act.ts';
 import { leituraDoEdital } from './edital.ts';
 import { recheckTender, situacao } from './recheck.ts';
@@ -186,7 +187,8 @@ export const tools: Tool[] = [
       const deliveryBy = new Date(opening.getTime() + st.company.empresa.prazoEntregaDias * 86400e3);
       const row = anvisa.byRegistro(p.registroAnvisa);
       const r = checkAnvisa(row, { today: st.now, deliveryBy, coberturaDeclarada: p.coberturaDeclarada === true });
-      return { ...r, registro: p.registroAnvisa, nome_tecnico: row?.NOME_TECNICO, nome_comercial: row?.NOME_COMERCIAL, detentor: row?.DETENTOR_REGISTRO_CADASTRO, entrega_ate: deliveryBy.toISOString().slice(0, 10) };
+      return { ...r, registro: p.registroAnvisa, nome_tecnico: row?.NOME_TECNICO, nome_comercial: row?.NOME_COMERCIAL, detentor: row?.DETENTOR_REGISTRO_CADASTRO,
+        fabricante: row?.NOME_FABRICANTE, conferencia: conferirRegistro(p, row, st.now), entrega_ate: deliveryBy.toISOString().slice(0, 10) };
     },
   },
   {
@@ -272,7 +274,12 @@ export const tools: Tool[] = [
         : { viavel: null, precoProposto: null, motivo: 'política de preço ausente' };
       const deliveryBy = new Date(opening.getTime() + st.company.empresa.prazoEntregaDias * 86400e3);
       let an;
-      try { an = checkAnvisa(anvisa.byRegistro(p.registroAnvisa), { today: st.now, deliveryBy, coberturaDeclarada: p.coberturaDeclarada === true }); }
+      let conferencia: ConferenciaRegistro | null = null;
+      try {
+        const row = anvisa.byRegistro(p.registroAnvisa);
+        an = checkAnvisa(row, { today: st.now, deliveryBy, coberturaDeclarada: p.coberturaDeclarada === true });
+        conferencia = conferirRegistro(p, row, st.now);
+      }
       catch { an = { regularizacao: 'nao_verificado' as const, cobertura: 'nao_comprovada' as const, classe: null, detentor: null, validUntil: null }; }
       const requirements = st.requirements.filter(r => r.tender_id === a.tender_id);
       const docs = checkDocs(st.company.cofre, requirements.map(r => ({ tipo: r.requirement, citacao: r.quote })), raw.slice(0, 10));
@@ -281,9 +288,13 @@ export const tools: Tool[] = [
       const d = decideItem({ fit: fit.validacao?.cobertura === 'conferida' ? fit.overall : 'desconhecido', regularizacao: an.regularizacao,
         cobertura: an.cobertura, preco: price, docs, restritivo: !!st.restrictive[k], varianteNaoCoberta,
         prazoEsclarecimentoAberto: prazo.prazo ? prazo.aberto : null, venceAntesEntrega: 'venceAntesEntrega' in an && an.venceAntesEntrega === true });
+      // Ofertar exige que o registro seja da marca declarada; esclarecer não oferta produto e segue.
+      if (conferencia?.status === 'marca_divergente' && (d.estado === 'disputar' || d.estado === 'disputar_com_pendencia')) {
+        d.estado = 'escalar'; d.motivos = [...d.motivos, conferencia.motivo];
+      }
       const legacy: Record<string, string> = { disputar: 'ofertar', disputar_com_pendencia: 'ofertar_com_pendencia', nao_disputar: 'nao_ofertar', esclarecer: 'escalar', escalar: 'escalar' };
       const dec = { ...d, tenderId: a.tender_id, item: a.item, produto: a.product_id, product_id: a.product_id,
-        precoProposto: price.precoProposto, preco_sugerido: price.precoProposto, preco: price, anvisa: an, docs,
+        precoProposto: price.precoProposto, preco_sugerido: price.precoProposto, preco: price, anvisa: { ...an, conferencia }, docs,
         decision: legacy[d.estado], reasons: d.motivos, docs_vencidos: docs.filter(x => !['vigente', 'sem_vencimento'].includes(x.status)).map(x => x.exigencia) };
       st.decisions[k] = dec;
       return dec;
