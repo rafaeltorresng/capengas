@@ -3,3 +3,5 @@ cache/
 data/
 out/
 node_modules/
+web/dist/
+.tooling/

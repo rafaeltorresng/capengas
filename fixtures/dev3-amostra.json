@@ -1,0 +1,302 @@
+{
+  "hoje": {
+    "data": "2026-11-08",
+    "pregoes": 2,
+    "itens": 3,
+    "disputar": 0,
+    "pendencias": 1,
+    "envios": 1,
+    "escaladasAbertas": 1,
+    "custoUsd": 0,
+    "porDecisao": [
+      {
+        "estado": "Em esclarecimento",
+        "quantidade": 1
+      },
+      {
+        "estado": "Com pendência",
+        "quantidade": 1
+      },
+      {
+        "estado": "Reavaliar",
+        "quantidade": 1
+      }
+    ],
+    "eventos": [
+      {
+        "id": "inicio",
+        "horario": "2026-11-08T08:00:00-03:00",
+        "tipo": "Turno",
+        "resumo": "Turno iniciado pelo agendador",
+        "detalhe": "Dois pregões de saúde entraram na fila.",
+        "rastro": [
+          {
+            "ferramenta": "Agendador",
+            "entrada": "Turno das 8h",
+            "saida": "2 pregões na fila",
+            "ms": 18,
+            "custoUsd": 0
+          }
+        ]
+      },
+      {
+        "id": "esclarecimento",
+        "horario": "2026-11-08T08:00:43-03:00",
+        "tipo": "Ação no sandbox",
+        "resumo": "Esclarecimento enviado e verificado",
+        "detalhe": "Item 40 · CPAP neonatal. Protocolo simulado SBX-017.",
+        "tender": "demo-17",
+        "item": "40",
+        "rastro": [
+          {
+            "ferramenta": "Comparar especificações",
+            "entrada": "Item 40 e catálogo de exemplo",
+            "saida": "Divergência de tamanho. Esclarecimento simulado.",
+            "ms": 740,
+            "custoUsd": 0
+          },
+          {
+            "ferramenta": "Consulta de protocolo",
+            "saida": "SBX-017 confirmado",
+            "ms": 120,
+            "custoUsd": 0
+          }
+        ]
+      },
+      {
+        "id": "dossie",
+        "horario": "2026-11-08T08:01:14-03:00",
+        "tipo": "Escalada",
+        "resumo": "A CND vence antes da sessão",
+        "detalhe": "O dossiê do pregão 17 está pronto para revisão.",
+        "tender": "demo-17",
+        "item": "54",
+        "dossie": true
+      },
+      {
+        "id": "errata",
+        "horario": "2026-11-08T08:03:00-03:00",
+        "tipo": "Monitor",
+        "resumo": "Errata detectada. Envio bloqueado",
+        "detalhe": "O item 12 do pregão 23 voltou para reavaliação.",
+        "tender": "demo-23",
+        "item": "12",
+        "rastro": [
+          {
+            "ferramenta": "Monitor de arquivos",
+            "entrada": "Hash anterior do edital",
+            "saida": "Arquivo alterado. Reavaliação solicitada.",
+            "ms": 116,
+            "custoUsd": 0
+          }
+        ]
+      }
+    ]
+  },
+  "fila": [
+    {
+      "tender": "demo-17",
+      "pregao": "Pregão 17/2026 · exemplo",
+      "item": "40",
+      "descricao": "Interface nasal para CPAP neonatal",
+      "orgao": "Hospital Universitário (exemplo)",
+      "prazo": "2026-11-08T11:30:00-03:00",
+      "estado": "Em esclarecimento",
+      "motivo": "O catálogo informa tamanho 0. O edital exige 00."
+    },
+    {
+      "tender": "demo-17",
+      "pregao": "Pregão 17/2026 · exemplo",
+      "item": "54",
+      "descricao": "Cadeira de rodas hospitalar",
+      "orgao": "Hospital Universitário (exemplo)",
+      "prazo": "2026-11-08T11:30:00-03:00",
+      "estado": "Com pendência",
+      "motivo": "A CND vence antes da sessão."
+    },
+    {
+      "tender": "demo-23",
+      "pregao": "Pregão 23/2026 · exemplo",
+      "item": "12",
+      "descricao": "Kit de curativos",
+      "orgao": "Secretaria de Saúde (exemplo)",
+      "prazo": "2026-11-08T12:00:00-03:00",
+      "estado": "Reavaliar",
+      "motivo": "Envio bloqueado após publicação de errata."
+    }
+  ],
+  "itens": [
+    {
+      "tender": "demo-17",
+      "pregao": "Pregão 17/2026 · exemplo",
+      "item": "40",
+      "descricao": "Interface nasal para CPAP neonatal",
+      "orgao": "Hospital Universitário (exemplo)",
+      "prazo": "2026-11-08T11:30:00-03:00",
+      "estado": "Em esclarecimento",
+      "motivo": "O catálogo informa tamanho 0. O edital exige 00.",
+      "encaixe": [
+        {
+          "atributo": "Tamanho",
+          "exigido": "00",
+          "ofertado": "0",
+          "resultado": "Não atende",
+          "fonte": {
+            "nome": "PDF do edital de exemplo",
+            "url": "/edital-exemplo.pdf#page=1",
+            "citacao": "Item 40. Interface nasal para CPAP neonatal, tamanho 00."
+          }
+        }
+      ],
+      "fontes": [
+        {
+          "nome": "PDF do edital de exemplo",
+          "url": "/edital-exemplo.pdf#page=1",
+          "citacao": "Item 40. Interface nasal para CPAP neonatal, tamanho 00."
+        },
+        {
+          "nome": "Consultar PNCP",
+          "url": "https://pncp.gov.br/app/editais"
+        },
+        {
+          "nome": "Consultar ANVISA",
+          "url": "https://consultas.anvisa.gov.br/#/saude/"
+        }
+      ],
+      "anvisa": "Consulta disponível no portal. Registro sem verificação na amostra.",
+      "preco": 230,
+      "estimativa": 250,
+      "rastro": [
+        {
+          "ferramenta": "Comparar especificações",
+          "entrada": "Item 40 e catálogo de exemplo",
+          "saida": "Divergência de tamanho. Esclarecimento simulado.",
+          "ms": 740,
+          "custoUsd": 0
+        }
+      ],
+      "dossie": true
+    },
+    {
+      "tender": "demo-17",
+      "pregao": "Pregão 17/2026 · exemplo",
+      "item": "54",
+      "descricao": "Cadeira de rodas hospitalar",
+      "orgao": "Hospital Universitário (exemplo)",
+      "prazo": "2026-11-08T11:30:00-03:00",
+      "estado": "Com pendência",
+      "motivo": "A CND vence antes da sessão.",
+      "encaixe": [],
+      "fontes": [
+        {
+          "nome": "PDF do edital de exemplo",
+          "url": "/edital-exemplo.pdf#page=1",
+          "citacao": "Item 40. Interface nasal para CPAP neonatal, tamanho 00."
+        },
+        {
+          "nome": "Consultar PNCP",
+          "url": "https://pncp.gov.br/app/editais"
+        },
+        {
+          "nome": "Consultar ANVISA",
+          "url": "https://consultas.anvisa.gov.br/#/saude/"
+        }
+      ],
+      "anvisa": "Registro sem verificação na amostra.",
+      "preco": 1190,
+      "estimativa": 1250,
+      "rastro": [],
+      "dossie": true
+    },
+    {
+      "tender": "demo-23",
+      "pregao": "Pregão 23/2026 · exemplo",
+      "item": "12",
+      "descricao": "Kit de curativos",
+      "orgao": "Secretaria de Saúde (exemplo)",
+      "prazo": "2026-11-08T12:00:00-03:00",
+      "estado": "Reavaliar",
+      "motivo": "Envio bloqueado após publicação de errata.",
+      "encaixe": [],
+      "fontes": [
+        {
+          "nome": "Consultar PNCP",
+          "url": "https://pncp.gov.br/app/editais"
+        },
+        {
+          "nome": "Consultar ANVISA",
+          "url": "https://consultas.anvisa.gov.br/#/saude/"
+        }
+      ],
+      "anvisa": "Registro sem verificação na amostra.",
+      "preco": null,
+      "estimativa": null,
+      "rastro": []
+    }
+  ],
+  "dossies": [
+    {
+      "tender": "demo-17",
+      "pregao": "Pregão 17/2026 · exemplo",
+      "versao": "1",
+      "checklist": [
+        {
+          "exigencia": "Regularidade fiscal",
+          "documento": "Certidão Negativa de Débitos (CND)",
+          "status": "Pendente",
+          "detalhe": "Vence em 07/11. Sessão em 08/11 às 11h30."
+        },
+        {
+          "exigencia": "Especificação técnica",
+          "documento": "Edital de exemplo",
+          "status": "Em análise",
+          "fonte": {
+            "nome": "PDF do edital de exemplo",
+            "url": "/edital-exemplo.pdf#page=1",
+            "citacao": "Item 40. Interface nasal para CPAP neonatal, tamanho 00."
+          }
+        }
+      ],
+      "pendencias": [
+        "Atualizar a CND antes da sessão."
+      ],
+      "documentos": [
+        {
+          "nome": "PDF do edital de exemplo",
+          "url": "/edital-exemplo.pdf#page=1",
+          "citacao": "Item 40. Interface nasal para CPAP neonatal, tamanho 00."
+        }
+      ]
+    }
+  ],
+  "escaladas": [
+    {
+      "id": "cnd",
+      "tender": "demo-17",
+      "item": "54",
+      "pregao": "Pregão 17/2026 · exemplo",
+      "motivo": "A CND vence antes da sessão.",
+      "recomendacao": "Solicitar uma CND vigente e revisar o dossiê antes de seguir.",
+      "prazo": "2026-11-08T11:30:00-03:00",
+      "dossie": true
+    }
+  ],
+  "prova": {
+    "fonte": "Referência histórica documentada no spike. Os números não foram produzidos pela execução desta amostra.",
+    "avaliacoes": [
+      {
+        "nome": "Encaixe técnico",
+        "valor": "18 de 18"
+      }
+    ],
+    "cenarios": [
+      {
+        "nome": "Cenários de exceção do Dev2",
+        "resultado": "Resultado ainda não integrado"
+      }
+    ],
+    "concordancia": null,
+    "custoUsd": 0.22,
+    "duracaoMs": 750000
+  }
+}
