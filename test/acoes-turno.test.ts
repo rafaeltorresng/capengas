@@ -103,6 +103,18 @@ describe('executarAcoesDoTurno: só age sobre o que a análise atual produziu', 
     await executarAcoesDoTurno({ ...deps, state, ids: [T] });
     assert.equal(posts.length, 0);
   });
+  test('encaixe antigo de outro produto não sustenta o esclarecimento do produto decidido agora', async () => {
+    const { store, state, posts, deps } = setup();
+    store.upsertFit({ tenderId: T, item: 40, produto: 'P2', fit: 'atende',
+      atributos: { attributes: [{ atributo: 'embalagem', veredito: 'atende' }], restritivo: null, varianteNaoCoberta: false } });
+    state.fits[`${T}#40`] = { product_id: 'P2' };
+    state.decisions[`${T}#40`] = { estado: 'esclarecer', produto: 'P2' };
+    state.drafts[`${T}#40`] = { texto: TEXTO, prazo: '2026-11-18' };
+    const r = await executarAcoesDoTurno({ ...deps, state, ids: [T] });
+    assert.equal(posts.length, 0);
+    assert.equal(r.esclarecimentos.escalada, 1);
+    assert.ok(store.openEscalations().some(e => e.item === '40' && /evidência/.test(e.motivo)));
+  });
   test('rascunho de item cujo encaixe não foi gravado nesta análise: escala, zero POST', async () => {
     const { store, state, posts, deps } = setup();
     delete state.fits[`${T}#40`];

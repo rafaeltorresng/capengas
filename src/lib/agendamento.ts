@@ -62,7 +62,11 @@ export async function executarAcoesDoTurno(d: {
       if (!k.startsWith(id + '#') || !draft?.texto) continue;
       const item = Number(k.split('#')[1]);
       // Evidência só vale se o encaixe e a decisão foram gravados nesta análise, não num turno anterior à errata.
-      const evidencias = d.state.fits[k] && desteTurno.has(item) ? motivosDaEvidencia(d.store, id, item) : new Set<string>();
+      const fit = d.state.fits[k];
+      const produto = typeof fit?.product_id === 'string' ? fit.product_id : '';
+      const decisao = d.state.decisions[k];
+      const produtoConfere = !!produto && (!decisao?.produto || decisao.produto === produto);
+      const evidencias = fit && produtoConfere && desteTurno.has(item) ? motivosDaEvidencia(d.store, id, item, produto) : new Set<string>();
       const motivo = ORDEM_MOTIVO.find(m => evidencias.has(m));
       if (!motivo) {
         if (!d.store.openEscalations().some(e => e.tender === id && e.item === String(item) && e.motivo === SEM_EVIDENCIA)) {
