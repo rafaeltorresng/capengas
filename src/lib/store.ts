@@ -180,8 +180,15 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
       return db.prepare(`SELECT * FROM actions ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY criada_em, key`).all(...args).map(toAction);
     },
 
-    openEscalation(e) {
+    openEscalation(e, options) {
       return tx(() => {
+        if (options?.reuseOpen) {
+          const existing = db.prepare(
+            "SELECT * FROM escalations WHERE tender = ? AND item IS ? AND motivo = ? AND status = 'aberta' ORDER BY seq",
+          ).all(e.tender, e.item ?? null, e.motivo)
+            .map(toEscalation).find(row => Date.parse(row.prazo) >= now().getTime());
+          if (existing) return existing;
+        }
         const { lastInsertRowid } = db.prepare(`INSERT INTO escalations (id, tender, item, motivo, recomendacao, prazo, status) VALUES (?,?,?,?,?,?,'aberta')`)
           .run(`tmp_${Math.random().toString(36).slice(2)}`, e.tender, e.item ?? null, e.motivo, e.recomendacao, e.prazo);
         const id = `esc_${lastInsertRowid}`;

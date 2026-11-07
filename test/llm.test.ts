@@ -1,7 +1,7 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
-import { openaiCompatible } from '../src/lib/llm.ts';
+import { featherless, openaiCompatible } from '../src/lib/llm.ts';
 
 let srv: Server; let base = ''; const seen: any[] = []; let fail429 = 1;
 before(async () => {
@@ -33,4 +33,22 @@ describe('openaiCompatible', () => {
   test('sem chave falha cedo com mensagem clara', () => {
     assert.throws(() => openaiCompatible({ baseURL: base, apiKey: '', model: 'm' }), /FEATHERLESS_API_KEY/);
   });
+});
+
+test('featherless aceita a chave Api_key usada no .env do hackathon', async () => {
+  const names = ['FEATHERLESS_API_KEY', 'AI_API_KEY', 'Api_key', 'FEATHERLESS_BASE_URL'] as const;
+  const previous = names.map(name => process.env[name]);
+  try {
+    delete process.env.FEATHERLESS_API_KEY;
+    process.env.AI_API_KEY = '';
+    process.env.Api_key = 'chave-ficticia';
+    process.env.FEATHERLESS_BASE_URL = base;
+    await featherless('m2').chat([{ role: 'user', content: 'x' }], []);
+    assert.equal(seen.at(-1).auth, 'Bearer chave-ficticia');
+  } finally {
+    names.forEach((name, index) => {
+      if (previous[index] === undefined) delete process.env[name];
+      else process.env[name] = previous[index];
+    });
+  }
 });

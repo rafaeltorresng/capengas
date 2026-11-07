@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { openStore } from '../src/lib/store.ts';
 import { createScheduler } from '../src/lib/scheduler.ts';
-import { selecionarPregoes, createAnalysisTurn, type DemoSelecao } from '../src/lib/agendamento.ts';
+import { selecionarPregoes, createAnalysisTurn, resolverPregoesSolicitados, type DemoSelecao } from '../src/lib/agendamento.ts';
 import type { LanceState } from '../src/lib/tools.ts';
 import type { Recheque } from '../src/lib/contracts.ts';
 
@@ -125,5 +125,26 @@ describe('agendador + turno de análise', () => {
     const turnos = store.events().filter(e => e.tipo.startsWith('turno'));
     assert.deepEqual(turnos.map(e => e.tipo), ['turno_inicio', 'turno_fim']);
     assert.match(turnos[1].resumo, new RegExp(A));
+  });
+});
+
+describe('resolverPregoesSolicitados', () => {
+  test('aceita os pregões e as exceções da demo que não estão em coverage', () => {
+    const ids = [A, B, C, SUSPENSO, ZIP];
+    const resolvidos = resolverPregoesSolicitados(ids, [], demo);
+    assert.deepEqual(Object.keys(resolvidos), ids);
+    assert.deepEqual(resolvidos[B], {
+      cnpj: '00394452000103', ano: 2026, seq: 22617,
+      orgao: demo.pregoes[1].orgao, uf: 'PR', municipio: undefined,
+      abertura: '2026-11-16T09:00', sistema: 'Compras.gov.br', url: demo.pregoes[1].url,
+    });
+    assert.equal(resolvidos[ZIP].orgao, 'FAZENDA RIO GRANDE');
+    assert.equal(resolvidos[ZIP].abertura, null);
+  });
+
+  test('preserva a referência de coverage e rejeita um pregão fora da seleção', () => {
+    const conhecido = { cnpj: '77816510000166', ano: 2026, seq: 348, objeto: 'Descrição de coverage' };
+    assert.equal(resolverPregoesSolicitados([A], [conhecido], demo)[A], conhecido);
+    assert.throws(() => resolverPregoesSolicitados(['11111111000111/2026/999'], [conhecido], demo), /coverage e demo/);
   });
 });

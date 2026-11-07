@@ -154,7 +154,7 @@ export interface Store {
   /** Idempotência: a mesma key devolve a ação existente em vez de criar outra. */
   recordIntent(a: Pick<Action, 'key' | 'tipo' | 'tenderId' | 'item' | 'payload'>): { status: 'nova' | 'existente'; action: Action };
   updateAction(key: string, patch: Partial<Pick<Action, 'status' | 'protocolo' | 'verificado'>>): Action;
-  openEscalation(e: Omit<Escalation, 'id' | 'status'>): Escalation;
+  openEscalation(e: Omit<Escalation, 'id' | 'status'>, options?: { reuseOpen?: boolean }): Escalation;
   /** Grava a decisão humana e o evento escalada_decidida na mesma transação. */
   resolveEscalation(id: string, d: Decision): DecisionResult;
   logEvent(e: Omit<Event, 'id' | 'horario'>): Event;

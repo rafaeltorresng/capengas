@@ -6,12 +6,13 @@ import { runAnalysisTurn, type AnalysisExecution } from './turn.ts';
 import { parseId } from './recheck.ts';
 import { executarAcao, type ActDeps, type ResultadoAcao } from './act.ts';
 import type { Recheque, TenderRow } from './contracts.ts';
+import type { Tender } from './data.ts';
 import type { LanceStore } from './store.ts';
 import type { TurnContext } from './scheduler.ts';
 
-export type PregaoDemo = { id: string; orgao: string; uf?: string; municipio?: string; abertura?: string | null; plataforma?: string; url?: string };
+export type PregaoDemo = { id: string; orgao?: string; uf?: string; municipio?: string; abertura?: string | null; plataforma?: string; url?: string };
 /** Subconjunto de fixtures/demo.json usado aqui. */
-export type DemoSelecao = { pregoes: PregaoDemo[]; evento?: { id: string; orgao?: string }; editalIlegivel?: PregaoDemo };
+export type DemoSelecao = { pregoes: PregaoDemo[]; evento?: PregaoDemo | null; editalIlegivel?: PregaoDemo | null };
 
 /** Ordem: marcados pelo monitor para reavaliar; depois os da demo ainda sem foto da análise. O suspenso não entra. */
 export function selecionarPregoes(store: LanceStore, demo: DemoSelecao, limite: number): string[] {
@@ -28,7 +29,7 @@ function tenderRef(id: string, base: PregaoDemo | TenderRow | undefined) {
   return {
     cnpj: p.cnpj, ano: p.ano, seq: p.seq, orgao: base?.orgao ?? '', uf: base?.uf ?? '',
     municipio: base && 'municipio' in base ? base.municipio : undefined, abertura: base?.abertura ?? null,
-    sistema: base?.plataforma ?? '', url: `https://pncp.gov.br/app/editais/${id}`,
+    sistema: base?.plataforma ?? '', url: (base && 'url' in base ? base.url : undefined) ?? `https://pncp.gov.br/app/editais/${id}`,
   };
 }
 
@@ -98,6 +99,19 @@ export function textoAcoes(r: ResumoAcoes): string {
   for (const [k, n] of Object.entries(r.propostas) as [ResultadoAcao['resultado'], number][]) partes.push(`${n} ${plural(n, `proposta ${ROTULO[k][1]}`)}`);
   if (r.bloqueados) partes.push(`${r.bloqueados} ${plural(r.bloqueados, 'pregão bloqueado')}`);
   return partes.length ? `ações: ${partes.join('; ')}` : 'ações: nenhuma';
+}
+
+export function resolverPregoesSolicitados<T extends Pick<Tender, 'cnpj' | 'ano' | 'seq'>>(
+  ids: string[], coverage: T[], demo: DemoSelecao,
+) {
+  const selecao = demo.pregoes.concat(demo.evento ?? [], demo.editalIlegivel ?? []);
+  return Object.fromEntries(ids.map(id => {
+    const anterior = coverage.find(t => `${t.cnpj}/${t.ano}/${t.seq}` === id);
+    if (anterior) return [id, anterior] as const;
+    const selecionado = selecao.find(t => t.id === id);
+    if (!selecionado) throw new Error(`pregão ${id} não está nas fixtures coverage e demo; atualize a seleção antes de executar`);
+    return [id, tenderRef(id, selecionado)] as const;
+  }));
 }
 
 export function createAnalysisTurn(d: {

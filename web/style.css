@@ -79,6 +79,10 @@ main { padding-block: 1.5rem 3rem; overflow-wrap: anywhere; }
 .panel { border: 1px solid var(--line); padding: 1rem; }
 .panel h2, .panel p { margin-block: .2rem .5rem; }
 .panel .metrics { margin-block: .75rem; }
+.cofre { border-inline-start: .25rem solid var(--attention); }
+.cofre-alerts { list-style: none; padding: 0; margin: 0; }
+.cofre-alerts > li + li { border-top: 1px solid var(--line); padding-top: .75rem; margin-top: .75rem; }
+.cofre-alerts ul { margin-block: .4rem 0; }
 .trace { margin-block-start: .45rem; }
 .trace ul, .checklist { list-style: none; padding: 0; }
 .trace li { margin-bottom: .55rem; padding-inline-start: .65rem; border-inline-start: 2px solid var(--line); }
