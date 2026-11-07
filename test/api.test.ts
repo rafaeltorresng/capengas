@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { openStore } from '../src/lib/store.ts';
 import { once } from 'node:events';
 import { test, type TestContext } from 'node:test';
 import { createServer } from '../src/server/api.ts';
@@ -88,4 +92,35 @@ test('integrated API reads the projection and delegates decisions to the store',
   assert.deepEqual(calls, ['cnd']);
   assert.deepEqual((await (await get('escaladas')).json()).dados, []);
   assert.equal((await (await get('hoje')).json()).dados.eventos.at(-1).tipo, 'decisao-humana');
+});
+test('persists a decision and one audit event through HTTP and SQLite', async t => {
+  const dir = mkdtempSync(join(tmpdir(), 'lance-api-'));
+  const path = join(dir, 'test.db');
+  const store = openStore(path, { now: () => new Date('2026-11-08T10:00:00-03:00') });
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const row = store.openEscalation({
+    tender: 'demo-17', motivo: 'CND', recomendacao: 'Atualizar', prazo: '2026-11-08T11:00:00-03:00',
+  });
+  const sample = createSampleStore();
+  const api = createIntegratedStore(store, {
+    ...sample,
+    hoje: () => ({ ...sample.hoje(), eventos: store.events() }),
+    escaladas: () => store.openEscalations().map(entry => ({ ...entry, pregao: 'Pregão de teste' })),
+  });
+  const { get, decide } = await fixture(t, api);
+  try {
+    assert.equal((await decide(row.id, { decisao: 'ajustar', ajuste: 'Atualizar CND' })).status, 200);
+    assert.equal((await decide(row.id, { decisao: 'aprovar' })).status, 409);
+    assert.deepEqual((await (await get('escaladas')).json()).dados, []);
+  } finally {
+    store.close();
+  }
+  const reopened = openStore(path);
+  try {
+    assert.deepEqual(reopened.openEscalations(), []);
+    assert.equal(reopened.resolveEscalation(row.id, { decisao: 'aprovar' }).status, 'resolvida');
+    assert.equal(reopened.events().filter(event => event.tipo === 'escalada_decidida').length, 1);
+  } finally {
+    reopened.close();
+  }
 });

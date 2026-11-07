@@ -7,9 +7,10 @@ export type Event = {
   id: string; horario: string; tipo: string; resumo: string; detalhe?: string;
   tender?: string; item?: string; dossie?: boolean; rastro?: Trace[];
 };
+export type DeadlineKind = 'sessao' | 'esclarecimento' | 'decisao_humana' | 'desconhecido';
 export type QueueItem = {
   tender: string; pregao: string; item: string; descricao: string; orgao: string;
-  prazo: string; estado: string; motivo: string;
+  prazo: string | null; prazoTipo?: DeadlineKind; estado: string; motivo: string;
 };
 export type Item = QueueItem & {
   encaixe: { atributo: string; exigido: string; ofertado: string; resultado: string; fonte?: Source }[];
@@ -26,7 +27,7 @@ export type Dossier = {
 };
 export type Escalation = {
   id: string; tender: string; item?: string; pregao: string; motivo: string;
-  recomendacao: string; prazo: string; dossie?: boolean;
+  recomendacao: string; prazo: string | null; prazoTipo?: DeadlineKind; dossie?: boolean;
 };
 export type Today = {
   data: string; pregoes: number; itens: number; disputar: number; pendencias: number;

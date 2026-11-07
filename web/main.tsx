@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { ApiResponse, Decision, Dossier, Escalation, Item, Proof, QueueItem, SavedDecision, Source, Today, Trace } from '../src/server/contract.ts';
+import type { ApiResponse, DeadlineKind, Decision, Dossier, Escalation, Item, Proof, QueueItem, SavedDecision, Source, Today, Trace } from '../src/server/contract.ts';
 import './style.css';
 
 const fortaleza = 'America/Fortaleza';
@@ -11,6 +11,18 @@ const money = (amount: number | null, currency: string) => amount === null ? 'Se
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(amount);
 const duration = (ms: number) => ms < 1000 ? ms + ' ms' :
   ms < 60_000 ? Math.round(ms / 1000) + ' s' : Math.floor(ms / 60_000) + ' min ' + Math.floor(ms / 1000 % 60) + ' s';
+const deadlineLabels: Record<DeadlineKind, string> = {
+  sessao: 'Sessão', esclarecimento: 'Prazo de esclarecimento',
+  decisao_humana: 'Prazo de decisão', desconhecido: 'Prazo',
+};
+const deadlineTime = (value: string | null) => value ? Date.parse(value) : NaN;
+function deadlineLabel(value: string | null, kind: DeadlineKind = 'desconhecido') {
+  const timestamp = deadlineTime(value);
+  return Number.isFinite(timestamp)
+    ? deadlineLabels[kind] + ' · ' + dateTime.format(timestamp)
+    : 'Prazo não informado';
+}
+
 const itemPath = (tender: string, item: string) => 'itens/' + encodeURIComponent(tender) + '/' + encodeURIComponent(item);
 const dossierPath = (tender: string) => 'dossies/' + encodeURIComponent(tender);
 const nav = [['hoje', 'Hoje'], ['fila', 'Fila'], ['escaladas', 'Escaladas'], ['prova', 'Prova']] as const;
@@ -140,7 +152,7 @@ function QueueScreen({ rows }: { rows: QueueItem[] }) {
   const agencies = [...new Set(rows.map(row => row.orgao))];
   const deadlineLimit = deadline ? Date.parse(deadline + 'T23:59:59.999-03:00') : Infinity;
   const visible = rows.filter(row => (!tender || row.tender === tender) &&
-    (!agency || row.orgao === agency) && Date.parse(row.prazo) <= deadlineLimit);
+    (!agency || row.orgao === agency) && (!deadline || deadlineTime(row.prazo) <= deadlineLimit));
   return <>
     <Heading title="Fila de decisões" detail="Acompanhe o estado e o motivo de cada item." />
     <div className="filters">
@@ -156,7 +168,7 @@ function QueueScreen({ rows }: { rows: QueueItem[] }) {
       <small>{row.pregao} / item {row.item}</small>
       <h2><Internal path={itemPath(row.tender, row.item)}>{row.descricao}</Internal></h2>
       <p><strong>{row.estado}.</strong> {row.motivo}</p>
-      <small>{row.orgao} • {dateTime.format(new Date(row.prazo))}</small>
+      <small>{row.orgao} • {deadlineLabel(row.prazo, row.prazoTipo)}</small>
     </article>)}</div>
     {!visible.length && <p>Nenhum item encontrado. Confira os filtros da fila.</p>}
   </>;
@@ -173,7 +185,7 @@ const coberturaAnvisa = {
 function ItemScreen({ item }: { item: Item }) {
   return <>
     <Internal path="fila">Voltar à fila</Internal>
-    <Heading title={item.descricao} detail={item.pregao + ' / item ' + item.item} />
+    <Heading title={item.descricao} detail={item.pregao + ' / item ' + item.item + ' / ' + deadlineLabel(item.prazo, item.prazoTipo)} />
     <div className="notice"><span><strong>{item.estado}.</strong> {item.motivo}</span>
       {item.dossie && <Internal path={dossierPath(item.tender)}>Abrir dossiê</Internal>}</div>
     <section className="panel"><h2>Encaixe técnico</h2>
@@ -240,7 +252,7 @@ function EscalationCard({ row, onSaved }: { row: Escalation; onSaved: (message: 
   }
 
   return <article className="panel escalation">
-    <small>{row.pregao} / decidir até {dateTime.format(new Date(row.prazo))}</small>
+    <small>{row.pregao} / {deadlineLabel(row.prazo, row.prazoTipo ?? 'decisao_humana')}</small>
     <h2>{row.motivo}</h2>
     <p><strong>Recomendação.</strong> {row.recomendacao}</p>
     <div className="actions">
