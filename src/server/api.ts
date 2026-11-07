@@ -91,6 +91,7 @@ export function createServer(store: DemoStore, webRoot?: string) {
         const result = store.decidir(params[0], await readDecision(req));
         if (result.status === 'ausente') throw new RequestError(404, 'Escalada não encontrada.');
         if (result.status === 'resolvida') throw new RequestError(409, 'Esta escalada já foi resolvida.');
+        if (result.status === 'expirada') throw new RequestError(409, 'O prazo desta escalada terminou.');
         if (result.status === 'salva') dados = result.registro;
       }
       if (dados === undefined) throw new RequestError(404, 'Registro ou rota indisponível.');

@@ -10,7 +10,9 @@ export type QueueItem = {
 };
 export type Item = QueueItem & {
   encaixe: { atributo: string; exigido: string; ofertado: string; resultado: string; fonte?: Source }[];
-  fontes: Source[]; anvisa: string; preco: number | null; estimativa: number | null;
+  fontes: Source[]; anvisa: string;
+  regularizacao?: 'vigente' | 'vencido' | 'nao_encontrado' | 'nao_verificado';
+  cobertura?: 'declarada_pelo_cliente' | 'nao_comprovada'; preco: number | null; estimativa: number | null;
   rastro: Trace[]; dossie?: boolean;
 };
 export type Dossier = {
@@ -38,7 +40,7 @@ export type Origin = 'amostra' | 'integrado';
 export type ApiResponse<T> = { origem: Origin; dados: T };
 export type DecisionResult =
   | { status: 'salva'; registro: SavedDecision }
-  | { status: 'ausente' | 'resolvida' };
+  | { status: 'ausente' | 'resolvida' | 'expirada' };
 
 // The integrated implementation must persist the resolution and audit event atomically.
 export interface DemoStore {

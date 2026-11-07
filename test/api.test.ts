@@ -4,8 +4,8 @@ import { test, type TestContext } from 'node:test';
 import { createServer } from '../src/server/api.ts';
 import { createSampleStore } from '../src/server/sample.ts';
 
-async function fixture(t: TestContext) {
-  const server = createServer(createSampleStore());
+async function fixture(t: TestContext, store = createSampleStore()) {
+  const server = createServer(store);
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   t.after(() => new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())));
@@ -60,4 +60,13 @@ test('rejects invalid, unknown and concurrent decisions', async t => {
   assert.deepEqual(responses.map(response => response.status).sort(), [200, 409]);
   const today = (await (await get('hoje')).json()).dados;
   assert.equal(today.eventos.filter((event: { tipo: string }) => event.tipo === 'decisao-humana').length, 1);
+});
+
+test('reports an expired escalation as a conflict', async t => {
+  const store = createSampleStore();
+  store.decidir = () => ({ status: 'expirada' });
+  const { decide } = await fixture(t, store);
+  const response = await decide('cnd', { decisao: 'aprovar' });
+  assert.equal(response.status, 409);
+  assert.equal((await response.json()).erro, 'O prazo desta escalada terminou.');
 });

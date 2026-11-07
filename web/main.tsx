@@ -162,6 +162,14 @@ function QueueScreen({ rows }: { rows: QueueItem[] }) {
   </>;
 }
 
+const regularizacaoAnvisa = {
+  vigente: 'Vigente', vencido: 'Vencida', nao_encontrado: 'Registro não encontrado',
+  nao_verificado: 'Não verificada',
+};
+const coberturaAnvisa = {
+  declarada_pelo_cliente: 'Declarada pelo cliente', nao_comprovada: 'Não comprovada',
+};
+
 function ItemScreen({ item }: { item: Item }) {
   return <>
     <Internal path="fila">Voltar à fila</Internal>
@@ -178,6 +186,12 @@ function ItemScreen({ item }: { item: Item }) {
     </section>
     <section className="panel"><h2>Preço e registro sanitário</h2>
       <Metrics items={[[ 'Preço da proposta', money(item.preco, 'BRL') ], [ 'Estimativa', money(item.estimativa, 'BRL') ]]} />
+      <dl>
+        <dt>Regularização na ANVISA</dt>
+        <dd>{item.regularizacao ? regularizacaoAnvisa[item.regularizacao] : 'Não verificada'}</dd>
+        <dt>Cobertura do produto ofertado</dt>
+        <dd>{item.cobertura ? coberturaAnvisa[item.cobertura] : 'Não comprovada'}</dd>
+      </dl>
       <p>{item.anvisa}</p>
       <ul>{item.fontes.map(source => <li key={source.url}><Evidence source={source} /></li>)}</ul>
       <Trail entries={item.rastro} />
