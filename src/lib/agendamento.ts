@@ -55,11 +55,14 @@ export async function executarAcoesDoTurno(d: {
       d.store.logEvent({ tipo: 'bloqueio', resumo: 'ações do turno suspensas: foto da análise ausente ou pregão marcado pelo monitor; reavaliar antes de agir', tender: id });
       continue;
     }
+    const desteTurno = new Set(Object.entries(d.state.decisions)
+      .filter(([k, decisao]) => k.startsWith(id + '#') && decisao?.estado)
+      .map(([k]) => Number(k.split('#')[1])));
     for (const [k, draft] of Object.entries(d.state.drafts)) {
       if (!k.startsWith(id + '#') || !draft?.texto) continue;
       const item = Number(k.split('#')[1]);
-      // Evidência só vale se o encaixe foi gravado nesta análise, não num turno anterior à errata.
-      const evidencias = d.state.fits[k] ? motivosDaEvidencia(d.store, id, item) : new Set<string>();
+      // Evidência só vale se o encaixe e a decisão foram gravados nesta análise, não num turno anterior à errata.
+      const evidencias = d.state.fits[k] && desteTurno.has(item) ? motivosDaEvidencia(d.store, id, item) : new Set<string>();
       const motivo = ORDEM_MOTIVO.find(m => evidencias.has(m));
       if (!motivo) {
         if (!d.store.openEscalations().some(e => e.tender === id && e.item === String(item) && e.motivo === SEM_EVIDENCIA)) {
