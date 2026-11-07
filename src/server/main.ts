@@ -1,5 +1,8 @@
 import { access, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { openStore } from '../lib/store.ts';
+import { createReadModel } from '../lib/read-model.ts';
+import { createIntegratedStore } from './integrated.ts';
 import { createServer } from './api.ts';
 import { createSampleStore, type SampleState } from './sample.ts';
 
@@ -11,20 +14,22 @@ async function loadSample(): Promise<SampleState | undefined> {
 const mode = process.argv[2];
 const webRoot = fileURLToPath(new URL('../../web/dist', import.meta.url));
 
-if (mode === 'integrado') {
-  console.error('Modo integrado indisponível neste checkout. São necessários o store SQLite do Dev1 e os contratos de dossiê e prova do Dev2.');
-  process.exitCode = 1;
-} else if (mode === 'amostra') {
+if (mode === 'amostra' || mode === 'integrado') {
   try {
     await access(new URL('../../web/dist/index.html', import.meta.url));
-    const server = createServer(createSampleStore(await loadSample()), webRoot);
+    const store = mode === 'integrado' ? openStore() : undefined;
+    const state = store
+      ? createIntegratedStore(store, createReadModel(store, { actions: () => store.getActions() }))
+      : createSampleStore(await loadSample());
+    const server = createServer(state, webRoot);
     server.on('error', (error: NodeJS.ErrnoException) => {
-      console.error('Não foi possível iniciar a demo em 127.0.0.1:8080 (' + error.code + ').');
+      console.error('Não foi possível iniciar o Lance em 127.0.0.1:8080 (' + error.code + ').');
+      store?.close();
       process.exitCode = 1;
     });
-    server.listen(8080, '127.0.0.1', () => console.log('Lance • amostra descartável • http://127.0.0.1:8080'));
+    server.listen(8080, '127.0.0.1', () => console.log('Lance • ' + mode + ' • http://127.0.0.1:8080'));
   } catch (error) {
-    console.error('Falha ao iniciar a demo. Confira o build e, com --dev2, fixtures/estado-exemplo.json.',
+    console.error('Falha ao iniciar o Lance. Confira o build e a fonte de dados selecionada.',
       error instanceof Error ? error.message : '');
     process.exitCode = 1;
   }

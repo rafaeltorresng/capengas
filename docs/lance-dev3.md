@@ -31,10 +31,10 @@ cloudflared tunnel --url http://127.0.0.1:8080
 
 Abra a URL temporária em outro computador. Visitantes compartilham o estado descartável daquela instância. Reinicie o servidor da amostra antes de uma nova apresentação para reabrir a escalada inicial.
 
-## Integração pendente
+## Modo integrado
 
-O adaptador em `src/server/integrated.ts` recebe a projeção de leitura do Dev2 e delega a decisão ao `resolveEscalation` do Dev1. A execução integrada depende dos módulos concretos do SQLite e da projeção. Quando chegarem, ligar o ponto de entrada e repetir o percurso com um pregão real, verificando a persistência da decisão e do evento.
+O adaptador em `src/server/integrated.ts` recebe a projeção de leitura do Dev2 e delega a decisão ao `resolveEscalation` do Dev1. Rode `npm.cmd run integrado` com o build pronto. O servidor usa `data/lance.db` ou o caminho definido em `LANCE_DB`. Para demonstrar o fluxo, use um banco preenchido pelo turno. O túnel público usa apenas a amostra interna.
 
-Para revisar localmente a amostra sintética do Dev2 quando ela for publicada, gere `fixtures/estado-exemplo.json` conforme a [issue #4](https://github.com/rafaeltorresng/capengas/issues/4) e rode `npm.cmd run demo -- --dev2`. O comando de demo padrão continua usando a amostra interna. Use o padrão para o túnel público.
+Para revisar localmente a amostra sintética do Dev2 gere `fixtures/estado-exemplo.json` conforme a [issue #4](https://github.com/rafaeltorresng/capengas/issues/4) e rode `npm.cmd run demo -- --dev2`. O comando de demo padrão continua usando a amostra interna. Use o padrão para o túnel público.
 
 A tela **Prova** identifica as medições pendentes. O resultado histórico de encaixe cobre seis pares com fichas sintéticas, avaliados três vezes. O protocolo na amostra interna é fictício e representa uma verificação no sandbox. A tela de item separa regularização na ANVISA de cobertura do produto ofertado.

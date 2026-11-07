@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createReadModel } from '../src/lib/read-model.ts';
 import { openStore } from '../src/lib/store.ts';
 import { once } from 'node:events';
 import { test, type TestContext } from 'node:test';
@@ -99,16 +100,31 @@ test('persists a decision and one audit event through HTTP and SQLite', async t 
   const store = openStore(path, { now: () => new Date('2026-11-08T10:00:00-03:00') });
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const row = store.openEscalation({
-    tender: 'demo-17', motivo: 'CND', recomendacao: 'Atualizar', prazo: '2026-11-08T11:00:00-03:00',
+    tender: '77816510000166/2026/348', motivo: 'CND', recomendacao: 'Atualizar', prazo: '2026-11-08T11:00:00-03:00',
   });
-  const sample = createSampleStore();
-  const api = createIntegratedStore(store, {
-    ...sample,
-    hoje: () => ({ ...sample.hoje(), eventos: store.events() }),
-    escaladas: () => store.openEscalations().map(entry => ({ ...entry, pregao: 'Pregão de teste' })),
+  store.upsertTender({
+    id: row.tender, orgao: 'Município de Francisco Beltrão', uf: 'PR', abertura: null,
+    situacao: 'Divulgada', plataforma: 'Compras.gov.br', arquivosHash: null, ultimoCheck: null,
   });
+  store.upsertItems(row.tender, [{
+    tenderId: row.tender, numero: 40, descricao: 'Item de teste', catalogCode: null,
+    quantidade: 1, estimativa: null, sigiloso: false,
+  }]);
+  store.upsertDossie(row.tender, {
+    tender: row.tender, pregao: 'Pregão 348/2026', versao: '1', checklist: [], documentos: [], pendencias: [], itens: [],
+  });
+  store.upsertDecision({ tenderId: row.tender, item: 40, produto: 'P2',
+    estado: 'escalar', motivos: ['Conferir a CND'], precoProposto: null });
+  const api = createIntegratedStore(store, createReadModel(store, { actions: () => store.getActions() }));
   const { get, decide } = await fixture(t, api);
   try {
+    const tender = encodeURIComponent(row.tender);
+    for (const route of ['hoje', 'fila', 'itens/' + tender + '/40', 'dossies/' + tender, 'escaladas', 'prova']) {
+      const response = await get(route);
+      assert.equal(response.status, 200, route);
+      assert.equal((await response.json()).origem, 'integrado');
+    }
+    assert.equal((await (await get('itens/' + tender + '/40')).json()).dados.prazo, null);
     assert.equal((await decide(row.id, { decisao: 'ajustar', ajuste: 'Atualizar CND' })).status, 200);
     assert.equal((await decide(row.id, { decisao: 'aprovar' })).status, 409);
     assert.deepEqual((await (await get('escaladas')).json()).dados, []);
