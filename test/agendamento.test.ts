@@ -29,7 +29,10 @@ function setup(o: { limite?: number; recheck?: (id: string) => Promise<Recheque>
     store, company, demo, limite: o.limite ?? 1,
     analisar: async (state, ids) => {
       calls.analisar.push(ids); calls.estados.push(state);
-      for (const id of ids) state.items[id] = [{ numero: 1, descricao: 'cabo de bisturi', quantidade: 10 }];
+      for (const id of ids) {
+        state.items[id] = [{ numero: 1, descricao: 'cabo de bisturi', quantidade: 10 }];
+        state.decisions[`${id}#1`] = { estado: 'escalar', motivos: ['cobertura não verificada'], produto: 'P1', precoProposto: null };
+      }
       return { stopped: 'final' };
     },
     snapshot: async (id, s) => { calls.snapshot.push(id); s.upsertTender({ ...s.getTender(id)!, arquivosHash: `h-${id}`, reavaliar: false }); },
