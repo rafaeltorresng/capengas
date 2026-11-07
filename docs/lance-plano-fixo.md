@@ -105,6 +105,8 @@ Portal sandbox ◄── envio + verificação     Tela (React): linha do tempo,
 
 ## 6. Cronograma e responsáveis
 
+> **Atualizado:** o cronograma detalhado, com tarefas, estimativas e dependências por dev a partir das 15h, está em `lance-execucao.md` e substitui a tabela abaixo.
+
 | Horário | Dev 1 — dados, regras e política | Dev 2 — agente | Dev 3 — tela e pitch |
 |---|---|---|---|
 | **13:15–14:00** | Repositório de código com o núcleo e os 68 testes; `.gitignore` com `.env`; persistência do estado em SQLite | Paginação e filtro por catálogo (O1); prompt do digital worker | Wireframe: linha do tempo, fila, item, dossiê, escaladas |
