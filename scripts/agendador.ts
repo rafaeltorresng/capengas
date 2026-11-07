@@ -2,6 +2,7 @@
 // Uso: npm run agendador                 (fica rodando; Ctrl+C para parar)
 //      npm run agendador -- --uma-vez    (um tick e sai)
 //      npm run agendador -- --demo 30    (um turno de demonstração daqui a 30 s, depois segue agendado)
+//      npm run agendador -- --demo 0 --uma-vez   (só o turno de demonstração e sai)
 // Pregões por turno: LANCE_PREGOES_POR_TURNO (padrão 1). Banco: LANCE_DB. Portal: LANCE_SANDBOX_URL (padrão: sandbox local).
 // O modelo só analisa e rascunha; quem envia é o código, na fase de ações, pela porta executarAcao.
 import { readFileSync } from 'node:fs';
@@ -47,7 +48,8 @@ process.on('SIGINT', fechar); process.on('SIGTERM', fechar);
 
 log(`agendador ligado; banco ${process.env.LANCE_DB ?? 'data/lance.db'}; portal ${sandboxUrl}; ${JSON.stringify(s.status())}`);
 if (args.includes('--uma-vez')) {
-  log(`tick: ${JSON.stringify(await s.tick())}`);
+  if (demoSeg != null) log(`turno de demonstração: ${await s.runNext(demoSeg * 1000)}`);
+  else log(`tick: ${JSON.stringify(await s.tick())}`);
   sbx?.close(); store.close();
 } else {
   if (demoSeg != null) log(`turno de demonstração: ${await s.runNext(demoSeg * 1000)}`);
