@@ -35,6 +35,7 @@ describe('executarAcoesDoTurno', () => {
   test('rascunho com evidência de "não informado" e prazo aberto: envia sozinho e confirma o protocolo', async () => {
     const { store, state, posts, deps } = setup();
     state.drafts[`${T}#40`] = { texto: TEXTO, prazo: '2026-11-18' };
+    state.decisions[`${T}#40`] = { estado: 'esclarecer', produto: 'P1', motivos: ['m'], precoProposto: null };
     const r = await executarAcoesDoTurno({ ...deps, state, ids: [T] });
     assert.equal(posts.length, 1);
     assert.match(posts[0].url, /\/api\/esclarecimentos$/);
@@ -45,6 +46,7 @@ describe('executarAcoesDoTurno', () => {
   test('rascunho sem evidência gravada: abre escalada e não envia', async () => {
     const { store, state, posts, deps } = setup({ atributos: { attributes: [{ atributo: 'material', veredito: 'atende' }] } });
     state.drafts[`${T}#40`] = { texto: TEXTO, prazo: '2026-11-18' };
+    state.decisions[`${T}#40`] = { estado: 'esclarecer', produto: 'P1', motivos: ['m'], precoProposto: null };
     const r = await executarAcoesDoTurno({ ...deps, state, ids: [T] });
     assert.equal(posts.length, 0);
     assert.equal(r.esclarecimentos.escalada, 1);
@@ -57,6 +59,7 @@ describe('executarAcoesDoTurno', () => {
   });
   test('item em disputar, dentro do limite: envia a proposta com o preço e a quantidade do store', async () => {
     const { state, posts, deps } = setup({ estado: 'disputar', preco: 50, quantidade: 10 });
+    state.decisions[`${T}#40`] = { estado: 'disputar', produto: 'P1', motivos: ['m'], precoProposto: 50 };
     const r = await executarAcoesDoTurno({ ...deps, state, ids: [T] });
     assert.equal(posts.length, 1);
     assert.match(posts[0].url, /\/api\/propostas$/);
@@ -65,6 +68,7 @@ describe('executarAcoesDoTurno', () => {
   });
   test('item em disputar acima do limite: escala, zero POST', async () => {
     const { store, state, posts, deps } = setup({ estado: 'disputar', preco: 90, quantidade: 1000 });
+    state.decisions[`${T}#40`] = { estado: 'disputar', produto: 'P1', motivos: ['m'], precoProposto: 90 };
     const r = await executarAcoesDoTurno({ ...deps, state, ids: [T] });
     assert.equal(posts.length, 0);
     assert.equal(r.propostas.escalada, 1);
@@ -80,11 +84,33 @@ describe('executarAcoesDoTurno', () => {
   test('repetir a fase no mesmo estado não faz outro POST (chave idempotente)', async () => {
     const { state, posts, deps } = setup();
     state.drafts[`${T}#40`] = { texto: TEXTO, prazo: '2026-11-18' };
+    state.decisions[`${T}#40`] = { estado: 'esclarecer', produto: 'P1', motivos: ['m'], precoProposto: null };
     await executarAcoesDoTurno({ ...deps, state, ids: [T] });
     await executarAcoesDoTurno({ ...deps, state, ids: [T] });
     assert.equal(posts.length, 1);
   });
 });
+
+test('decisão antiga, sem decisão neste turno, não é enviada mesmo com a foto renovada', async () => {
+    const { state, posts, deps } = setup({ estado: 'disputar', reavaliar: false });
+    const r = await executarAcoesDoTurno({ ...deps, state, ids: [T] });
+    assert.equal(posts.length, 0);
+    assert.equal(r.propostas.confirmada, undefined);
+  });
+
+test('decisão nova do item 40 não libera o item 41 que ficou só com a decisão antiga', async () => {
+    const { store, state, posts, deps } = setup({ estado: 'disputar', preco: 50, quantidade: 10 });
+    store.upsertItems(T, [
+      { tenderId: T, numero: 40, descricao: 'tesoura', catalogCode: null, quantidade: 10, estimativa: 100, sigiloso: false },
+      { tenderId: T, numero: 41, descricao: 'cabo', catalogCode: null, quantidade: 10, estimativa: 100, sigiloso: false },
+    ]);
+    store.upsertDecision({ tenderId: T, item: 41, produto: 'P1', estado: 'disputar', motivos: ['antiga'], precoProposto: 50 });
+    state.decisions[`${T}#40`] = { estado: 'disputar', produto: 'P1', motivos: ['nova'], precoProposto: 50 };
+    const r = await executarAcoesDoTurno({ ...deps, state, ids: [T] });
+    assert.equal(posts.length, 1);
+    assert.deepEqual(posts[0].body.itens.map((i: any) => i.numero), [40]);
+    assert.equal(r.propostas.confirmada, 1);
+  });
 
 describe('turno agendado com fase de ações', () => {
   test('a fase de ações roda depois da análise e o resumo conta os envios', async () => {
@@ -92,7 +118,7 @@ describe('turno agendado com fase de ações', () => {
     const demo: DemoSelecao = { pregoes: [{ id: '00394429000100/2026/2941', orgao: 'AERONÁUTICA', uf: 'GO', abertura: '2026-11-30T09:30', plataforma: 'Compras.gov.br' }] };
     const ordem: string[] = [];
     const run = createAnalysisTurn({ store, company, demo,
-      analisar: async (state, ids) => { ordem.push('analisar'); state.items[ids[0]] = [{ numero: 1, descricao: 'x', quantidade: 1 }]; return { stopped: 'final' }; },
+      analisar: async (state, ids) => { ordem.push('analisar'); state.items[ids[0]] = [{ numero: 1, descricao: 'x', quantidade: 1 }]; state.decisions[`${ids[0]}#1`] = { estado: 'escalar', motivos: ['m'], produto: 'P1', precoProposto: null }; return { stopped: 'final' }; },
       snapshot: async (id, s) => { ordem.push('foto'); s.upsertTender({ ...s.getTender(id)!, arquivosHash: 'h' }); },
       recheck: deps.recheck,
       agir: async (_state, ids) => { ordem.push(`agir:${ids.join(',')}`); return { esclarecimentos: { confirmada: 1 }, propostas: {}, bloqueados: 0 }; },

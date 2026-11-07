@@ -55,9 +55,13 @@ export async function executarAcoesDoTurno(d: {
       d.store.logEvent({ tipo: 'bloqueio', resumo: 'ações do turno suspensas: foto da análise ausente ou pregão marcado pelo monitor; reavaliar antes de agir', tender: id });
       continue;
     }
+    const desteTurno = new Set(Object.entries(d.state.decisions)
+      .filter(([k, decisao]) => k.startsWith(id + '#') && decisao?.estado)
+      .map(([k]) => Number(k.split('#')[1])));
     for (const [k, draft] of Object.entries(d.state.drafts)) {
       if (!k.startsWith(id + '#') || !draft?.texto) continue;
       const item = Number(k.split('#')[1]);
+      if (!desteTurno.has(item)) continue;
       const evidencias = motivosDaEvidencia(d.store, id, item);
       const motivo = ORDEM_MOTIVO.find(m => evidencias.has(m));
       if (!motivo) {
@@ -70,7 +74,7 @@ export async function executarAcoesDoTurno(d: {
       }
       conta(r.esclarecimentos, (await executarAcao({ tipo: 'enviar_esclarecimento', tenderId: id, item, texto: draft.texto, motivo }, deps)).resultado);
     }
-    const disputar = [...new Set(d.store.getDecisions(id).filter(x => x.estado === 'disputar').map(x => x.item))];
+    const disputar = [...new Set(d.store.getDecisions(id).filter(x => x.estado === 'disputar' && desteTurno.has(x.item)).map(x => x.item))];
     if (disputar.length) conta(r.propostas, (await executarAcao({ tipo: 'enviar_proposta', tenderId: id, itens: disputar }, deps)).resultado);
   }
   return r;
@@ -80,7 +84,7 @@ const ROTULO: Record<ResultadoAcao['resultado'], [string, string]> = {
   confirmada: ['confirmado', 'confirmada'], escalada: ['escalado', 'escalada'], bloqueada: ['bloqueado', 'bloqueada'],
   reconciliar: ['a reconciliar', 'a reconciliar'], falhou: ['com falha', 'com falha'],
 };
-const plural = (n: number, s: string) => n === 1 ? s : s.split(' ').map(w => w === 'a' || w === 'com' ? w : w + 's').join(' ');
+const plural = (n: number, s: string) => n === 1 ? s : s.replaceAll('pregão', 'pregões').replaceAll('esclarecimento', 'esclarecimentos').replaceAll('proposta', 'propostas').replaceAll('confirmado', 'confirmados').replaceAll('confirmada', 'confirmadas').replaceAll('escalado', 'escalados').replaceAll('escalada', 'escaladas').replaceAll('bloqueado', 'bloqueados').replaceAll('bloqueada', 'bloqueadas');
 export function textoAcoes(r: ResumoAcoes): string {
   const partes: string[] = [];
   for (const [k, n] of Object.entries(r.esclarecimentos) as [ResultadoAcao['resultado'], number][]) partes.push(`${n} ${plural(n, `esclarecimento ${ROTULO[k][0]}`)}`);
