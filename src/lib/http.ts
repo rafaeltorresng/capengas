@@ -31,6 +31,15 @@ export async function fetchJson(url: string, o: FetchOpts = {}) {
     const buf = readFileSync(cp);
     return { data: o.raw ? buf : JSON.parse(buf.toString('utf8')), fromCache: true, stale: false, attempts: 0, ms: 0 };
   }
+  // Modo offline da demo (LANCE_OFFLINE=1): serve o cache mesmo vencido e nunca vai à rede.
+  // Leituras "frescas" (allowStale: false, usadas no recheque) falham, e o recheque bloqueia como fonte indisponível.
+  if (process.env.LANCE_OFFLINE === '1') {
+    if (cp && allowStale && existsSync(cp)) {
+      const buf = readFileSync(cp);
+      return { data: o.raw ? buf : JSON.parse(buf.toString('utf8')), fromCache: true, stale: true, attempts: 0, ms: 0 };
+    }
+    throw new HttpError(`offline (LANCE_OFFLINE=1) e sem cache: ${url}`, null, 0);
+  }
   let lastErr: HttpError | null = null;
   const t0 = performance.now();
   for (let attempt = 1; attempt <= retries + 1; attempt++) {

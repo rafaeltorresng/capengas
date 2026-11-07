@@ -47,7 +47,7 @@ Primeiro o que é **regra pura** (mais valor, sem dependência, fácil de testar
 | **5** | ✅ Recheque antes de agir + verificação de esclarecimento | 1 h | Corrige as duas falhas reais do turno |
 | **6** | ✅ `monitor.ts`: detectar mudança nos pregões acompanhados | 1 h | Reação a eventos reais |
 | **7** | ✅ `scheduler.ts`: turnos e monitor sem clique | 30 min | Autonomia de verdade |
-| **8** | Dados da demo: filtro Compras.gov.br, atualização da ANVISA, cache pré-carregado | 45 min | Demo estável |
+| **8** | ✅ Dados da demo: filtro Compras.gov.br, cache pré-carregado, modo offline | 45 min | Demo estável |
 | 9 (desejável) | Calendário do cofre | 45 min | "Renove a CND até X ou perde N pregões" |
 | 10 (desejável) | Semáforo financeiro do órgão (SICONFI) | 1 h | Informação extra no dossiê |
 
