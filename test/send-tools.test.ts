@@ -83,6 +83,9 @@ test('esclarecimento sem evidência gravada não sai, mesmo com motivo automáti
   assert.equal(r.resultado, 'escalada');
   assert.match(r.motivo, /não confere/);
   assert.equal(sbx.esclarecimentos.length, 0);
+  assert.equal(store.openEscalations().filter(e => e.item === '40' && /não confere/.test(e.motivo)).length, 1);
+  await tool('send_esclarecimento').run({ tender_id: TENDER, item: 40, motivo: 'nao_informado' }, ctx);
+  assert.equal(store.openEscalations().filter(e => e.item === '40' && /não confere/.test(e.motivo)).length, 1);
   store.close();
   sbx.close();
 });

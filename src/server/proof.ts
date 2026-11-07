@@ -1,4 +1,3 @@
-import historical from '../../research/evals-kimi-k2.6.json' with { type: 'json' };
 import type { Event, Proof } from './contract.ts';
 
 function lastCompletedTurn(events: readonly Event[]) {
@@ -32,25 +31,16 @@ function lastCompletedTurn(events: readonly Event[]) {
   };
 }
 
-export function buildProof(events: readonly Event[]): Proof {
-  const { encaixeTecnico, exigenciasEdital, codigoXDescricao } = historical.resultado;
+export function buildProof(report: Proof, events: readonly Event[]): Proof {
   const turn = lastCompletedTurn(events);
   const time = turn ? new Intl.DateTimeFormat('pt-BR', {
     timeZone: 'America/Fortaleza', dateStyle: 'short', timeStyle: 'short',
   }).format(new Date(turn.horario)) : null;
   return {
-    fonte: 'Avaliações históricas do spike de 07/11/2026, publicadas em research/evals-kimi-k2.6.json. '
+    ...report,
+    fonte: report.fonte + ' '
       + (time ? 'Custo e tempo vêm do último turno encerrado no banco, em ' + time + '.'
         : 'O banco ainda não tem um turno encerrado com horários válidos.'),
-    avaliacoes: [
-      { nome: 'Encaixe técnico', valor: encaixeTecnico.acertos + ' de ' + encaixeTecnico.execucoes
-        + ' (' + encaixeTecnico.paresDistintos + ' pares com fichas sintéticas, ' + historical.repeticoes + ' repetições)' },
-      { nome: 'Exigências do edital', valor: exigenciasEdital.camposCertos + ' de ' + exigenciasEdital.campos
-        + ' campos em ' + exigenciasEdital.editais + ' editais' },
-      { nome: 'Código e descrição', valor: codigoXDescricao.acertos + ' de ' + codigoXDescricao.execucoes },
-    ],
-    cenarios: [],
-    concordancia: null,
     custoUsd: turn?.custoUsd ?? null,
     duracaoMs: turn?.duracaoMs ?? null,
   };
