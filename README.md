@@ -50,6 +50,7 @@ npm run smoke        # confere a chave e o tool calling do modelo
 npm run turno        # turno ponta a ponta em 3 pregões reais (usa o modelo; ~US$ 0,20)
 npm run evals        # evals do modelo com gabarito (~US$ 0,80)
 node scripts/estado-exemplo.ts # gera a amostra identificada para integrar a tela, sem rede ou modelo
+npm run errata:sintetica  # caso da quantidade (#25, fase 1) num banco importado; ver o cabeçalho do script
 ```
 
 | Pasta | Conteúdo |

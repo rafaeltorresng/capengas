@@ -7,6 +7,9 @@ import { buildProof } from './proof.ts';
 import { createServer } from './api.ts';
 import { createSampleStore, type SampleState } from './sample.ts';
 import { relatorioProva } from '../lib/cenarios.ts';
+import { sancoesDoArquivo } from '../lib/carteira.ts';
+import { DATA } from '../lib/data.ts';
+import { join } from 'node:path';
 
 async function loadSample(): Promise<SampleState | undefined> {
   if (process.argv[3] !== '--dev2') return undefined;
@@ -22,9 +25,13 @@ if (mode === 'amostra' || mode === 'integrado') {
     const store = mode === 'integrado' ? openStore() : undefined;
     const company = store ? JSON.parse(await readFile(new URL('../../fixtures/company.json', import.meta.url), 'utf8')) : null;
     const prova = store ? await relatorioProva() : null;
+    // Pauta: semáforo fiscal dos pregões da demo e CEIS do cliente (arquivo do Portal da Transparência, se houver).
+    const demo = store ? JSON.parse(await readFile(new URL('../../fixtures/demo.json', import.meta.url), 'utf8')) : null;
+    const semaforos = Object.fromEntries((demo?.pregoes ?? []).filter((p: any) => p.semaforoFiscal?.status).map((p: any) => [p.id, p.semaforoFiscal]));
+    const sancoes = store ? sancoesDoArquivo(process.env.LANCE_CEIS_CSV ?? join(DATA, 'ceis.csv'), company.empresa?.cnpj) : null;
     const state = store
       ? createIntegratedStore(store, createReadModel(store, {
-        actions: () => store.getActions(), cofre: company.cofre,
+        actions: () => store.getActions(), cofre: company.cofre, semaforos, sancoes,
         proof: () => buildProof(prova!, store.events()),
       }))
       : createSampleStore(await loadSample());

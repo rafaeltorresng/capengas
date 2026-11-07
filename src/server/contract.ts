@@ -1,6 +1,9 @@
 import type { AnvisaCheck } from '../lib/contracts.ts';
 import type { AlertaCofre } from '../lib/cofre.ts';
-export type { AlertaCofre };
+import type { Pauta } from '../lib/pauta.ts';
+export type { AlertaCofre, Pauta };
+export type { LinhaPauta, Papel, TipoLinha, Urgencia } from '../lib/pauta.ts';
+export type { Prazo, Origem } from '../lib/prazos.ts';
 export type { Decision, DecisionResult, SavedDecision, Trace } from '../lib/contracts.ts';
 import type { Decision, DecisionResult, Trace } from '../lib/contracts.ts';
 
@@ -64,5 +67,7 @@ export interface DemoStore {
   dossie(tender: string): Dossier | undefined;
   escaladas(): Escalation[];
   prova(): Proof;
+  /** Pauta da manhã (#25, fase 1): prazos legais, diferenças da errata, cofre e sanção. */
+  pauta(): Pauta;
   decidir(id: string, decision: Decision): DecisionResult;
 }

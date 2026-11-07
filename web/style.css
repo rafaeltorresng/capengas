@@ -83,6 +83,16 @@ main { padding-block: 1.5rem 3rem; overflow-wrap: anywhere; }
 .cofre-alerts { list-style: none; padding: 0; margin: 0; }
 .cofre-alerts > li + li { border-top: 1px solid var(--line); padding-top: .75rem; margin-top: .75rem; }
 .cofre-alerts ul { margin-block: .4rem 0; }
+.agenda { border-inline-start: .25rem solid var(--action); }
+.agenda-lines { list-style: none; padding: 0; margin: 0; }
+.agenda-line { padding-block: .75rem; }
+.agenda-line + .agenda-line { border-top: 1px solid var(--line); }
+.agenda-line h3 { margin-block: .3rem .2rem; font-size: 1.05rem; }
+.agenda-line p { margin-block: 0 .35rem; }
+.agenda-meta { display: flex; flex-wrap: wrap; gap: .3rem .9rem; font-size: .9rem; }
+.agenda-role { font-weight: 700; color: var(--action); }
+.agenda-hoje .agenda-meta time, .agenda-vencido .agenda-meta time, .agenda-proximos_3_dias .agenda-meta time { color: var(--attention); font-weight: 700; }
+.agenda-synthetic { color: var(--attention); }
 .trace { margin-block-start: .45rem; }
 .trace ul, .checklist { list-style: none; padding: 0; }
 .trace li { margin-bottom: .55rem; padding-inline-start: .65rem; border-inline-start: 2px solid var(--line); }

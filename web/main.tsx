@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { ApiResponse, CofreAlert, DeadlineKind, Decision, Dossier, Escalation, Item, Proof, QueueItem, SavedDecision, Source, Today, Trace } from '../src/server/contract.ts';
+import type { ApiResponse, CofreAlert, DeadlineKind, Decision, Dossier, Escalation, Item, LinhaPauta, Origem, Papel, Pauta, Proof, QueueItem, SavedDecision, Source, Today, Trace, Urgencia } from '../src/server/contract.ts';
 import './style.css';
 
 const fortaleza = 'America/Fortaleza';
@@ -25,7 +25,7 @@ function deadlineLabel(value: string | null, kind: DeadlineKind = 'desconhecido'
 
 const itemPath = (tender: string, item: string) => 'itens/' + encodeURIComponent(tender) + '/' + encodeURIComponent(item);
 const dossierPath = (tender: string) => 'dossies/' + encodeURIComponent(tender);
-const nav = [['hoje', 'Hoje'], ['fila', 'Fila'], ['escaladas', 'Escaladas'], ['prova', 'Prova']] as const;
+const nav = [['hoje', 'Hoje'], ['pauta', 'Pauta'], ['fila', 'Fila'], ['escaladas', 'Escaladas'], ['prova', 'Prova']] as const;
 
 async function request<T>(path: string, options?: RequestInit): Promise<ApiResponse<T>> {
   const response = await fetch('/api/' + path, options);
@@ -157,6 +157,53 @@ function TodayScreen({ data }: { data: Today }) {
       <Metrics items={[[ 'Envios registrados', data.envios ]]} />
       <ul>{data.porDecisao.map(row => <li key={row.estado}>{row.estado}: {row.quantidade}</li>)}</ul>
     </section>
+  </>;
+}
+
+const papelLabels: Record<Papel, string> = { analista: 'Analista', juridico: 'Jurídico', financeiro: 'Financeiro', lance: 'Lance' };
+const origemLabels: Record<Origem, string> = {
+  publicado: 'Publicado no PNCP', calculado: 'Calculado pela regra', aguardando: 'Aguardando a fonte', informado_cliente: 'Informado pela empresa',
+};
+const urgenciaLabels: Record<Urgencia, string> = { vencido: 'Vencido', hoje: 'Vence hoje', proximos_3_dias: 'Próximos 3 dias', depois: 'Mais adiante' };
+const dayOf = (value: string) => day.format(new Date(value + 'T12:00:00-03:00'));
+
+function AgendaLine({ line }: { line: LinhaPauta }) {
+  return <li className={'agenda-line' + (line.urgencia ? ' agenda-' + line.urgencia : '')}>
+    <div className="agenda-meta">
+      <span className="agenda-role">{papelLabels[line.papel]}</span>
+      {line.ate && <time dateTime={line.ate}>Até {dayOf(line.ate)}</time>}
+      {line.urgencia && line.acionavel && <span>{urgenciaLabels[line.urgencia]}</span>}
+      <span>{origemLabels[line.origem]}</span>
+      {line.sintetico && <span className="agenda-synthetic">Errata sintética de teste</span>}
+    </div>
+    <h3>{line.acao}</h3>
+    <p>{line.oQueMudou}</p>
+    {line.prazo?.artigo && <small>Base: {line.prazo.artigo} da Lei 14.133
+      {line.prazo.divergencia && ` · lei: ${dayOf(line.prazo.divergencia.lei)}, edital: ${dayOf(line.prazo.divergencia.edital)}`}
+    </small>}
+    <div className="evidence-links">
+      {line.fonte && <Evidence source={line.fonte} quote />}
+      {line.tenderId && line.item !== undefined && line.itemDisponivel && <Internal path={itemPath(line.tenderId, String(line.item))}>Abrir item {line.item}</Internal>}
+      {line.tenderId && line.dossie && <Internal path={dossierPath(line.tenderId)}>Abrir dossiê</Internal>}
+      {line.pregoes?.map(id => <span key={id}>Pregão {id}</span>)}
+    </div>
+  </li>;
+}
+
+function AgendaScreen({ data }: { data: Pauta }) {
+  const now = data.linhas.filter(line => line.acionavel);
+  const info = data.linhas.filter(line => !line.acionavel);
+  return <>
+    <Heading title="Pauta" detail={dayOf(data.data) + ' · o que mudou desde ontem e quem precisa agir'} />
+    <Metrics items={[['Para agir', data.contagem.acionaveis], ['Informativas', data.contagem.informativas]]} />
+    <section className="panel agenda" aria-labelledby="agenda-now">
+      <h2 id="agenda-now">Para agir</h2>
+      {now.length ? <ol className="agenda-lines">{now.map(line => <AgendaLine key={line.id} line={line} />)}</ol> : <p>Nada pede ação hoje.</p>}
+    </section>
+    {info.length > 0 && <section className="panel" aria-labelledby="agenda-info">
+      <h2 id="agenda-info">Informativas</h2>
+      <ol className="agenda-lines">{info.map(line => <AgendaLine key={line.id} line={line} />)}</ol>
+    </section>}
   </>;
 }
 
@@ -344,6 +391,7 @@ function App() {
 
   let view;
   if (path === 'hoje') view = <View<Today> path={path}>{data => <TodayScreen data={data} />}</View>;
+  else if (path === 'pauta') view = <View<Pauta> path={path}>{data => <AgendaScreen data={data} />}</View>;
   else if (path === 'fila') view = <View<QueueItem[]> path={path}>{rows => <QueueScreen rows={rows} />}</View>;
   else if (path === 'escaladas') view = <View<Escalation[]> path={path}>{(rows, refresh) => <EscalationScreen rows={rows} refresh={refresh} />}</View>;
   else if (path === 'prova') view = <View<Proof> path={path} poll={false}>{data => <ProofScreen data={data} />}</View>;

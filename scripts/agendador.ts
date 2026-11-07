@@ -12,6 +12,7 @@ import { runAgent } from '../src/lib/agent.ts';
 import { tools } from '../src/lib/tools.ts';
 import { snapshotTender, recheckTender } from '../src/lib/recheck.ts';
 import { createScheduler } from '../src/lib/scheduler.ts';
+import { runMonitor } from '../src/lib/monitor.ts';
 import { createAnalysisTurn, executarAcoesDoTurno } from '../src/lib/agendamento.ts';
 import { startSandbox } from '../src/lib/sandbox.ts';
 
@@ -42,7 +43,10 @@ const runTurn = createAnalysisTurn({
   }),
 });
 
-const s = createScheduler({ store, politica: company.politica, runTurn });
+// O monitor também calcula o diff da errata (sem modelo) para a pauta da manhã.
+const custos = Object.fromEntries(company.catalogo.map((p: { id: string; custo: number }) => [p.id, p.custo]));
+const s = createScheduler({ store, politica: company.politica, runTurn,
+  runMonitor: st => runMonitor(st, { errata: { politica: company.politica, custos } }) });
 const fechar = () => { s.stop(); sbx?.close(); store.close(); log('agendador parado'); process.exit(0); };
 process.on('SIGINT', fechar); process.on('SIGTERM', fechar);
 
