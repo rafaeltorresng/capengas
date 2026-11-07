@@ -49,7 +49,7 @@ O resultado mantém `tender`, `pregao`, `versao`, `checklist`, `pendencias`, `do
 
 - `get_tender_items({ tender_id, keywords?, page?, page_size? })`: até 25 resumos de 240 caracteres por página. Siga `proxima_pagina`. O resumo curto evita truncar uma página inteira no limite padrão do histórico do agente.
 - `get_tender_item({ tender_id, item, offset? })`: descrição em partes de 6000 caracteres. Siga `proximo_offset` até `null` antes de concluir a comparação.
-- `record_fit`: recusa lista vazia, nomes vazios/duplicados e citações não encontradas; invalida a decisão anterior quando se refaz a análise. Bloqueia divergência de medidas exatas isoladas em mm/cm/m. Não valida toda a semântica ou completude: registra `validacao.cobertura: 'nao_verificada'`.
+- `record_fit`: recusa lista vazia, nomes vazios/duplicados e citações não encontradas; invalida a decisão anterior quando se refaz a análise. Bloqueia divergência de medidas exatas isoladas em mm/cm/m. Não valida toda a semântica. A cobertura só fica `conferida` quando cada campo `nome: valor` do item tem a própria citação; texto sem campo nomeado, ou campo omitido, permanece `nao_verificada`.
 - `record_requirement`: preserva o arquivo de origem quando a citação foi localizada nele. Não inventa página de PDF.
 
 ```bash
@@ -90,4 +90,6 @@ Já na `main`: `decide_item` no contrato novo, persistência do turno de anális
 
 `runAnalysisTurn` (`src/lib/turn.ts`) persiste a análise. Com `origem: 'direto'`, grava `turno_inicio` e `turno_fim`. Com `origem: 'agendador'`, não grava esses dois eventos: o `createScheduler` já os grava, e o teste conjunto garante um único par. O `scripts/analisar.ts` usa a origem direta e não oferece as ferramentas de envio.
 
-Ainda faltam: inventário de exigências técnicas e cobertura; evals distintos e a meta de 3 minutos. As funções legadas de `rules.ts` continuam nos testes e não devem ser removidas sem migrá-los.
+`record_fit` inventaria os campos `nome: valor` do item. Cada campo precisa da própria citação literal; uma citação que junta vários campos só cobre um. Sem campo nomeado, ou com algum de fora, `validacao.cobertura` continua `nao_verificada` e `decide_item` segue com `fit: 'desconhecido'`. Isso não julga a semântica do veredito.
+
+Ainda faltam evals distintos e a meta de 3 minutos. As funções legadas de `rules.ts` continuam nos testes e não devem ser removidas sem migrá-los.

@@ -4,6 +4,7 @@ import { pncp, compras, anvisa, pdf, catmat } from './data.ts';
 import { checkAnvisa, priceStats, brandConcentration, priceCheck, checkDocs, verifyQuote, esclarecimentoDeadline, decideItem } from './rules.ts';
 import { executarAcao, type ActDeps, type PedidoAcao } from './act.ts';
 import { recheckTender } from './recheck.ts';
+import { inventarioCobertura } from './cobertura.ts';
 import type { LanceStore } from './store.ts';
 import { randomUUID } from 'node:crypto';
 
@@ -185,7 +186,7 @@ export const tools: Tool[] = [
     },
   },
   {
-    name: 'record_fit', description: 'Registra o encaixe técnico item × produto, atributo a atributo. Cada atributo exige citação literal do item (citacao_item) e, se atende/não atende, da ficha (citacao_ficha). Citações são conferidas.',
+    name: 'record_fit', description: 'Registra o encaixe técnico item × produto, atributo a atributo. Cada atributo exige citação literal do item (citacao_item) e, se atende/não atende, da ficha (citacao_ficha). Citações são conferidas. Cada campo "nome: valor" do item precisa da própria citação; campo de fora deixa a cobertura não verificada.',
     parameters: { type: 'object', required: ['tender_id', 'item', 'product_id', 'attributes'], properties: {
       tender_id: { type: 'string' }, item: { type: 'integer' }, product_id: { type: 'string' },
       attributes: { type: 'array', items: { type: 'object', required: ['atributo', 'veredito', 'citacao_item'], properties: {
@@ -213,9 +214,11 @@ export const tools: Tool[] = [
       if (errors.length) return { aceito: false, erros: errors, instrucao: 'corrija as citações copiando trechos literais e chame record_fit de novo' };
       const v = a.attributes.map((x: any) => x.veredito);
       const overall = v.includes('nao_atende') ? 'nao_atende' : v.includes('nao_informado') ? 'nao_informado' : 'atende';
-      const validacao = { citacoes: 'conferidas', cobertura: 'nao_verificada', semantica: 'julgamento_modelo' };
+      const inventario = inventarioCobertura(it.descricao ?? '', a.attributes);
+      const validacao = { citacoes: 'conferidas', cobertura: inventario.cobertura, semantica: 'julgamento_modelo', lacunas: inventario.lacunas };
       st.fits[key(a.tender_id, a.item)] = { product_id: a.product_id, overall, attributes: a.attributes, validacao };
-      return { aceito: true, resultado: overall, validacao };
+      return { aceito: true, resultado: overall, validacao, lacunas: inventario.lacunas,
+        instrucao: inventario.cobertura === 'conferida' ? 'todos os campos nomeados do item foram citados' : 'cada campo "nome: valor" do item precisa da própria citação literal; o que faltar continua não verificado' };
     },
   },
   {
