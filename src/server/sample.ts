@@ -26,13 +26,9 @@ export function createSampleStore(): DemoStore {
       const escalada = escaladas.find(entry => entry.id === id);
       if (!escalada) return { status: 'ausente' };
       if (decisoes.has(id)) return { status: 'resolvida' };
-      const now = new Date();
-      const time = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'America/Fortaleza', timeStyle: 'medium', hourCycle: 'h23',
-      }).format(now);
-      const latest = Math.max(Date.parse(hoje.data + 'T' + time + '-03:00'),
-        ...eventos.map(event => Date.parse(event.horario) + 1000));
-      const horario = new Date(latest).toISOString();
+      // Advance the simulated day's clock after each human decision.
+      const latest = Math.max(...eventos.map(event => Date.parse(event.horario)));
+      const horario = new Date(latest + 1000).toISOString();
       const registro = { id, horario, ...decision };
       decisoes.set(id, registro);
       eventos.push({

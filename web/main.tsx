@@ -126,7 +126,7 @@ function TodayScreen({ data }: { data: Today }) {
       </li>)}</ol>
     </section>
     <section className="panel"><h2>Relatório do dia</h2>
-      <p>{data.pregoes} pregões analisados, {data.itens} itens, {data.envios} envios, {data.pendencias} pendências e {data.escaladasAbertas} escaladas abertas. Custo: {money(data.custoUsd, 'USD')}.</p>
+      <Metrics items={[[ 'Envios registrados', data.envios ]]} />
       <ul>{data.porDecisao.map(row => <li key={row.estado}>{row.estado}: {row.quantidade}</li>)}</ul>
     </section>
   </>;
@@ -144,12 +144,12 @@ function QueueScreen({ rows }: { rows: QueueItem[] }) {
   return <>
     <Heading title="Fila de decisões" detail="Acompanhe o estado e o motivo de cada item." />
     <div className="filters">
-      <label>Pregão<select value={tender} onChange={event => setTender(event.target.value)}>
+      <div className="filter"><label htmlFor="pregao">Pregão</label><select id="pregao" value={tender} onChange={event => setTender(event.target.value)}>
         <option value="">Todos</option>{[...tenders].map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-      </select></label>
-      <label>Órgão<select value={agency} onChange={event => setAgency(event.target.value)}>
+      </select></div>
+      <div className="filter"><label htmlFor="orgao">Órgão</label><select id="orgao" value={agency} onChange={event => setAgency(event.target.value)}>
         <option value="">Todos</option>{agencies.map(name => <option key={name}>{name}</option>)}
-      </select></label>
+      </select></div>
       <label>Prazo até<input type="date" value={deadline} onChange={event => setDeadline(event.target.value)} /></label>
     </div>
     <div className="rows">{visible.map(row => <article className="panel" key={row.tender + ':' + row.item}>
