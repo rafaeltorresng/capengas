@@ -76,7 +76,7 @@ O gerador escreve `fixtures/estado-exemplo.json` com o formato da tela (`hoje`, 
 LANCE_DB=data/turno-validacao.db node --env-file-if-exists=.env scripts/analisar.ts 77816510000166/2026/348
 ```
 
-O comando limita a análise a três itens relevantes por instrução, com limites de passos e tokens. O limite de itens é uma instrução ao modelo, não uma quota garantida pelo código. A empresa continua fictícia; as fontes do pregão são reais. O comando não expõe ferramentas de envio e não substitui o fluxo de ações com política/recheque. Não versionar o banco gerado.
+O comando limita a análise a três itens relevantes por instrução, com limites de passos e tokens. O limite de itens é uma instrução ao modelo, não uma quota garantida pelo código. A empresa continua fictícia; as fontes do pregão são reais. O comando não expõe ferramentas de envio. A porta de envio está em `src/lib/act.ts` (`executarAcao`) e ainda não foi ligada às ferramentas do modelo. Não versionar o banco gerado.
 
 `decide_item` usa agora preço pela estimativa, documentos e regularização do contrato novo. Cobertura técnica não verificada escala; preço desconhecido permanece nulo. Campos de saída legados são mantidos temporariamente para os consumidores do spike. As funções legadas de `rules.ts` ainda são usadas por testes e não devem ser removidas sem migrá-los.
 
@@ -84,6 +84,8 @@ O turno real foi executado: 3 decisões, dossiê e 3 escaladas, 292 segundos e U
 
 Implementação própria: `tools.ts`, `dossie.ts`, `read-model.ts`, gerador/amostra, ajustes dos scripts de turno/evals e testes correspondentes. A entrega foi integrada sobre os commits do Dev 1 na `main`, preservando contratos, regras, store, política, recheque, dados e testes já publicados por ele; essas mudanças não são autoria do Dev 2.
 
-Ainda faltam: migrar `decide_item` ao contrato novo e persistir seu fluxo; conectar geração de dossiê/eventos ao turno; integrar política, recheque e idempotência nas ações; inventário de exigências técnicas e cobertura; avaliações distintas do modelo, relatório de prova e medição de latência. Cobertura técnica não verificada deve ser passada ao novo decisor como `fit: 'desconhecido'`, conforme alinhamento na #2.
+Já na `main`: `decide_item` no contrato novo, persistência do turno de análise, dossiê, projeção e o snapshot `fixtures/execucoes/analise-2026-11-07.json`. O PR #3 foi integrado. Cobertura técnica não verificada continua indo para `decideItem` como `fit: 'desconhecido'`.
 
-A publicação desta entrega na `main` foi autorizada pelo usuário. O PR #3 do Dev 3 continua independente; seu adaptador já pode consumir o módulo `src/lib/read-model.ts` por meio do ponto de entrada documentado acima. O progresso e os resultados de publicação ficam na issue #4.
+`executarAcao` aplica a ordem da #2: recheque, `evaluate`, `recordIntent`, POST no sandbox, `consultarProtocolo` e `updateAction`. Sem `recheck` injetado, a função bloqueia. Timeout ou consulta falha depois do POST não gera outro envio. O modelo ainda não recebe `submit_proposal` nem `send_esclarecimento`.
+
+Ainda faltam: extrair `runTurn` para o agendador sem duplicar `turno_inicio`/`turno_fim`; ligar as ferramentas de envio a `executarAcao`; inventário de exigências técnicas e cobertura; evals distintos e a meta de 3 minutos. As funções legadas de `rules.ts` continuam nos testes e não devem ser removidas sem migrá-los.
