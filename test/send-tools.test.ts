@@ -212,3 +212,20 @@ test('verifica proposta e esclarecimento no portal usando o store, mesmo em uma 
     sbx.close();
   }
 });
+test('um encaixe antigo de outro produto não justifica esclarecer', async () => {
+  const sbx = await startSandbox(0);
+  const { store, ctx } = cenario(sbx.url);
+  try {
+    store.upsertFit({ tenderId: TENDER, item: 40, produto: 'P0-antigo', fit: 'nao_informado',
+      atributos: { attributes: [{ atributo: 'embalagem', veredito: 'nao_informado' }] } });
+    store.upsertFit({ tenderId: TENDER, item: 40, produto: 'P1', fit: 'atende',
+      atributos: { attributes: [{ atributo: 'embalagem', veredito: 'atende' }] } });
+    const result: any = await tool('send_esclarecimento').run({ tender_id: TENDER, item: 40, motivo: 'nao_informado' }, ctx);
+    assert.equal(result.resultado, 'escalada');
+    assert.equal(store.openEscalations().length, 1);
+    assert.equal(sbx.esclarecimentos.length, 0);
+  } finally {
+    store.close();
+    sbx.close();
+  }
+});
