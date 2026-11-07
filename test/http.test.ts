@@ -51,6 +51,18 @@ describe('fetchJson', () => {
     assert.equal(a.fromCache, false); assert.equal(b.fromCache, true);
     assert.equal(hits.get('/ok-cache'), 1);
   });
+  test('modo offline: serve cache vencido sem ir à rede; sem cache ou leitura fresca → erro', async () => {
+    const o = { ...opts(), ttlMs: 0 };
+    await fetchJson(base + '/ok-offline', o);
+    const antes = hits.get('/ok-offline');
+    process.env.LANCE_OFFLINE = '1';
+    try {
+      const r = await fetchJson(base + '/ok-offline', o);
+      assert.equal(r.fromCache, true); assert.equal(hits.get('/ok-offline'), antes);
+      await assert.rejects(fetchJson(base + '/nunca-vista', o), /offline/);
+      await assert.rejects(fetchJson(base + '/ok-offline', { ...o, allowStale: false }), /offline/);
+    } finally { delete process.env.LANCE_OFFLINE; }
+  });
   test('cache vencido serve de fallback quando a rede falha', async () => {
     const o = { ...opts(), ttlMs: 0 };
     await fetchJson(base + '/ok-stale', o);
