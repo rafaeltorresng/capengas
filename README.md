@@ -22,6 +22,8 @@ Projeto da equipe Capengas para o Converge Challenge 2026 (Recife, 7–8/11/2026
 | [docs/lance-produto.md](docs/lance-produto.md) | Documento do produto: visão, funcionalidades do MVP, política, telas, arquitetura, métricas e roteiro |
 | [docs/lance-plano-fixo.md](docs/lance-plano-fixo.md) | Plano final aprovado: escopo, demo, riscos e ordem de corte |
 | [docs/lance-execucao.md](docs/lance-execucao.md) | Plano de execução para 3 devs: contratos, tarefas, cronograma e portões |
+| [docs/dev2-analise-produto.md](docs/dev2-analise-produto.md) | Revisão de produto, concorrência, limites das evidências e prioridades do agente |
+| [docs/dev2-integracao.md](docs/dev2-integracao.md) | Contrato do dossiê e da projeção para a tela, amostra e verificação da integração |
 
 ## Números principais
 
@@ -47,6 +49,7 @@ npm run test:live    # testes contra as APIs reais (PNCP, Compras.gov.br, ANVISA
 npm run smoke        # confere a chave e o tool calling do modelo
 npm run turno        # turno ponta a ponta em 3 pregões reais (usa o modelo; ~US$ 0,20)
 npm run evals        # evals do modelo com gabarito (~US$ 0,80)
+node scripts/estado-exemplo.ts # gera a amostra identificada para integrar a tela, sem rede ou modelo
 ```
 
 | Pasta | Conteúdo |
