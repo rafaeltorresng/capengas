@@ -7,14 +7,21 @@ import type { Decision, DecisionResult, Trace } from '../lib/contracts.ts';
 export type Source = { nome: string; url: string; citacao?: string };
 export type Event = {
   id: string; horario: string; tipo: string; resumo: string; detalhe?: string;
-  tender?: string; item?: string; dossie?: boolean; rastro?: Trace[];
+  tender?: string; item?: string; itemDisponivel?: boolean; dossie?: boolean; rastro?: Trace[];
 };
 export type DeadlineKind = 'sessao' | 'esclarecimento' | 'decisao_humana' | 'desconhecido';
 export type QueueItem = {
   tender: string; pregao: string; item: string; descricao: string; orgao: string;
   prazo: string | null; prazoTipo?: DeadlineKind; estado: string; motivo: string;
 };
+export type EvidenceValidation = {
+  citacoes: 'conferidas' | 'nao_verificadas';
+  cobertura: 'conferida' | 'nao_verificada';
+  semantica: 'julgamento_modelo' | 'nao_verificada';
+  lacunas: string[];
+};
 export type Item = QueueItem & {
+  validacao?: EvidenceValidation;
   encaixe: { atributo: string; exigido: string; ofertado: string; resultado: string; fonte?: Source }[];
   fontes: Source[]; anvisa: string;
   regularizacao?: AnvisaCheck['regularizacao'];
@@ -28,7 +35,7 @@ export type Dossier = {
   pendencias: string[]; documentos: Source[];
 };
 export type Escalation = {
-  id: string; tender: string; item?: string; pregao: string; motivo: string;
+  id: string; tender: string; item?: string; itemDisponivel?: boolean; pregao: string; motivo: string;
   recomendacao: string; prazo: string | null; prazoTipo?: DeadlineKind; dossie?: boolean;
 };
 export type CofreAlert = Omit<AlertaCofre, 'pregoes'> & {

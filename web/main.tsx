@@ -147,7 +147,7 @@ function TodayScreen({ data }: { data: Today }) {
           {event.rastro?.length ? <Trail entries={event.rastro} /> : null}
         </div>
         <div className="evidence-links">
-          {event.tender && event.item && <Internal path={itemPath(event.tender, event.item)}>Abrir item {event.item}</Internal>}
+          {event.tender && event.item && event.itemDisponivel !== false && <Internal path={itemPath(event.tender, event.item)}>Abrir item {event.item}</Internal>}
           {event.tender && event.dossie && <Internal path={dossierPath(event.tender)}>Abrir dossiê</Internal>}
           {['Escalada', 'escalada_aberta'].includes(event.tipo) && <Internal path="escaladas">Ver escaladas</Internal>}
         </div>
@@ -205,6 +205,15 @@ function ItemScreen({ item }: { item: Item }) {
     <div className="notice"><span><strong>{item.estado}.</strong> {item.motivo}</span>
       {item.dossie && <Internal path={dossierPath(item.tender)}>Abrir dossiê</Internal>}</div>
     <section className="panel"><h2>Encaixe técnico</h2>
+      <dl className="metrics">
+        <div><dt>Citações</dt><dd>{item.validacao?.citacoes === 'conferidas' ? 'Trechos conferidos' : 'Não verificadas'}</dd></div>
+        <div><dt>Cobertura dos campos</dt><dd>{item.validacao?.cobertura === 'conferida' ? 'Conferida' : 'Não verificada'}</dd></div>
+        <div><dt>Conclusão técnica</dt><dd>{item.validacao?.semantica === 'julgamento_modelo' ? 'Julgamento do modelo' : 'Não verificada'}</dd></div>
+      </dl>
+      {item.validacao?.lacunas.length ? <details className="trace">
+        <summary>Campos sem citação própria ({item.validacao.lacunas.length})</summary>
+        <ul>{item.validacao.lacunas.map((clause, index) => <li key={index}>{clause}</li>)}</ul>
+      </details> : null}
       {item.encaixe.length ? <div className="scroll-table" role="region" aria-label="Tabela de encaixe" tabIndex={0}><table>
         <thead><tr>{['Atributo', 'Exigido', 'Ofertado', 'Resultado e evidência'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead>
         <tbody>{item.encaixe.map((row, index) => <tr key={index}><th scope="row">{row.atributo}</th><td>{row.exigido}</td>
@@ -216,11 +225,11 @@ function ItemScreen({ item }: { item: Item }) {
       <Metrics items={[[ 'Preço da proposta', money(item.preco, 'BRL') ], [ 'Estimativa', money(item.estimativa, 'BRL') ]]} />
       <dl>
         <dt>Regularização na ANVISA</dt>
-        <dd>{item.regularizacao ? regularizacaoAnvisa[item.regularizacao] : 'Não verificada'}</dd>
+        <dd>{(item.regularizacao && regularizacaoAnvisa[item.regularizacao]) || 'Não verificada'}</dd>
         <dt>Cobertura do produto ofertado</dt>
-        <dd>{item.cobertura ? coberturaAnvisa[item.cobertura] : 'Não comprovada'}</dd>
+        <dd>{(item.cobertura && coberturaAnvisa[item.cobertura]) || 'Não comprovada'}</dd>
       </dl>
-      <p>{item.anvisa}</p>
+      {!item.regularizacao && !item.cobertura && <p>{item.anvisa}</p>}
       <ul>{item.fontes.map(source => <li key={source.url}><Evidence source={source} /></li>)}</ul>
       <Trail entries={item.rastro} />
     </section>
@@ -273,7 +282,8 @@ function EscalationCard({ row, onSaved }: { row: Escalation; onSaved: (message: 
     <p><strong>Recomendação.</strong> {row.recomendacao}</p>
     <div className="actions">
       {row.dossie && <Internal path={dossierPath(row.tender)}>Abrir dossiê</Internal>}
-      {row.item && <Internal path={itemPath(row.tender, row.item)}>Abrir item {row.item}</Internal>}
+      {row.item && (row.itemDisponivel === false ? <span>Item {row.item}</span>
+        : <Internal path={itemPath(row.tender, row.item)}>Abrir item {row.item}</Internal>)}
     </div>
     <div className="actions">
       <button className="primary" disabled={busy || saved} onClick={() => void save('aprovar')}>Aprovar</button>
