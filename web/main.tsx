@@ -244,11 +244,14 @@ function DossierScreen({ data }: { data: Dossier }) {
     </div>}
     {data.retificacao && <section className="panel"><h2>Versão desta retificação</h2>
       {data.retificacao.aviso && <p>{data.retificacao.aviso}</p>}
-      <p>Abertura {data.retificacao.abertura}. Chamadas de modelo evitadas: {data.retificacao.chamadasEvitadas}.
+      <p>Abertura {data.retificacao.abertura}. Publicada antes: {data.retificacao.aberturaPublicadaAntes ?? 'sem data'}. Publicada depois: {data.retificacao.aberturaPublicadaDepois ?? 'sem data'}. Chamadas de modelo evitadas: {data.retificacao.chamadasEvitadas}.
         {data.retificacao.custoEvitadoUsd == null ? ' Custo evitado sem medição.' : ' Custo evitado US$ ' + data.retificacao.custoEvitadoUsd + '.'}</p>
       <ul>{data.retificacao.linhas.map((linha, index) => <li key={index}>Item {linha.item}: {linha.estado}. {linha.motivo}
+        {linha.quantidadeNova != null && <> Quantidade {linha.quantidadeAnterior} para {linha.quantidadeNova}.</>}
+        {linha.precoUnitario !== undefined && <> Preço unitário {money(linha.precoUnitario, 'BRL')}. Total {money(linha.valorTotal ?? null, 'BRL')}.</>}
+        {linha.escalarLimite ? ' Não libera decisão automática.' : ''}
         {linha.chamarAgente ? ' O agente relê este item.' : ''}{linha.discordancia ? ' ' + linha.discordancia : ''}</li>)}</ul>
-      <ul>{data.retificacao.pauta.map((linha, index) => <li key={index}>{linha.oQueMudou}. {linha.oQueFazer}
+      <ul>{data.retificacao.pauta.map((linha, index) => <li key={index}>{linha.artigo ? linha.artigo + '. ' : ''}{linha.oQueMudou}. {linha.oQueFazer}
         {linha.quem ? ' Responsável: ' + linha.quem + '.' : ''}{linha.ateQuando ? ' Até ' + linha.ateQuando + '.' : ''}
         {linha.ofereceAcao ? '' : ' Sem ação oferecida.'} Origem: {linha.origem}.</li>)}</ul>
     </section>}

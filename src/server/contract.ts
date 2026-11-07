@@ -35,9 +35,10 @@ export type Dossier = {
   pendencias: string[]; documentos: Source[];
   retificacao?: {
     sintetica: boolean; aviso: string | null; abertura: string;
+    aberturaPublicadaAntes: string | null; aberturaPublicadaDepois: string | null;
     chamadasEvitadas: number; custoEvitadoUsd: number | null;
-    linhas: { item: number; estado: string; motivo: string; chamarAgente: boolean; discordancia?: string }[];
-    pauta: { oQueMudou: string; oQueFazer: string; quem: string | null; ateQuando: string | null; origem: string; ofereceAcao: boolean }[];
+    linhas: { item: number; estado: string; motivo: string; chamarAgente: boolean; discordancia?: string; quantidadeAnterior?: number; quantidadeNova?: number; precoUnitario?: number | null; valorTotal?: number | null; escalarLimite?: boolean }[];
+    pauta: { item?: number; oQueMudou: string; oQueFazer: string; quem: string | null; ateQuando: string | null; origem: string; ofereceAcao: boolean; artigo?: string }[];
   };
 };
 export type Escalation = {
