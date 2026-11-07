@@ -19,6 +19,7 @@ export async function runAnalysisTurn(o: {
   const direto = o.origem !== 'agendador';
   if (direto) o.store.logEvent({ tipo: 'turno_inicio', resumo: 'Turno de análise iniciado; ferramentas de envio indisponíveis.' });
   try {
+    o.state.analysisStore = { openEscalation: (request, options) => o.store.openEscalation(request, options) };
     const result = await o.run();
     const saved = persistAnalysis(o.state, o.store);
     if (o.snapshot) {

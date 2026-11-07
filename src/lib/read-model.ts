@@ -1,7 +1,8 @@
 // Adapta leituras persistidas à API do Dev 3. Não executa regras, modelo ou envios.
-import type { Action, CofreDoc, Decision, DecisionRow, Store } from './contracts.ts';
+import type { Action, AnvisaCheck, CofreDoc, Decision, DecisionRow, Store } from './contracts.ts';
 import { calendarioCofre } from './cofre.ts';
 import type { buildDossie, DossierSource } from './dossie.ts';
+import type { EvidenceValidation } from '../server/contract.ts';
 
 export type ReadStore = Pick<Store, 'events' | 'openEscalations' | 'getTender' | 'getItems' | 'getDecisions' | 'getDossie' | 'resolveEscalation'>
   & Partial<Pick<Store, 'getTenders' | 'getRequirements'>>;
@@ -66,8 +67,18 @@ export function createReadModel(store: ReadStore, options: {
     const pncp = /^\d{14}\/\d{4}\/\d+$/.test(tender) ? `https://pncp.gov.br/app/editais/${tender}` : null;
     const fontes: DossierSource[] = [...(dossier?.documentos ?? [])];
     if (pncp) fontes.push({ nome: 'Publicação do pregão no PNCP', url: pncp });
-    const anvisa = evidence?.anvisa;
-    return { ...queue(decision),
+    const anvisa = evidence?.anvisa as Partial<AnvisaCheck> | null | undefined;
+    const regularizacao = anvisa?.regularizacao;
+    const cobertura = anvisa?.cobertura;
+    const validacao = evidence?.validacao;
+    const technicalEvidence: EvidenceValidation = {
+      citacoes: validacao?.citacoes === 'conferidas' ? 'conferidas' : 'nao_verificadas',
+      cobertura: validacao?.cobertura === 'conferida' ? 'conferida' : 'nao_verificada',
+      semantica: validacao?.semantica === 'julgamento_modelo' ? 'julgamento_modelo' : 'nao_verificada',
+      lacunas: Array.isArray(validacao?.lacunas) ? validacao.lacunas.filter((value: unknown): value is string => typeof value === 'string') : [],
+    };
+    return { ...queue(decision), validacao: technicalEvidence,
+      regularizacao, cobertura,
       encaixe: (evidence?.atributos ?? []).map((a: any) => ({ atributo: a.atributo,
         exigido: a.exigido ?? a.citacao_item, ofertado: a.ofertado ?? a.citacao_ficha ?? 'Não informado',
         resultado: fitLabels[a.veredito] ?? 'Não verificado',
@@ -80,8 +91,12 @@ export function createReadModel(store: ReadStore, options: {
       dossie: !!dossier,
     };
   }
+  function itemDisponivel(tender: string, item: string) {
+    return store.getDecisions(tender).some(decision => String(decision.item) === item);
+  }
   function escaladas() {
-    return store.openEscalations().map(e => ({ ...e, pregao: e.tender, prazo: timestamp(e.prazo), prazoTipo: 'decisao_humana' as const, dossie: !!dossie(e.tender) }));
+    return store.openEscalations().map(e => ({ ...e, pregao: e.tender, prazo: timestamp(e.prazo), prazoTipo: 'decisao_humana' as const, dossie: !!dossie(e.tender),
+      itemDisponivel: e.item ? itemDisponivel(e.tender, e.item) : false }));
   }
   function hoje() {
     const day = localDay(now());
@@ -89,7 +104,9 @@ export function createReadModel(store: ReadStore, options: {
     const inDay = (iso: string) => Date.parse(iso) >= start && Date.parse(iso) < end;
     const events = store.events({ desde: new Date(start).toISOString() }).filter(e => inDay(e.horario));
     const decided = new Set(events.filter(e => e.tipo === 'decisao' && e.tender && e.item).map(e => `${e.tender}#${e.item}`));
-    const decisions = selectedDecisions().filter(d => decided.has(`${d.tenderId}#${d.item}`));
+    const allDecisions = selectedDecisions();
+    const availableItems = new Set(allDecisions.map(d => d.tenderId + '#' + d.item));
+    const decisions = allDecisions.filter(d => decided.has(`${d.tenderId}#${d.item}`));
     const actions = new Map(options.actions().map(a => [a.key, a]));
     const confirmed = [...actions.values()].filter(a => a.status === 'confirmada' && a.verificado === true && !!a.protocolo && inDay(a.atualizadaEm));
     const counts = new Map<string, number>();
@@ -99,12 +116,17 @@ export function createReadModel(store: ReadStore, options: {
       ? calls.reduce((sum, c) => sum + c.custoUsd!, 0) : null;
     const cofre = !options.cofre?.length || !store.getTenders || !store.getRequirements ? [] : calendarioCofre(options.cofre,
       store.getTenders().filter(t => t.abertura).map(t => ({ tenderId: t.id, sessao: t.abertura!.slice(0, 10),
-        exigencias: store.getRequirements!(t.id).map(r => ({ tipo: r.tipo, citacao: r.citacao })) })), day);
+        exigencias: store.getRequirements!(t.id).map(r => ({ tipo: r.tipo, citacao: r.citacao })) })), day).map(alerta => ({
+      ...alerta,
+      pregoes: alerta.pregoes.map(pregao => dossie(pregao.tenderId) ? { ...pregao, dossie: true } : pregao),
+    }));
     return { data: day, pregoes: new Set(decisions.map(d => d.tenderId)).size, itens: decisions.length,
       disputar: counts.get('disputar') ?? 0, pendencias: counts.get('disputar_com_pendencia') ?? 0,
       envios: confirmed.length, escaladasAbertas: store.openEscalations().length, custoUsd,
       porDecisao: [...counts].map(([estado, quantidade]) => ({ estado: labels[estado] ?? estado, quantidade })),
-      eventos: [...events].sort((a, b) => Date.parse(a.horario) - Date.parse(b.horario)), cofre,
+      eventos: events.map(event => ({ ...event, itemDisponivel: event.tender && event.item
+        ? availableItems.has(event.tender + '#' + event.item) : undefined }))
+        .sort((a, b) => Date.parse(a.horario) - Date.parse(b.horario)), cofre,
     };
   }
   return {

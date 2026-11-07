@@ -2,7 +2,7 @@
 import type { LLM } from './agent.ts';
 
 export function openaiCompatible(o: { baseURL: string; apiKey: string; model: string; temperature?: number; maxTokens?: number; retries?: number; baseDelayMs?: number; timeoutMs?: number }): LLM {
-  if (!o.apiKey) throw new Error('FEATHERLESS_API_KEY (ou AI_API_KEY) ausente no ambiente; veja .env.example');
+  if (!o.apiKey) throw new Error('FEATHERLESS_API_KEY, AI_API_KEY ou Api_key ausente no ambiente; veja .env.example');
   const { retries = 4, baseDelayMs = 1500, timeoutMs = 180_000 } = o;
   return {
     model: o.model,
@@ -33,5 +33,5 @@ export function openaiCompatible(o: { baseURL: string; apiKey: string; model: st
 }
 
 export function featherless(model = process.env.LANCE_MODEL ?? 'moonshotai/Kimi-K2.6') {
-  return openaiCompatible({ baseURL: process.env.FEATHERLESS_BASE_URL ?? 'https://api.featherless.ai/v1', apiKey: process.env.FEATHERLESS_API_KEY ?? process.env.AI_API_KEY ?? '', model });
+  return openaiCompatible({ baseURL: process.env.FEATHERLESS_BASE_URL ?? 'https://api.featherless.ai/v1', apiKey: process.env.FEATHERLESS_API_KEY || process.env.AI_API_KEY || process.env.Api_key || '', model });
 }

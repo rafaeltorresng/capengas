@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { openStore } from '../lib/store.ts';
 import { createReadModel } from '../lib/read-model.ts';
 import { createIntegratedStore } from './integrated.ts';
+import { buildProof } from './proof.ts';
 import { createServer } from './api.ts';
 import { createSampleStore, type SampleState } from './sample.ts';
 import { relatorioProva } from '../lib/cenarios.ts';
@@ -22,7 +23,10 @@ if (mode === 'amostra' || mode === 'integrado') {
     const company = store ? JSON.parse(await readFile(new URL('../../fixtures/company.json', import.meta.url), 'utf8')) : null;
     const prova = store ? await relatorioProva() : null;
     const state = store
-      ? createIntegratedStore(store, createReadModel(store, { actions: () => store.getActions(), cofre: company.cofre, proof: () => prova! }))
+      ? createIntegratedStore(store, createReadModel(store, {
+        actions: () => store.getActions(), cofre: company.cofre,
+        proof: () => buildProof(prova!, store.events()),
+      }))
       : createSampleStore(await loadSample());
     const server = createServer(state, webRoot);
     server.on('error', (error: NodeJS.ErrnoException) => {
