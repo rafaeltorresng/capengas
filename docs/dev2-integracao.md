@@ -80,7 +80,7 @@ O comando limita a análise a três itens relevantes por instrução, com limite
 
 `decide_item` usa agora preço pela estimativa, documentos e regularização do contrato novo. Cobertura técnica não verificada escala; preço desconhecido permanece nulo. Campos de saída legados são mantidos temporariamente para os consumidores do spike. As funções legadas de `rules.ts` ainda são usadas por testes e não devem ser removidas sem migrá-los.
 
-Nesta etapa, 201 testes locais passaram. O turno real acima ainda não foi executado; não há banco de modelo para entregar ao Dev 3 nem medidas novas de qualidade/latência. A bateria ao vivo antiga ainda contém expectativas do fluxo legado e precisa ser atualizada antes da validação completa.
+O turno real foi executado: 3 decisões, dossiê e 3 escaladas, 292 segundos e US$ 0,062826164 informados pela API. O snapshot e os comandos para restaurar o SQLite sem gastar modelo estão em `fixtures/execucoes/README.md`. Nesta etapa, 202 testes locais passaram. A bateria ao vivo antiga ainda contém expectativas do fluxo legado e precisa ser atualizada antes da validação completa.
 
 Implementação própria: `tools.ts`, `dossie.ts`, `read-model.ts`, gerador/amostra, ajustes dos scripts de turno/evals e testes correspondentes. A entrega foi integrada sobre os commits do Dev 1 na `main`, preservando contratos, regras, store, política, recheque, dados e testes já publicados por ele; essas mudanças não são autoria do Dev 2.
 

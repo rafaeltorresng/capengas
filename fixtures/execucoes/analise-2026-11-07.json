@@ -1,0 +1,1116 @@
+{
+  "versao": 1,
+  "aviso": "Snapshot de análise: pregão real, empresa e fichas sintéticas. Não comprova conformidade ou envio.",
+  "tabelas": {
+    "tenders": [
+      {
+        "id": "77816510000166/2026/348",
+        "orgao": "MUNICIPIO DE FRANCISCO BELTRAO",
+        "uf": "PR",
+        "abertura": "2026-11-23T09:00",
+        "situacao": "nao_verificada",
+        "plataforma": "Compras.gov.br",
+        "arquivos_hash": null,
+        "ultimo_check": null,
+        "reavaliar": 0,
+        "atualizado_em": "2026-11-07T19:18:11.182Z"
+      }
+    ],
+    "items": [
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 1,
+        "descricao": "Bacia - Uso Hospitalar capacidade: cerca de 6000, diâmetro: cerca de 40, esterilidade: esterilizável, material: aço inoxidável BACIA TAMANHO GRANDE AÇO INOX AUTOCLAVÁVEL 41CM CAPACIDADE 6.300ML - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 439955,
+        "quantidade": 60,
+        "estimativa": 515.2,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 2,
+        "descricao": "Bandeja De Aço altura: 4, características adicionais: com acabamento arredondado nas bordas, comprimento: 30, largura: 20, material: aço inoxidável  BANDEJA AÇO INOX 30X20X4CM AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 401886,
+        "quantidade": 41,
+        "estimativa": 180.32,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 3,
+        "descricao": "Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 3 CABO DE BISTURI Nº3 13 CM AÇO INOX AUTOCLAVÁVEL -  CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 299683,
+        "quantidade": 20,
+        "estimativa": 126.97,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 4,
+        "descricao": "Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4 CABO DE BISTURI Nº4 13 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 299116,
+        "quantidade": 20,
+        "estimativa": 126.97,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 5,
+        "descricao": "Cuba Uso Hospitalar capacidade: cerca de 150, formato: redondo, material: aço inox CUBA REDONDA AÇO INOX 08 CM AUTOCLAVÁVEL CAPACIDADE 150ML- CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 439208,
+        "quantidade": 100,
+        "estimativa": 40.44,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 6,
+        "descricao": "Cuba Uso Hospitalar capacidade: cerca de 500, formato: tipo rim, material: aço inox CUBA RIM AÇO INOX 20X10CM AUTOCLAVÁVEL CAPACIDADE 330ML - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 439213,
+        "quantidade": 100,
+        "estimativa": 111.7,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 7,
+        "descricao": "Espéculo Uso Médico aplicação: vaginal, esterilidade: esterilizável, material: aço inoxidável, modelo: collin, tamanho: grande, travamento: c/ trava tipo rosca ESPECULO DE METAL ESTERILIZÁVEL TAMANHO G - 20 × 10 × 6 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 479739,
+        "quantidade": 50,
+        "estimativa": 426.69,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 8,
+        "descricao": "Espéculo Uso Médico aplicação: vaginal, esterilidade: esterilizável, material: aço inoxidável, modelo: collin, tamanho: médio, travamento: c/ trava tipo rosca ESPECULO DE METAL ESTERILIZÁVEL TAMANHO M - 15 X 10 X 5 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 479738,
+        "quantidade": 50,
+        "estimativa": 384.59,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 9,
+        "descricao": "Espéculo Uso Médico aplicação: nasal, esterilidade: esterilizável, material: aço inoxidável, modelo: hartmann, tamanho: adulto nº 1, travamento: s/ trava ESPECULO NASAL HARTMANN ADULTO – 15 X 5,5 X 2,20 CM- AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 479762,
+        "quantidade": 10,
+        "estimativa": 752.59,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 10,
+        "descricao": "Espéculo Uso Médico aplicação: nasal, esterilidade: esterilizável, material: aço inoxidável, modelo: hartmann, tamanho: infantil nº 1, travamento: s/ trava ESPECULO NASAL HARTMANN INFANTIL – 14 X 5,2 X 2 - AÇO INOX AUTOCLAVÁVEL- CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 479760,
+        "quantidade": 10,
+        "estimativa": 996.91,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 11,
+        "descricao": "Dispositivo P/ Medidas Antropométricas escala graduação: c/ escala métrica - cm, material*: aço inoxidável, modelo: collin, tipo*: histerômetro HISTEROMETRO DE COLLIN 28CM - AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 442460,
+        "quantidade": 20,
+        "estimativa": 580.17,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 12,
+        "descricao": "Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: adson, tipo ponta: serrilhada PINÇA ADSON DE 12 CM – AÇO INOX – AUTOCLAVÁVEL  - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 468001,
+        "quantidade": 120,
+        "estimativa": 175.57,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 13,
+        "descricao": "Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 16, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: allis, tipo ponta: 4 x 5 dentes PINÇA ALLIS DE 15 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467757,
+        "quantidade": 40,
+        "estimativa": 449.54,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 14,
+        "descricao": "Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: lazar p/ ponto, tipo ponta: lisa PINÇA ANATÔMICA (SEM DENTE) 12CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 607670,
+        "quantidade": 600,
+        "estimativa": 109.07,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 15,
+        "descricao": "Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 2: micro plataforma, tipo ponta: lisa PINÇA ANATÔMICA (SEM DENTE) 14 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 476090,
+        "quantidade": 600,
+        "estimativa": 113.51,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 16,
+        "descricao": "Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 12, diâmetro ponta: cerca de 0,12, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: colibri, tipo ponta: 1 x 2 dentes PINÇA ANATÔMICA CURVA PONTA FINA 12CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 468127,
+        "quantidade": 200,
+        "estimativa": 247.51,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 17,
+        "descricao": "Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 2: micro plataforma, tipo ponta: lisa PINÇA ANATÔMICA CRILEE CURVA PONTA FINA14 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 476091,
+        "quantidade": 200,
+        "estimativa": 327.19,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 18,
+        "descricao": "Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: dente de rato, tipo ponta: 1 x 2 dentes  PINÇA ANATÔMICA DENTE DE RATO 12CM - AÇO INOX – AUTOCLAVÁVEL- CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467995,
+        "quantidade": 468,
+        "estimativa": 148.97,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 19,
+        "descricao": "Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: dente de rato, tipo ponta: 1 x 2 dentes PINÇA ANATÔMICA DENTE DE RATO14CM - AÇO INOX – AUTOCLAVÁVEL- CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467996,
+        "quantidade": 600,
+        "estimativa": 159.6,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 20,
+        "descricao": "Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 16, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 2: baioneta lucae, tipo ponta: serrilhada PINÇA BAIONETE 16 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 468149,
+        "quantidade": 10,
+        "estimativa": 276.65,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 21,
+        "descricao": "Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 24, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: cheron, tipo ponta: serrilhada PINÇA CHERON 24CM - AÇO INOX – AUTOCLAVÁVEL- CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467873,
+        "quantidade": 80,
+        "estimativa": 1012.38,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 22,
+        "descricao": "Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 18, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: foerster, tipo ponta: serrilhada PINÇA FOERSTER 18 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467886,
+        "quantidade": 20,
+        "estimativa": 458.53,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 23,
+        "descricao": "Pinça Cirúrgica componente: s/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: jacaré, tipo ponta: serrilhada  PINÇA HARTMANN (JACARÉ) 12 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 601263,
+        "quantidade": 40,
+        "estimativa": 386.4,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 24,
+        "descricao": "Pinça Cirúrgica componente: s/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: jacaré, tipo ponta: serrilhada PINÇA HARTMANN (JACARÉ) 14CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 601264,
+        "quantidade": 40,
+        "estimativa": 386.4,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 25,
+        "descricao": "Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA HEMOSTÁTICA KELLY CURVA 14 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467838,
+        "quantidade": 200,
+        "estimativa": 247.38,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 26,
+        "descricao": "Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA HEMOSTÁTICA KELLY RETA 12 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467832,
+        "quantidade": 200,
+        "estimativa": 234.71,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 27,
+        "descricao": "Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA KELLY MOSQUITO CURVA 12 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467837,
+        "quantidade": 200,
+        "estimativa": 229.27,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 28,
+        "descricao": "Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada  PINÇA KELLY MOSQUITO RETA - 12 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467832,
+        "quantidade": 200,
+        "estimativa": 224.29,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 29,
+        "descricao": "Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA KELLY RETA 14CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467833,
+        "quantidade": 400,
+        "estimativa": 224.29,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 30,
+        "descricao": "Pinça Cirúrgica componente: s/ cremalheira, comprimento total: cerca de 16, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: magil, tipo ponta: serrilha c/ fenestra PINÇA MAGILL 12 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467863,
+        "quantidade": 20,
+        "estimativa": 470.99,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 31,
+        "descricao": "Pinça Cirúrgica componente: s/ cremalheira, comprimento total: cerca de 16, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: magil, tipo ponta: serrilha c/ fenestra PINÇA MAGILL14 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467863,
+        "quantidade": 20,
+        "estimativa": 229.27,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 32,
+        "descricao": "Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 24, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: pozzi PINÇA POZZI 14CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 467761,
+        "quantidade": 20,
+        "estimativa": 566.59,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 33,
+        "descricao": "Pinça Cirúrgica adicional: cerca de 2 mm, componente: c/ cremalheira, comprimento total: cerca de 24, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: professor medina, tipo ponta: concha PINÇA PROFESSOR MEDINA 24CM - AÇO INOX – AUTOCLAVÁVEL  - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 623312,
+        "quantidade": 20,
+        "estimativa": 2149.3,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 34,
+        "descricao": "Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA KELLY CURVA14 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL  ",
+        "catalog_code": 467838,
+        "quantidade": 400,
+        "estimativa": 245.24,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 35,
+        "descricao": "Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA KELLY CURVA12CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL",
+        "catalog_code": 467837,
+        "quantidade": 382,
+        "estimativa": 239.4,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 36,
+        "descricao": "Porta-Agulha Instrumental adicional 1: com trava, característica ponta: c/ vídea, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo: mayo hegar, tipo ponta: ponta curva PORTA AGULHA MAIO 12CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL",
+        "catalog_code": 471165,
+        "quantidade": 40,
+        "estimativa": 598.5,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 37,
+        "descricao": "Porta-Agulha Instrumental adicional 1: com trava, característica ponta: c/ vídea, comprimento total: cerca de 16, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo: mayo hegar, tipo ponta: ponta curva PORTA AGULHA MAIO 16CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL",
+        "catalog_code": 471166,
+        "quantidade": 46,
+        "estimativa": 329.84,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 38,
+        "descricao": "Tesoura Instrumental característica ponta: fina c/ vídea, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: íris, tipo ponta: ponta curva TESOURA ÍRIS 11,5 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 471576,
+        "quantidade": 200,
+        "estimativa": 153.41,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 39,
+        "descricao": "Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, tipo ponta: ponta curva TESOURA METZENBAUM CURVA 20CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 471555,
+        "quantidade": 20,
+        "estimativa": 428.26,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 40,
+        "descricao": "Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, tipo ponta: ponta reta TESOURA METZENBAUM RETA 20CM - AÇO INOX – AUTOCLAVÁVEL  - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 471547,
+        "quantidade": 25,
+        "estimativa": 424.47,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 41,
+        "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta curva TESOURA PONTA FINA CURVA 12 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 471453,
+        "quantidade": 200,
+        "estimativa": 236.74,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 42,
+        "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta curva TESOURA PONTA FINA CURVA 14 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 471454,
+        "quantidade": 200,
+        "estimativa": 236.74,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 43,
+        "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA FINA RETA 12 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+        "catalog_code": 471447,
+        "quantidade": 200,
+        "estimativa": 234.85,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 44,
+        "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA FINA RETA 14 CM - AÇO INOX – AUTOCLAVÁVEL  - CONFORME DESCRIÇÃO DO EDITAL  ",
+        "catalog_code": 471448,
+        "quantidade": 200,
+        "estimativa": 234.85,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 45,
+        "descricao": "Tesoura Instrumental característica ponta: romba fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA ROMBA DE 12 CM - AÇO INOX – AUTOCLAVÁVEL  - CONFORME DESCRIÇÃO DO EDITAL  ",
+        "catalog_code": 471435,
+        "quantidade": 200,
+        "estimativa": 210.15,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "numero": 46,
+        "descricao": "Tesoura Instrumental característica ponta: romba fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA ROMBA DE 14 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL   ",
+        "catalog_code": 471436,
+        "quantidade": 200,
+        "estimativa": 218.13,
+        "sigiloso": 0,
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      }
+    ],
+    "fits": [
+      {
+        "tender_id": "77816510000166/2026/348",
+        "item": 4,
+        "produto": "P1",
+        "fit": "desconhecido",
+        "atributos": "{\"attributes\":[{\"atributo\":\"tipo\",\"citacao_item\":\"tamanho: nº 4\",\"veredito\":\"atende\",\"citacao_ficha\":\"Cabo de bisturi nº 4\",\"exigido\":\"nº 4\",\"ofertado\":\"nº 4\"},{\"atributo\":\"comprimento\",\"citacao_item\":\"CABO DE BISTURI Nº4 13 CM\",\"veredito\":\"atende\",\"citacao_ficha\":\"Comprimento total 13 cm\",\"exigido\":\"13 cm\",\"ofertado\":\"13 cm\"},{\"atributo\":\"material\",\"citacao_item\":\"material: aço inoxidável\",\"veredito\":\"atende\",\"citacao_ficha\":\"Material: aço inoxidável AISI 420\",\"exigido\":\"aço inoxidável\",\"ofertado\":\"aço inoxidável AISI 420\"},{\"atributo\":\"esterilidade\",\"citacao_item\":\"AUTOCLAVÁVEL\",\"veredito\":\"atende\",\"citacao_ficha\":\"Reutilizável e autoclavável\",\"exigido\":\"autoclavável\",\"ofertado\":\"autoclavável\"}],\"validacao\":{\"citacoes\":\"conferidas\",\"cobertura\":\"nao_verificada\",\"semantica\":\"julgamento_modelo\"}}",
+        "atualizado_em": "2026-11-07T19:18:11.184Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "item": 39,
+        "produto": "P2",
+        "fit": "desconhecido",
+        "atributos": "{\"attributes\":[{\"atributo\":\"modelo\",\"citacao_item\":\"modelo 1: metzenbaum - nelson\",\"veredito\":\"atende\",\"citacao_ficha\":\"Tesoura cirúrgica Metzenbaum\",\"exigido\":\"metzenbaum - nelson\",\"ofertado\":\"Metzenbaum\"},{\"atributo\":\"comprimento\",\"citacao_item\":\"comprimento total: cerca de 20\",\"veredito\":\"atende\",\"citacao_ficha\":\"Comprimento total 20 cm\",\"exigido\":\"cerca de 20\",\"ofertado\":\"20 cm\"},{\"atributo\":\"material\",\"citacao_item\":\"material: aço inoxidável\",\"veredito\":\"atende\",\"citacao_ficha\":\"Material: aço inoxidável\",\"exigido\":\"aço inoxidável\",\"ofertado\":\"aço inoxidável\"},{\"atributo\":\"esterilidade\",\"citacao_item\":\"esterilidade: esterilizável\",\"veredito\":\"atende\",\"citacao_ficha\":\"Esterilizável em autoclave\",\"exigido\":\"esterilizável\",\"ofertado\":\"esterilizável em autoclave\"},{\"atributo\":\"haste\",\"citacao_item\":\"haste: haste reta\",\"veredito\":\"nao_atende\",\"citacao_ficha\":\"Haste curva\",\"exigido\":\"haste reta\",\"ofertado\":\"haste curva\"},{\"atributo\":\"tipo ponta\",\"citacao_item\":\"tipo ponta: ponta curva\",\"veredito\":\"atende\",\"citacao_ficha\":\"ponta romba\",\"exigido\":\"ponta curva\",\"ofertado\":\"ponta romba\"}],\"validacao\":{\"citacoes\":\"conferidas\",\"cobertura\":\"nao_verificada\",\"semantica\":\"julgamento_modelo\"}}",
+        "atualizado_em": "2026-11-07T19:18:11.184Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "item": 3,
+        "produto": "P1",
+        "fit": "desconhecido",
+        "atributos": "{\"attributes\":[{\"atributo\":\"tipo\",\"citacao_item\":\"tamanho: nº 3\",\"veredito\":\"nao_atende\",\"citacao_ficha\":\"Cabo de bisturi nº 4\",\"exigido\":\"nº 3\",\"ofertado\":\"nº 4\"},{\"atributo\":\"comprimento\",\"citacao_item\":\"CABO DE BISTURI Nº3 13 CM\",\"veredito\":\"atende\",\"citacao_ficha\":\"Comprimento total 13 cm\",\"exigido\":\"13 cm\",\"ofertado\":\"13 cm\"},{\"atributo\":\"material\",\"citacao_item\":\"material: aço inoxidável\",\"veredito\":\"atende\",\"citacao_ficha\":\"Material: aço inoxidável AISI 420\",\"exigido\":\"aço inoxidável\",\"ofertado\":\"aço inoxidável AISI 420\"},{\"atributo\":\"esterilidade\",\"citacao_item\":\"AUTOCLAVÁVEL\",\"veredito\":\"atende\",\"citacao_ficha\":\"Reutilizável e autoclavável\",\"exigido\":\"autoclavável\",\"ofertado\":\"autoclavável\"}],\"validacao\":{\"citacoes\":\"conferidas\",\"cobertura\":\"nao_verificada\",\"semantica\":\"julgamento_modelo\"}}",
+        "atualizado_em": "2026-11-07T19:18:11.184Z"
+      }
+    ],
+    "requirements": [
+      {
+        "tender_id": "77816510000166/2026/348",
+        "tipo": "registro_anvisa",
+        "citacao": "Comprovação da regularização dos produtos ofertados perante a Agência Nacional de Vigilância Sanitária – ANVISA, mediante Registro, Notificação ou Cadastro, conforme o enquadramento sanitário aplicável ao produto",
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "tipo": "afe",
+        "citacao": "Apresentação da Autorização de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razão da atividade exercida pela licitante e do enquadramento sanitário dos produtos",
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "tipo": "amostra",
+        "citacao": "A apresentação dos materiais e documentos a que se referem o subitem 10.1.5 não desonera a licitante da obrigação de apresentar amostras que venham a ser solicitadas",
+        "atualizado_em": "2026-11-07T19:18:11.183Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "tipo": "certidoes",
+        "citacao": "A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital",
+        "atualizado_em": "2026-11-07T19:18:11.184Z"
+      }
+    ],
+    "decisions": [
+      {
+        "tender_id": "77816510000166/2026/348",
+        "item": 4,
+        "produto": "P1",
+        "estado": "escalar",
+        "motivos": "[\"encaixe técnico desconhecido\"]",
+        "preco_proposto": 7.5,
+        "atualizado_em": "2026-11-07T19:18:11.186Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "item": 39,
+        "produto": "P2",
+        "estado": "escalar",
+        "motivos": "[\"encaixe técnico desconhecido\"]",
+        "preco_proposto": 27.5,
+        "atualizado_em": "2026-11-07T19:18:11.187Z"
+      },
+      {
+        "tender_id": "77816510000166/2026/348",
+        "item": 3,
+        "produto": "P1",
+        "estado": "escalar",
+        "motivos": "[\"encaixe técnico desconhecido\"]",
+        "preco_proposto": 7.5,
+        "atualizado_em": "2026-11-07T19:18:11.188Z"
+      }
+    ],
+    "dossies": [
+      {
+        "tender_id": "77816510000166/2026/348",
+        "json": "{\"tender\":\"77816510000166/2026/348\",\"pregao\":\"77816510000166/2026/348\",\"versao\":\"1\",\"geradoEm\":\"2026-11-07T19:13:19.140Z\",\"orgao\":\"MUNICIPIO DE FRANCISCO BELTRAO\",\"sessao\":\"2026-11-23T09:00\",\"empresa\":\"Distribuidora Modelo Ltda (fictícia)\",\"checklist\":[{\"exigencia\":\"registro_anvisa\",\"documento\":\"A conferir\",\"estado\":\"nao_verificado\",\"status\":\"Não verificado\",\"detalhe\":\"A verificação desta exigência ainda não foi recebida.\",\"citacao\":\"Comprovação da regularização dos produtos ofertados perante a Agência Nacional de Vigilância Sanitária – ANVISA, mediante Registro, Notificação ou Cadastro, conforme o enquadramento sanitário aplicável ao produto\",\"fonte\":{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"Comprovação da regularização dos produtos ofertados perante a Agência Nacional de Vigilância Sanitária – ANVISA, mediante Registro, Notificação ou Cadastro, conforme o enquadramento sanitário aplicável ao produto\"}},{\"exigencia\":\"afe\",\"documento\":\"AFE ANVISA (distribuidora de produtos para saúde)\",\"estado\":\"sem_vencimento\",\"status\":\"Sem vencimento\",\"detalhe\":\"Documento sem prazo de vencimento; situação depende da verificação da fonte.\",\"citacao\":\"Apresentação da Autorização de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razão da atividade exercida pela licitante e do enquadramento sanitário dos produtos\",\"fonte\":{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"Apresentação da Autorização de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razão da atividade exercida pela licitante e do enquadramento sanitário dos produtos\"}},{\"exigencia\":\"amostra\",\"documento\":\"A conferir\",\"estado\":\"nao_verificado\",\"status\":\"Não verificado\",\"detalhe\":\"A verificação desta exigência ainda não foi recebida.\",\"citacao\":\"A apresentação dos materiais e documentos a que se referem o subitem 10.1.5 não desonera a licitante da obrigação de apresentar amostras que venham a ser solicitadas\",\"fonte\":{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"A apresentação dos materiais e documentos a que se referem o subitem 10.1.5 não desonera a licitante da obrigação de apresentar amostras que venham a ser solicitadas\"}},{\"exigencia\":\"certidoes\",\"documento\":\"CND Federal (Receita/PGFN)\",\"estado\":\"vence_antes_sessao\",\"status\":\"Vence antes da sessão\",\"detalhe\":\"Vence antes da sessão. Validade: 2026-11-15. Sessão: 2026-11-23T09:00.\",\"citacao\":\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\",\"fonte\":{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\"}},{\"exigencia\":\"certidoes\",\"documento\":\"CRF FGTS\",\"estado\":\"vigente\",\"status\":\"Vigente\",\"detalhe\":\"Vigente. Validade: 2026-12-20. Sessão: 2026-11-23T09:00.\",\"citacao\":\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\",\"fonte\":{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\"}},{\"exigencia\":\"certidoes\",\"documento\":\"CNDT Trabalhista\",\"estado\":\"vigente\",\"status\":\"Vigente\",\"detalhe\":\"Vigente. Validade: 2027-02-10. Sessão: 2026-11-23T09:00.\",\"citacao\":\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\",\"fonte\":{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\"}}],\"pendencias\":[\"A conferir: Não verificado (registro_anvisa).\",\"A conferir: Não verificado (amostra).\",\"CND Federal (Receita/PGFN): Vence antes da sessão (certidoes).\",\"Verificação documental incompleta; receber resultados das regras antes de agir.\",\"Item 4: cobertura das exigências técnicas não verificada.\",\"CND Federal (certidoes)\",\"Item 39: cobertura das exigências técnicas não verificada.\",\"Item 3: cobertura das exigências técnicas não verificada.\"],\"documentos\":[{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"Comprovação da regularização dos produtos ofertados perante a Agência Nacional de Vigilância Sanitária – ANVISA, mediante Registro, Notificação ou Cadastro, conforme o enquadramento sanitário aplicável ao produto\"},{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"Apresentação da Autorização de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razão da atividade exercida pela licitante e do enquadramento sanitário dos produtos\"},{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"A apresentação dos materiais e documentos a que se referem o subitem 10.1.5 não desonera a licitante da obrigação de apresentar amostras que venham a ser solicitadas\"},{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\"}],\"exigencias\":[{\"tender_id\":\"77816510000166/2026/348\",\"requirement\":\"registro_anvisa\",\"quote\":\"Comprovação da regularização dos produtos ofertados perante a Agência Nacional de Vigilância Sanitária – ANVISA, mediante Registro, Notificação ou Cadastro, conforme o enquadramento sanitário aplicável ao produto\",\"fonte\":{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"Comprovação da regularização dos produtos ofertados perante a Agência Nacional de Vigilância Sanitária – ANVISA, mediante Registro, Notificação ou Cadastro, conforme o enquadramento sanitário aplicável ao produto\"}},{\"tender_id\":\"77816510000166/2026/348\",\"requirement\":\"afe\",\"quote\":\"Apresentação da Autorização de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razão da atividade exercida pela licitante e do enquadramento sanitário dos produtos\",\"fonte\":{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"Apresentação da Autorização de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razão da atividade exercida pela licitante e do enquadramento sanitário dos produtos\"}},{\"tender_id\":\"77816510000166/2026/348\",\"requirement\":\"amostra\",\"quote\":\"A apresentação dos materiais e documentos a que se referem o subitem 10.1.5 não desonera a licitante da obrigação de apresentar amostras que venham a ser solicitadas\",\"fonte\":{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"A apresentação dos materiais e documentos a que se referem o subitem 10.1.5 não desonera a licitante da obrigação de apresentar amostras que venham a ser solicitadas\"}},{\"tender_id\":\"77816510000166/2026/348\",\"requirement\":\"certidoes\",\"quote\":\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\",\"fonte\":{\"nome\":\"EDITAL PE SRP 90114.2026.pdf\",\"url\":\"https://pncp.gov.br/pncp-api/v1/orgaos/77816510000166/compras/2026/348/arquivos/1\",\"citacao\":\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\"}}],\"itens\":[{\"item\":3,\"descricao\":\"Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 3 CABO DE BISTURI Nº3 13 CM AÇO INOX AUTOCLAVÁVEL -  CONFORME DESCRIÇÃO DO EDITAL \",\"estado\":\"escalar\",\"motivos\":[\"encaixe técnico desconhecido\"],\"produto\":{\"id\":\"P1\",\"nome\":\"Cabo de bisturi nº 4\",\"marca\":\"Allplan\",\"registroAnvisa\":\"80243520033\"},\"quantidade\":20,\"precoUnitario\":7.5,\"estimativa\":126.97,\"valorTotal\":150,\"resultadoEncaixe\":\"nao_atende\",\"atributos\":[{\"atributo\":\"tipo\",\"citacao_item\":\"tamanho: nº 3\",\"veredito\":\"nao_atende\",\"citacao_ficha\":\"Cabo de bisturi nº 4\",\"exigido\":\"nº 3\",\"ofertado\":\"nº 4\"},{\"atributo\":\"comprimento\",\"citacao_item\":\"CABO DE BISTURI Nº3 13 CM\",\"veredito\":\"atende\",\"citacao_ficha\":\"Comprimento total 13 cm\",\"exigido\":\"13 cm\",\"ofertado\":\"13 cm\"},{\"atributo\":\"material\",\"citacao_item\":\"material: aço inoxidável\",\"veredito\":\"atende\",\"citacao_ficha\":\"Material: aço inoxidável AISI 420\",\"exigido\":\"aço inoxidável\",\"ofertado\":\"aço inoxidável AISI 420\"},{\"atributo\":\"esterilidade\",\"citacao_item\":\"AUTOCLAVÁVEL\",\"veredito\":\"atende\",\"citacao_ficha\":\"Reutilizável e autoclavável\",\"exigido\":\"autoclavável\",\"ofertado\":\"autoclavável\"}],\"validacao\":{\"citacoes\":\"conferidas\",\"cobertura\":\"nao_verificada\",\"semantica\":\"julgamento_modelo\"},\"anvisa\":{\"cobertura\":\"nao_comprovada\",\"classe\":\"I\",\"detentor\":\"PRISMA INSTRUMENTOS ODONTOLÓGICOS LTDA - ME\",\"regularizacao\":\"vigente\",\"status\":\"ok\",\"validUntil\":null}},{\"item\":4,\"descricao\":\"Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4 CABO DE BISTURI Nº4 13 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL \",\"estado\":\"escalar\",\"motivos\":[\"encaixe técnico desconhecido\"],\"produto\":{\"id\":\"P1\",\"nome\":\"Cabo de bisturi nº 4\",\"marca\":\"Allplan\",\"registroAnvisa\":\"80243520033\"},\"quantidade\":20,\"precoUnitario\":7.5,\"estimativa\":126.97,\"valorTotal\":150,\"resultadoEncaixe\":\"atende\",\"atributos\":[{\"atributo\":\"tipo\",\"citacao_item\":\"tamanho: nº 4\",\"veredito\":\"atende\",\"citacao_ficha\":\"Cabo de bisturi nº 4\",\"exigido\":\"nº 4\",\"ofertado\":\"nº 4\"},{\"atributo\":\"comprimento\",\"citacao_item\":\"CABO DE BISTURI Nº4 13 CM\",\"veredito\":\"atende\",\"citacao_ficha\":\"Comprimento total 13 cm\",\"exigido\":\"13 cm\",\"ofertado\":\"13 cm\"},{\"atributo\":\"material\",\"citacao_item\":\"material: aço inoxidável\",\"veredito\":\"atende\",\"citacao_ficha\":\"Material: aço inoxidável AISI 420\",\"exigido\":\"aço inoxidável\",\"ofertado\":\"aço inoxidável AISI 420\"},{\"atributo\":\"esterilidade\",\"citacao_item\":\"AUTOCLAVÁVEL\",\"veredito\":\"atende\",\"citacao_ficha\":\"Reutilizável e autoclavável\",\"exigido\":\"autoclavável\",\"ofertado\":\"autoclavável\"}],\"validacao\":{\"citacoes\":\"conferidas\",\"cobertura\":\"nao_verificada\",\"semantica\":\"julgamento_modelo\"},\"anvisa\":{\"cobertura\":\"nao_comprovada\",\"classe\":\"I\",\"detentor\":\"PRISMA INSTRUMENTOS ODONTOLÓGICOS LTDA - ME\",\"regularizacao\":\"vigente\",\"status\":\"ok\",\"validUntil\":null}},{\"item\":39,\"descricao\":\"Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, tipo ponta: ponta curva TESOURA METZENBAUM CURVA 20CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL \",\"estado\":\"escalar\",\"motivos\":[\"encaixe técnico desconhecido\"],\"produto\":{\"id\":\"P2\",\"nome\":\"Tesoura Metzenbaum curva 20 cm\",\"marca\":\"Professional\",\"registroAnvisa\":\"10150470165\"},\"quantidade\":20,\"precoUnitario\":27.5,\"estimativa\":428.26,\"valorTotal\":550,\"resultadoEncaixe\":\"nao_atende\",\"atributos\":[{\"atributo\":\"modelo\",\"citacao_item\":\"modelo 1: metzenbaum - nelson\",\"veredito\":\"atende\",\"citacao_ficha\":\"Tesoura cirúrgica Metzenbaum\",\"exigido\":\"metzenbaum - nelson\",\"ofertado\":\"Metzenbaum\"},{\"atributo\":\"comprimento\",\"citacao_item\":\"comprimento total: cerca de 20\",\"veredito\":\"atende\",\"citacao_ficha\":\"Comprimento total 20 cm\",\"exigido\":\"cerca de 20\",\"ofertado\":\"20 cm\"},{\"atributo\":\"material\",\"citacao_item\":\"material: aço inoxidável\",\"veredito\":\"atende\",\"citacao_ficha\":\"Material: aço inoxidável\",\"exigido\":\"aço inoxidável\",\"ofertado\":\"aço inoxidável\"},{\"atributo\":\"esterilidade\",\"citacao_item\":\"esterilidade: esterilizável\",\"veredito\":\"atende\",\"citacao_ficha\":\"Esterilizável em autoclave\",\"exigido\":\"esterilizável\",\"ofertado\":\"esterilizável em autoclave\"},{\"atributo\":\"haste\",\"citacao_item\":\"haste: haste reta\",\"veredito\":\"nao_atende\",\"citacao_ficha\":\"Haste curva\",\"exigido\":\"haste reta\",\"ofertado\":\"haste curva\"},{\"atributo\":\"tipo ponta\",\"citacao_item\":\"tipo ponta: ponta curva\",\"veredito\":\"atende\",\"citacao_ficha\":\"ponta romba\",\"exigido\":\"ponta curva\",\"ofertado\":\"ponta romba\"}],\"validacao\":{\"citacoes\":\"conferidas\",\"cobertura\":\"nao_verificada\",\"semantica\":\"julgamento_modelo\"},\"anvisa\":{\"cobertura\":\"nao_comprovada\",\"classe\":\"II\",\"detentor\":\"CIRURGICA FERNANDES - COMERCIO DE MATERIAIS CIRURGICOS E HOSPITALARES - SOCIEDADE LIMITADA\",\"regularizacao\":\"vigente\",\"status\":\"ok\",\"validUntil\":null}}],\"envioAutomaticoLiberado\":false}",
+        "versao": 1,
+        "atualizado_em": "2026-11-07T19:18:11.185Z"
+      }
+    ],
+    "actions": [],
+    "escalations": [
+      {
+        "seq": 1,
+        "id": "esc_1",
+        "tender": "77816510000166/2026/348",
+        "item": "4",
+        "motivo": "encaixe técnico desconhecido",
+        "recomendacao": "Revisar as evidências e recalcular a decisão antes de agir.",
+        "prazo": "2026-11-23T09:00:00-03:00",
+        "status": "aberta",
+        "decisao": null,
+        "decidida_em": null
+      },
+      {
+        "seq": 2,
+        "id": "esc_2",
+        "tender": "77816510000166/2026/348",
+        "item": "39",
+        "motivo": "encaixe técnico desconhecido",
+        "recomendacao": "Revisar as evidências e recalcular a decisão antes de agir.",
+        "prazo": "2026-11-23T09:00:00-03:00",
+        "status": "aberta",
+        "decisao": null,
+        "decidida_em": null
+      },
+      {
+        "seq": 3,
+        "id": "esc_3",
+        "tender": "77816510000166/2026/348",
+        "item": "3",
+        "motivo": "encaixe técnico desconhecido",
+        "recomendacao": "Revisar as evidências e recalcular a decisão antes de agir.",
+        "prazo": "2026-11-23T09:00:00-03:00",
+        "status": "aberta",
+        "decisao": null,
+        "decidida_em": null
+      }
+    ],
+    "events": [
+      {
+        "seq": 1,
+        "id": "ev_1",
+        "horario": "2026-11-07T19:13:19.142Z",
+        "tipo": "turno_inicio",
+        "resumo": "Turno de análise iniciado; ferramentas de envio indisponíveis.",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": null
+      },
+      {
+        "seq": 2,
+        "id": "ev_2",
+        "horario": "2026-11-07T19:13:24.055Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"ms\":4911.6521250000005,\"custoUsd\":0.0012444}]"
+      },
+      {
+        "seq": 3,
+        "id": "ev_3",
+        "horario": "2026-11-07T19:13:24.057Z",
+        "tipo": "analise_item",
+        "resumo": "tool: list_catalog",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"list_catalog\",\"entrada\":\"{}\",\"saida\":\"{\\\"empresa\\\":{\\\"nome\\\":\\\"Distribuidora Modelo Ltda (fictícia)\\\",\\\"porte\\\":\\\"EPP\\\",\\\"uf\\\":\\\"PR\\\",\\\"margemMinima\\\":0.15,\\\"prazoEntregaDias\\\":60},\\\"produtos\\\":[{\\\"id\\\":\\\"P1\\\",\\\"nome\\\":\\\"Cabo de bisturi nº 4\\\",\\\"marca\\\":\\\"Allplan\\\"},{\\\"id\\\":\\\"P2\\\",\\\"nome\\\":\\\"Tesoura Metzenbaum curva 20 cm\\\",\\\"marca\\\":\\\"Professional\\\"},{\\\"id\\\":\\\"P4\\\",\\\"nome\\\":\\\"Cadeira de rodas manual dobrável\\\",\\\"marca\\\":\\\"Modelo\\\"},{\\\"id\\\":\\\"P5\\\",\\\"nome\\\":\\\"Escova para degermação com clorexidina 2%\\\",\\\"marca\\\":\\\"Oxetil\\\"},{\\\"id\\\":\\\"P6\\\",\\\"nome\\\":\\\"Kit CPAP nasal com pronga neonatal\\\",\\\"marca\\\":\\\"Solumed\\\"},{\\\"id\\\":\\\"P7\\\",\\\"nome\\\":\\\"Pinça tripolar para eletrocirurgia\\\",\\\"marca\\\":\\\"Taimin\\\"}]}\",\"ms\":0.42041599999993196}]"
+      },
+      {
+        "seq": 4,
+        "id": "ev_4",
+        "horario": "2026-11-07T19:13:24.396Z",
+        "tipo": "analise_item",
+        "resumo": "tool: get_tender_items",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"get_tender_items\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"page\\\":1,\\\"page_size\\\":25}\",\"saida\":\"{\\\"total_itens\\\":46,\\\"filtrados\\\":46,\\\"pagina\\\":1,\\\"tamanho_pagina\\\":25,\\\"proxima_pagina\\\":2,\\\"itens\\\":[{\\\"numero\\\":1,\\\"descricao\\\":\\\"Bacia - Uso Hospitalar capacidade: cerca de 6000, diâmetro: cerca de 40, esterilidade: esterilizável, material: aço inoxidável BACIA TAMANHO GRANDE AÇO INOX AUTOCLAVÁVEL 41CM CAPACIDADE 6.300ML - CONFORME DESCRIÇÃO DO EDITAL \\\",\\\"descricao_truncada\\\":false,\\\"quantidade\\\":60,\\\"valor_estimado\\\":515.2,\\\"catalog_code\\\":439955,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":2,\\\"descricao\\\":\\\"Bandeja De Aço altura: 4, características adicionais: com acabamento arredondado nas bordas, comprimento: 30, largura: 20, material: aço inoxidável  BANDEJA AÇO INOX 30X20X4CM AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL \\\",\\\"descricao_truncada\\\":false,\\\"quantidade\\\":41,\\\"valor_estimado\\\":180.32,\\\"catalog_code\\\":401886,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":3,\\\"descricao\\\":\\\"Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 3 CABO DE BISTURI Nº3 13 CM AÇO INOX AUTOCLAVÁVEL -  CONFORME DESCRIÇÃO DO EDITAL \\\",\\\"descricao_truncada\\\":false,\\\"quantidade\\\":20,\\\"valor_estimado\\\":126.97,\\\"catalog_code\\\":299683,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":4,\\\"descricao\\\":\\\"Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4 CABO DE BISTURI Nº4 13 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL \\\",\\\"descricao_truncada\\\":false,\\\"quantidade\\\":20,\\\"valor_estimado\\\":126.97,\\\"catalog_code\\\":299116,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":5,\\\"descricao\\\":\\\"Cuba Uso Hospitalar capacidade: cerca de 150, formato: redondo, material: aço inox CUBA REDONDA AÇO INOX 08 CM AUTOCLAVÁVEL CAPACIDADE 150ML- CONFORME DESCRIÇÃO DO EDITAL \\\",\\\"descricao_truncada\\\":false,\\\"quantidade\\\":100,\\\"valor_estimado\\\":40.44,\\\"catalog_code\\\":439208,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":6,\\\"descricao\\\":\\\"Cuba Uso Hospitalar capacidade: cerca de 500, formato: tipo rim, material: aço inox CUBA RIM AÇO INOX 20X10CM AUTOCLAVÁVEL CAPACIDADE 330ML - CONFORME DESCRIÇÃO DO EDITAL \\\",\\\"descricao_truncada\\\":false,\\\"quantidade\\\":100,\\\"valor_estimado\\\":111.7,\\\"catalog_code\\\":439213,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":7,\\\"descricao\\\":\\\"Espéculo Uso Médico aplicação: vaginal, esterilidade: esterilizável, material: aço inoxidável, modelo: collin, tamanho: grande, travamento: c/ trava tipo rosca ESPECULO DE METAL ESTERILIZÁVEL TAMANHO G - 20 × 10 × 6 CM AÇO INOX AUTOCLAVÁVEL\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":50,\\\"valor_estimado\\\":426.69,\\\"catalog_code\\\":479739,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":8,\\\"descricao\\\":\\\"Espéculo Uso Médico aplicação: vaginal, esterilidade: esterilizável, material: aço inoxidável, modelo: collin, tamanho: médio, travamento: c/ trava tipo rosca ESPECULO DE METAL ESTERILIZÁVEL TAMANHO M - 15 X 10 X 5 CM AÇO INOX AUTOCLAVÁVEL \\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":50,\\\"valor_estimado\\\":384.59,\\\"catalog_code\\\":479738,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":9,\\\"descricao\\\":\\\"Espéculo Uso Médico aplicação: nasal, esterilidade: esterilizável, material: aço inoxidável, modelo: hartmann, tamanho: adulto nº 1, travamento: s/ trava ESPECULO NASAL HARTMANN ADULTO – 15 X 5,5 X 2,20 CM- AÇO INOX AUTOCLAVÁVEL - CONFORME \\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":10,\\\"valor_estimado\\\":752.59,\\\"catalog_code\\\":479762,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":10,\\\"descricao\\\":\\\"Espéculo Uso Médico aplicação: nasal, esterilidade: esterilizável, material: aço inoxidável, modelo: hartmann, tamanho: infantil nº 1, travamento: s/ trava ESPECULO NASAL HARTMANN INFANTIL – 14 X 5,2 X 2 - AÇO INOX AUTOCLAVÁVEL- CONFORME DE\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":10,\\\"valor_estimado\\\":996.91,\\\"catalog_code\\\":479760,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":11,\\\"descricao\\\":\\\"Dispositivo P/ Medidas Antropométricas escala graduação: c/ escala métrica - cm, material*: aço inoxidável, modelo: collin, tipo*: histerômetro HISTEROMETRO DE COLLIN 28CM - AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL \\\",\\\"descricao_truncada\\\":false,\\\"quantidade\\\":20,\\\"valor_estimado\\\":580.17,\\\"catalog_code\\\":442460,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":12,\\\"descricao\\\":\\\"Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: adson, tipo ponta: serrilhada PINÇA ADSON DE 12 CM – AÇO INOX – AUTOCLAV\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":120,\\\"valor_estimado\\\":175.57,\\\"catalog_code\\\":468001,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":13,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 16, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: allis, tipo ponta: 4 x 5 dentes PINÇA ALLIS DE 15 CM - AÇO INOX – AUTOCL\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":40,\\\"valor_estimado\\\":449.54,\\\"catalog_code\\\":467757,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":14,\\\"descricao\\\":\\\"Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: lazar p/ ponto, tipo ponta: lisa PINÇA ANATÔMICA (SEM DENTE) 12CM - AÇO \\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":600,\\\"valor_estimado\\\":109.07,\\\"catalog_code\\\":607670,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":15,\\\"descricao\\\":\\\"Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 2: micro plataforma, tipo ponta: lisa PINÇA ANATÔMICA (SEM DENTE) 14 CM - A\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":600,\\\"valor_estimado\\\":113.51,\\\"catalog_code\\\":476090,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":16,\\\"descricao\\\":\\\"Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 12, diâmetro ponta: cerca de 0,12, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: colibri, tipo ponta: 1 x 2 dentes PINÇA \\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":247.51,\\\"catalog_code\\\":468127,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":17,\\\"descricao\\\":\\\"Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 2: micro plataforma, tipo ponta: lisa PINÇA ANATÔMICA CRILEE CURVA PONTA F\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":327.19,\\\"catalog_code\\\":476091,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":18,\\\"descricao\\\":\\\"Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: dente de rato, tipo ponta: 1 x 2 dentes  PINÇA ANATÔMICA DENTE DE RATO 1\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":468,\\\"valor_estimado\\\":148.97,\\\"catalog_code\\\":467995,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":19,\\\"descricao\\\":\\\"Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: dente de rato, tipo ponta: 1 x 2 dentes PINÇA ANATÔMICA DENTE DE RATO14C\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":600,\\\"valor_estimado\\\":159.6,\\\"catalog_code\\\":467996,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":20,\\\"descricao\\\":\\\"Pinça Anatômica componente: s/ cremalheira, comprimento total: cerca de 16, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 2: baioneta lucae, tipo ponta: serrilhada PINÇA BAIONETE 16 CM - AÇO INOX –\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":10,\\\"valor_estimado\\\":276.65,\\\"catalog_code\\\":468149,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":21,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 24, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: cheron, tipo ponta: serrilhada PINÇA CHERON 24CM \\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":80,\\\"valor_estimado\\\":1012.38,\\\"catalog_code\\\":467873,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":22,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 18, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: foerster, tipo ponta: serrilhada PINÇA FOERSTER 18 CM - AÇO INOX – AUTO\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":20,\\\"valor_estimado\\\":458.53,\\\"catalog_code\\\":467886,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":23,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: s/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: jacaré, tipo ponta: serrilhada  PINÇA HARTMANN (J\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":40,\\\"valor_estimado\\\":386.4,\\\"catalog_code\\\":601263,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":24,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: s/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: jacaré, tipo ponta: serrilhada PINÇA HARTMANN (JA\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":40,\\\"valor_estimado\\\":386.4,\\\"catalog_code\\\":601264,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":25,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA HEMOSTÁTICA KELLY CURVA 14 CM - AÇO\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":247.38,\\\"catalog_code\\\":467838,\\\"beneficio\\\":\\\"Sem benefício\\\"}]}\",\"ms\":337.7604160000001}]"
+      },
+      {
+        "seq": 5,
+        "id": "ev_5",
+        "horario": "2026-11-07T19:13:35.614Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"ms\":11215.879583,\"custoUsd\":0.004083474}]"
+      },
+      {
+        "seq": 6,
+        "id": "ev_6",
+        "horario": "2026-11-07T19:13:35.615Z",
+        "tipo": "analise_item",
+        "resumo": "tool: get_tender_items",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"get_tender_items\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"page\\\":2,\\\"page_size\\\":25}\",\"saida\":\"{\\\"total_itens\\\":46,\\\"filtrados\\\":46,\\\"pagina\\\":2,\\\"tamanho_pagina\\\":25,\\\"proxima_pagina\\\":null,\\\"itens\\\":[{\\\"numero\\\":26,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA HEMOSTÁTICA KELLY RETA 12 CM - AÇO I\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":234.71,\\\"catalog_code\\\":467832,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":27,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA KELLY MOSQUITO CURVA 12 CM - AÇO IN\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":229.27,\\\"catalog_code\\\":467837,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":28,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada  PINÇA KELLY MOSQUITO RETA - 12 CM - AÇO I\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":224.29,\\\"catalog_code\\\":467832,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":29,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA KELLY RETA 14CM - AÇO INOX – AUTOCLA\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":400,\\\"valor_estimado\\\":224.29,\\\"catalog_code\\\":467833,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":30,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: s/ cremalheira, comprimento total: cerca de 16, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: magil, tipo ponta: serrilha c/ fenestra PINÇA MAG\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":20,\\\"valor_estimado\\\":470.99,\\\"catalog_code\\\":467863,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":31,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: s/ cremalheira, comprimento total: cerca de 16, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: magil, tipo ponta: serrilha c/ fenestra PINÇA MAG\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":20,\\\"valor_estimado\\\":229.27,\\\"catalog_code\\\":467863,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":32,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 24, esterilidade: esterilizável, formato ponta: ponta reta, material: aço inoxidável, modelo 1: pozzi PINÇA POZZI 14CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":20,\\\"valor_estimado\\\":566.59,\\\"catalog_code\\\":467761,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":33,\\\"descricao\\\":\\\"Pinça Cirúrgica adicional: cerca de 2 mm, componente: c/ cremalheira, comprimento total: cerca de 24, esterilidade: esterilizável, formato ponta: ponta reta, haste: haste angulada, material: aço inoxidável, modelo 1: professor medina, tipo \\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":20,\\\"valor_estimado\\\":2149.3,\\\"catalog_code\\\":623312,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":34,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 14, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA KELLY CURVA14 CM - AÇO INOX – AUTOC\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":400,\\\"valor_estimado\\\":245.24,\\\"catalog_code\\\":467838,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":35,\\\"descricao\\\":\\\"Pinça Cirúrgica componente: c/ cremalheira, comprimento total: cerca de 12, esterilidade: esterilizável, formato ponta: ponta curva, material: aço inoxidável, modelo 1: kelly, tipo ponta: serrilhada PINÇA KELLY CURVA12CM - AÇO INOX – AUTOCL\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":382,\\\"valor_estimado\\\":239.4,\\\"catalog_code\\\":467837,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":36,\\\"descricao\\\":\\\"Porta-Agulha Instrumental adicional 1: com trava, característica ponta: c/ vídea, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo: mayo hegar, tipo ponta: ponta curva PORTA AG\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":40,\\\"valor_estimado\\\":598.5,\\\"catalog_code\\\":471165,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":37,\\\"descricao\\\":\\\"Porta-Agulha Instrumental adicional 1: com trava, característica ponta: c/ vídea, comprimento total: cerca de 16, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo: mayo hegar, tipo ponta: ponta curva PORTA AG\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":46,\\\"valor_estimado\\\":329.84,\\\"catalog_code\\\":471166,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":38,\\\"descricao\\\":\\\"Tesoura Instrumental característica ponta: fina c/ vídea, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: íris, tipo ponta: ponta curva TESOURA ÍRIS 11,5 CM - AÇO INOX – AU\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":153.41,\\\"catalog_code\\\":471576,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":39,\\\"descricao\\\":\\\"Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, tipo ponta: ponta curva TESOURA METZENBAUM CURVA 20CM - AÇO INOX – AUTOCLAVÁVEL - \\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":20,\\\"valor_estimado\\\":428.26,\\\"catalog_code\\\":471555,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":40,\\\"descricao\\\":\\\"Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, tipo ponta: ponta reta TESOURA METZENBAUM RETA 20CM - AÇO INOX – AUTOCLAVÁVEL  - C\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":25,\\\"valor_estimado\\\":424.47,\\\"catalog_code\\\":471547,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":41,\\\"descricao\\\":\\\"Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta curva TESOURA PONTA FINA CURVA 12 CM - AÇO I\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":236.74,\\\"catalog_code\\\":471453,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":42,\\\"descricao\\\":\\\"Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta curva TESOURA PONTA FINA CURVA 14 CM - AÇO I\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":236.74,\\\"catalog_code\\\":471454,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":43,\\\"descricao\\\":\\\"Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA FINA RETA 12 CM - AÇO INO\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":234.85,\\\"catalog_code\\\":471447,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":44,\\\"descricao\\\":\\\"Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA FINA RETA 14 CM - AÇO INO\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":234.85,\\\"catalog_code\\\":471448,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":45,\\\"descricao\\\":\\\"Tesoura Instrumental característica ponta: romba fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA ROMBA DE 12 CM - AÇO INO\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":210.15,\\\"catalog_code\\\":471435,\\\"beneficio\\\":\\\"Sem benefício\\\"},{\\\"numero\\\":46,\\\"descricao\\\":\\\"Tesoura Instrumental característica ponta: romba fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA ROMBA DE 14 CM - AÇO INO\\\",\\\"descricao_truncada\\\":true,\\\"quantidade\\\":200,\\\"valor_estimado\\\":218.13,\\\"catalog_code\\\":471436,\\\"beneficio\\\":\\\"Sem benefício\\\"}]}\",\"ms\":0.09279099999912432}]"
+      },
+      {
+        "seq": 7,
+        "id": "ev_7",
+        "horario": "2026-11-07T19:13:47.743Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"ms\":12126.037334,\"custoUsd\":0.004473248}]"
+      },
+      {
+        "seq": 8,
+        "id": "ev_8",
+        "horario": "2026-11-07T19:13:53.989Z",
+        "tipo": "analise_item",
+        "resumo": "tool: read_edital",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"read_edital\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"topics\\\":[\\\"ANVISA\\\",\\\"AFE\\\",\\\"amostra\\\",\\\"habilitação\\\",\\\"marca referência\\\",\\\"prazo esclarecimento\\\"]}\",\"saida\":\"{\\\"caracteres_edital\\\":169392,\\\"trechos\\\":[{\\\"topico\\\":\\\"ANVISA\\\",\\\"trecho\\\":\\\"tado(s) de capacidade tecnica, emitido(s) por pessoa jurídica de direito publico ou privado, que comprove(m) o fornecimento anterior de instrumentais cirurgicos ou produtos para saude compatíveis ou similares ao objeto desta licitaçao. 12.3.3.2 Comprovaçao da regularizaçao dos produtos ofertados perante a Agencia Nacional de Vigilancia Sanitaria – ANVISA, mediante Registro, Notificaçao ou Cadastro, conforme o enquadramento sanitario aplicavel ao produto. 12.3.3.3 Apresentaçao da Autorizaçao de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razao da atividade exercida pela licitante e do enquadramento sanitario dos produtos. 12.3.3.4 Apresentaçao da Licença Sanitaria ou documento equivalente, expedida pelo orgao de Vigilancia Sanitaria competente, quando exigível e\\\"},{\\\"topico\\\":\\\"ANVISA\\\",\\\"trecho\\\":\\\"ia, circunstância que contribui para o desgaste acelerado dos materiais permanentes utilizados; g) Conformidade sanitária e regulatória, considerando que os instrumentais a serem adquiridos deverão atender às normas sanitárias vigentes e, quando aplicável, possuir registro ou regularização ativa perante a Agência Nacional de Vigilância Sanitária – ANVISA, de acordo com a natureza e classificação do produto. 3.1.1 A divisão dos itens em 03(três) grupos justifica-se pela necessidade de preservar a padronização, compatibilidade, especificidade técnica e qualidade dos instrumentais, Para verificar a validade das assinaturas, acesse https://franciscobeltrao.1doc.com.br/verificacao/5AAA-46A3-4A64-F33F e informe o código 5AAA-46A3-4A64-F33F considerando suas características, funcionalidades e res\\\"},{\\\"topico\\\":\\\"ANVISA\\\",\\\"trecho\\\":\\\"de atestado(s) de capacidade técnica, emitido(s) por pessoa jurídica de direito público ou privado, que comprove(m) o fornecimento anterior de instrumentais cirúrgicos ou produtos para saúde compatíveis ou similares ao objeto desta licitação; b)Comprovação da regularização dos produtos ofertados perante a Agência Nacional de Vigilância Sanitária – ANVISA, mediante Registro, Notificação ou Cadastro, conforme o enquadramento sanitário aplicável ao produto; Para verificar a validade das assinaturas, acesse https://franciscobeltrao.1doc.com.br/verificacao/5AAA-46A3-4A64-F33F e informe o código 5AAA-46A3-4A64-F33F c) Apresentação da Autorização de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razão da atividade exercida pela licitante e do enquadramento sanitário dos \\\"},{\\\"topico\\\":\\\"AFE\\\",\\\"trecho\\\":\\\"rmenorizadas no edital; b) apresentar preços inexequíveis ou permanecer acima do orçamento estimado para a contrataçao; c) nao tiver sua exequibilidade demonstrada, quando exigido pela Administraçao; e d) apresentar desconformidade com quaisquer outras exigencias do edital, desde que insanavel. 10.1.9.1 O Pregoeiro podera realizar diligencias para aferir a exequibilidade da proposta ou exigir do licitante que ela seja demonstrada, conforme disposto na alínea “c” acima. 10.2 O Pregoeiro examinara a proposta mais bem classificada quanto a compatibilidade com as especificaçoes tecnicas estabelecidas no edital e quanto aos preços unitarios ofertados, que nao poderao ser superiores aos valores estimados constantes na tabela do Anexo I. 10.2.1 O Pregoeiro podera promover diligencia destinada a e\\\"},{\\\"topico\\\":\\\"AFE\\\",\\\"trecho\\\":\\\"a saude compatíveis ou similares ao objeto desta licitaçao. 12.3.3.2 Comprovaçao da regularizaçao dos produtos ofertados perante a Agencia Nacional de Vigilancia Sanitaria – ANVISA, mediante Registro, Notificaçao ou Cadastro, conforme o enquadramento sanitario aplicavel ao produto. 12.3.3.3 Apresentaçao da Autorizaçao de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razao da atividade exercida pela licitante e do enquadramento sanitario dos produtos. 12.3.3.4 Apresentaçao da Licença Sanitaria ou documento equivalente, expedida pelo orgao de Vigilancia Sanitaria competente, quando exigível em razao da atividade desenvolvida pela empresa. 12.3.3.5 A documentaçao sanitaria devera ser compatível com a atividade exercida pela licitante e com o enquadramento dos produt\\\"},{\\\"topico\\\":\\\"AFE\\\",\\\"trecho\\\":\\\"mpugnaçao nao enseja efeito suspensivo automatico, devendo a Administraçao responde-la em ate 3 (tres) dias uteis, limitado ao ultimo dia util anterior a data prevista para a abertura do certame. 18.3 Acolhida a impugnaçao contra este edital, sera designada nova data para a realizaçao do certame, exceto quando, inquestionavelmente, a alteraçao nao afetar a formulaçao das propostas. 18.4 Os pedidos de esclarecimentos deverao ser enviados ao Pregoeiro ate o terceiro dia util anterior a data fixada para abertura da sessao publica, exclusivamente para o endereço eletronico daiane.licitacaofb@gmail.com. 18.4.1 O Pregoeiro, auxiliado pelo setor tecnico competente, prestara os esclarecimentos solicitados em ate 3 (tres) dias uteis, limitado ao ultimo dia util anterior a data prevista para a abert\\\"},{\\\"topico\\\":\\\"amostra\\\",\\\"trecho\\\":\\\"taçao formal por parte da licitante e antes de encerrado o prazo inicial. 10.1.5 O Pregoeiro poderá solicitar a apresentação de folders, prospectos, FICHA TÉCNICA e outros documentos ou materiais de divulgação que contenham informações técnicas e detalhamentos acerca dos produtos e/ou equipamentos ofertados, antes mesmo da apresentação de eventual amostra. 10.1.6 A apresentaçao dos materiais e documentos a que se referem o subitem 10.1.5 nao desonera a licitante da obrigaçao de apresentar amostras que venham a ser solicitadas. 10.1.7 Em caso de nao envio da proposta no prazo indicado ou expirada eventual prorrogaçao concedida pelo Pregoeiro, a licitante sera desclassificada e sujeitar-se-a as sançoes previstas neste edital. 10.1.8 A apresentação da proposta implicará na plena aceitação das\\\"},{\\\"topico\\\":\\\"habilitação\\\",\\\"trecho\\\":\\\" proposta apresentada compreende a integralidade dos custos para atendimento dos direitos trabalhistas assegurados na Constituição Federal, nas leis trabalhistas, nas normas infralegais, nas convenções coletivas de trabalho e nos termos de ajustamento de conduta vigentes na data de sua entrega em definitivo e que cumpre plenamente os requisitos de habilitação definidos no instrumento convocatório; 3.6.2 Não emprega menor de 18 anos em trabalho noturno, perigoso ou insalubre e não emprega menor de 16 anos, salvo menor, a partir de 14 anos, na condição de aprendiz, nos termos do artigo 7°, XXXIII, da Constituição; 3.6.3 Não possui empregados executando trabalho degradante ou forçado, observando o disposto nos incisos III e IV do art. 1º e no inciso III do art. 5º da Constituição Federal; 3.6\\\"},{\\\"topico\\\":\\\"habilitação\\\",\\\"trecho\\\":\\\"es, na ordem de classificaçao, possam ofertar um lance final e fechado em ate 05 (cinco) minutos, o qual sera sigiloso ate o encerramento deste prazo. 5.1.6 Podera o pregoeiro, auxiliado pela equipe de apoio, justificadamente, admitir o reinício da etapa fechada, caso nenhum licitante classificado na etapa de lance fechado atender as exigencias de habilitaçao. 5.2 A verificaçao da conformidade da proposta sera feita exclusivamente na fase de julgamento, ressalvado o disposto no item 5.3. 5.3 Durante a etapa de envio de lances, tendo por fundamento o disposto nos arts. 5º, 9º e 11 da Lei nº 14.133/2021, o Pregoeiro podera desclassificar a proposta que possa comprometer a regularidade do certame, a dinamica da disputa e/ou causar prejuízo a competitividade do processo licitatorio, assim comp\\\"},{\\\"topico\\\":\\\"habilitação\\\",\\\"trecho\\\":\\\"tem as especificaçoes tecnicas e características dos produtos, que permitam a consistente avaliaçao pela equipe tecnica. 11.3 Encaminhar Catalogo ou folheto tecnico dos produtos, em língua portuguesa, conforme modelo proposto, com especificaçoes completas dos produtos, marca, informaçoes tecnicas que possibilite avaliaçao completa do item. 12 – DA HABILITAÇÃO 12.1 A habilitaçao das licitantes sera verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentaçao especificada neste edital. 12.1.1 Diante da expiraçao de validade dos documentos registrados no SICAF referentes aos Níveis III, IV e VI, em relaçao aqueles solicitados pelo Pregoeiro, as licitantes deverao apresentar documentaçao complementar a fim de suprir tais exigencias, observado\\\"}]}\",\"ms\":6243.826083}]"
+      },
+      {
+        "seq": 9,
+        "id": "ev_9",
+        "horario": "2026-11-07T19:13:53.990Z",
+        "tipo": "analise_item",
+        "resumo": "tool: get_product_sheet",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"get_product_sheet\",\"entrada\":\"{\\\"product_id\\\":\\\"P1\\\"}\",\"saida\":\"{\\\"id\\\":\\\"P1\\\",\\\"nome\\\":\\\"Cabo de bisturi nº 4\\\",\\\"marca\\\":\\\"Allplan\\\",\\\"ficha\\\":\\\"Cabo de bisturi nº 4. Comprimento total 13 cm. Material: aço inoxidável AISI 420. Reutilizável e autoclavável. Encaixe para lâminas nº 18 a 36. Embalagem individual.\\\"}\",\"ms\":0.09958300000289455}]"
+      },
+      {
+        "seq": 10,
+        "id": "ev_10",
+        "horario": "2026-11-07T19:13:53.990Z",
+        "tipo": "analise_item",
+        "resumo": "tool: get_product_sheet",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"get_product_sheet\",\"entrada\":\"{\\\"product_id\\\":\\\"P2\\\"}\",\"saida\":\"{\\\"id\\\":\\\"P2\\\",\\\"nome\\\":\\\"Tesoura Metzenbaum curva 20 cm\\\",\\\"marca\\\":\\\"Professional\\\",\\\"ficha\\\":\\\"Tesoura cirúrgica Metzenbaum. Comprimento total 20 cm. Haste curva, ponta romba. Material: aço inoxidável. Esterilizável em autoclave.\\\"}\",\"ms\":0.008042000001296401}]"
+      },
+      {
+        "seq": 11,
+        "id": "ev_11",
+        "horario": "2026-11-07T19:14:18.554Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"ms\":24563.445125,\"custoUsd\":0.006792134}]"
+      },
+      {
+        "seq": 12,
+        "id": "ev_12",
+        "horario": "2026-11-07T19:14:18.571Z",
+        "tipo": "analise_item",
+        "resumo": "tool: record_requirement",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"record_requirement\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"requirement\\\":\\\"registro_anvisa\\\",\\\"quote\\\":\\\"Comprovação da regularização dos produtos ofertados perante a Agência Nacional de Vigilância Sanitária – ANVISA, mediante Registro, Notificação ou Cadastro, conforme o enquadramento sanitário aplicável ao produto\\\"}\",\"saida\":\"{\\\"aceito\\\":true}\",\"ms\":14.851208000000042}]"
+      },
+      {
+        "seq": 13,
+        "id": "ev_13",
+        "horario": "2026-11-07T19:14:18.580Z",
+        "tipo": "analise_item",
+        "resumo": "tool: record_requirement",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"record_requirement\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"requirement\\\":\\\"afe\\\",\\\"quote\\\":\\\"Apresentação da Autorização de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razão da atividade exercida pela licitante e do enquadramento sanitário dos produtos\\\"}\",\"saida\":\"{\\\"aceito\\\":true}\",\"ms\":7.266125000001921}]"
+      },
+      {
+        "seq": 14,
+        "id": "ev_14",
+        "horario": "2026-11-07T19:14:18.591Z",
+        "tipo": "analise_item",
+        "resumo": "tool: record_requirement",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"record_requirement\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"requirement\\\":\\\"amostra\\\",\\\"quote\\\":\\\"A apresentação dos materiais e documentos a que se referem o subitem 10.1.5 não desonera a licitante da obrigação de apresentar amostras que venham a ser solicitadas\\\"}\",\"saida\":\"{\\\"aceito\\\":true}\",\"ms\":8.115916999995534}]"
+      },
+      {
+        "seq": 15,
+        "id": "ev_15",
+        "horario": "2026-11-07T19:14:18.597Z",
+        "tipo": "analise_item",
+        "resumo": "tool: record_requirement",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"record_requirement\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"requirement\\\":\\\"certidoes\\\",\\\"quote\\\":\\\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\\\"}\",\"saida\":\"{\\\"aceito\\\":true}\",\"ms\":6.007459000000381}]"
+      },
+      {
+        "seq": 16,
+        "id": "ev_16",
+        "horario": "2026-11-07T19:14:33.119Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"ms\":14520.860916999998,\"custoUsd\":0.003684892}]"
+      },
+      {
+        "seq": 17,
+        "id": "ev_17",
+        "horario": "2026-11-07T19:14:33.121Z",
+        "tipo": "analise_item",
+        "resumo": "tool: get_tender_item",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"get_tender_item\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":4,\\\"offset\\\":0}\",\"saida\":\"{\\\"numero\\\":4,\\\"descricao\\\":\\\"Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4 CABO DE BISTURI Nº4 13 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL \\\",\\\"quantidade\\\":20,\\\"valorEstimado\\\":126.97,\\\"catalogCode\\\":299116,\\\"beneficio\\\":\\\"Sem benefício\\\",\\\"criterio\\\":\\\"Menor preço\\\",\\\"temResultado\\\":false,\\\"sigiloso\\\":false,\\\"caracteres_descricao\\\":167,\\\"offset\\\":0,\\\"proximo_offset\\\":null}\",\"ms\":0.3574159999989206}]"
+      },
+      {
+        "seq": 18,
+        "id": "ev_18",
+        "horario": "2026-11-07T19:14:33.121Z",
+        "tipo": "analise_item",
+        "resumo": "tool: get_tender_item",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"get_tender_item\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":39,\\\"offset\\\":0}\",\"saida\":\"{\\\"numero\\\":39,\\\"descricao\\\":\\\"Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, tipo ponta: ponta curva TESOURA METZENBAUM CURVA 20CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL \\\",\\\"quantidade\\\":20,\\\"valorEstimado\\\":428.26,\\\"catalogCode\\\":471555,\\\"beneficio\\\":\\\"Sem benefício\\\",\\\"criterio\\\":\\\"Menor preço\\\",\\\"temResultado\\\":false,\\\"sigiloso\\\":false,\\\"caracteres_descricao\\\":269,\\\"offset\\\":0,\\\"proximo_offset\\\":null}\",\"ms\":0.03558300000440795}]"
+      },
+      {
+        "seq": 19,
+        "id": "ev_19",
+        "horario": "2026-11-07T19:15:48.338Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"ms\":75216.05225,\"custoUsd\":0.010279452}]"
+      },
+      {
+        "seq": 20,
+        "id": "ev_20",
+        "horario": "2026-11-07T19:15:48.343Z",
+        "tipo": "analise_item",
+        "resumo": "tool: record_fit",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"record_fit\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":4,\\\"product_id\\\":\\\"P1\\\",\\\"attributes\\\":[{\\\"atributo\\\":\\\"tipo\\\",\\\"citacao_item\\\":\\\"Cabo Bisturi ... tamanho: nº 4 CABO DE BISTURI Nº4\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Cabo de bisturi nº 4\\\",\\\"exigido\\\":\\\"Cabo de bisturi nº 4\\\",\\\"ofertado\\\":\\\"Cabo de bisturi nº 4\\\"},{\\\"atributo\\\":\\\"comprimento\\\",\\\"citacao_item\\\":\\\"CABO DE BISTURI Nº4 13 CM\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Comprimento total 13 cm\\\",\\\"exigido\\\":\\\"13 cm\\\",\\\"ofertado\\\":\\\"13 cm\\\"},{\\\"atributo\\\":\\\"material\\\",\\\"citacao_item\\\":\\\"material: aço inoxidável\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Material: aço inoxidável AISI 420\\\",\\\"exigido\\\":\\\"aço inoxidável\\\",\\\"ofertado\\\":\\\"aço inoxidável AISI 420\\\"},{\\\"atributo\\\":\\\"esterilidade\\\",\\\"citacao_item\\\":\\\"AUTOCLAVÁVEL\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Reutilizável e autoclavável\\\",\\\"exigido\\\":\\\"autoclavável\\\",\\\"ofertado\\\":\\\"autoclavável\\\"}]}\",\"saida\":\"{\\\"aceito\\\":false,\\\"erros\\\":[\\\"tipo: citacao_item não encontrada no item\\\"],\\\"instrucao\\\":\\\"corrija as citações copiando trechos literais e chame record_fit de novo\\\"}\",\"ms\":3.16629200000898}]"
+      },
+      {
+        "seq": 21,
+        "id": "ev_21",
+        "horario": "2026-11-07T19:15:48.345Z",
+        "tipo": "analise_item",
+        "resumo": "tool: record_fit",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"record_fit\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":39,\\\"product_id\\\":\\\"P2\\\",\\\"attributes\\\":[{\\\"atributo\\\":\\\"modelo\\\",\\\"citacao_item\\\":\\\"modelo 1: metzenbaum - nelson ... TESOURA METZENBAUM CURVA 20CM\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Tesoura cirúrgica Metzenbaum\\\",\\\"exigido\\\":\\\"metzenbaum - nelson\\\",\\\"ofertado\\\":\\\"Metzenbaum\\\"},{\\\"atributo\\\":\\\"comprimento\\\",\\\"citacao_item\\\":\\\"comprimento total: cerca de 20 ... TESOURA METZENBAUM CURVA 20CM\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Comprimento total 20 cm\\\",\\\"exigido\\\":\\\"cerca de 20 cm\\\",\\\"ofertado\\\":\\\"20 cm\\\"},{\\\"atributo\\\":\\\"material\\\",\\\"citacao_item\\\":\\\"material: aço inoxidável\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Material: aço inoxidável\\\",\\\"exigido\\\":\\\"aço inoxidável\\\",\\\"ofertado\\\":\\\"aço inoxidável\\\"},{\\\"atributo\\\":\\\"esterilidade\\\",\\\"citacao_item\\\":\\\"esterilidade: esterilizável ... AUTOCLAVÁVEL\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Esterilizável em autoclave\\\",\\\"exigido\\\":\\\"esterilizável/autoclavável\\\",\\\"ofertado\\\":\\\"esterilizável em autoclave\\\"},{\\\"atributo\\\":\\\"haste\\\",\\\"citacao_item\\\":\\\"haste: haste reta ... TESOURA METZENBAUM CURVA 20CM\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Haste curva\\\",\\\"exigido\\\":\\\"curva (conforme nome do item)\\\",\\\"ofertado\\\":\\\"curva\\\"},{\\\"atributo\\\":\\\"tipo ponta\\\",\\\"citacao_item\\\":\\\"tipo ponta: ponta curva\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"ponta romba\\\",\\\"exigido\\\":\\\"ponta curva\\\",\\\"ofertado\\\":\\\"ponta romba (característica Metzenbaum)\\\"}]}\",\"saida\":\"{\\\"aceito\\\":false,\\\"erros\\\":[\\\"modelo: citacao_item não encontrada no item\\\",\\\"comprimento: citacao_item não encontrada no item\\\",\\\"esterilidade: citacao_item não encontrada no item\\\",\\\"haste: citacao_item não encontrada no item\\\"],\\\"instrucao\\\":\\\"corrija as citações copiando trechos literais e chame record_fit de novo\\\"}\",\"ms\":0.710958000010578}]"
+      },
+      {
+        "seq": 22,
+        "id": "ev_22",
+        "horario": "2026-11-07T19:16:21.666Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"ms\":33319.48912499999,\"custoUsd\":0.006100664}]"
+      },
+      {
+        "seq": 23,
+        "id": "ev_23",
+        "horario": "2026-11-07T19:16:21.667Z",
+        "tipo": "analise_item",
+        "resumo": "tool: record_fit",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"record_fit\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":4,\\\"product_id\\\":\\\"P1\\\",\\\"attributes\\\":[{\\\"atributo\\\":\\\"tipo\\\",\\\"citacao_item\\\":\\\"tamanho: nº 4\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Cabo de bisturi nº 4\\\",\\\"exigido\\\":\\\"nº 4\\\",\\\"ofertado\\\":\\\"nº 4\\\"},{\\\"atributo\\\":\\\"comprimento\\\",\\\"citacao_item\\\":\\\"CABO DE BISTURI Nº4 13 CM\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Comprimento total 13 cm\\\",\\\"exigido\\\":\\\"13 cm\\\",\\\"ofertado\\\":\\\"13 cm\\\"},{\\\"atributo\\\":\\\"material\\\",\\\"citacao_item\\\":\\\"material: aço inoxidável\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Material: aço inoxidável AISI 420\\\",\\\"exigido\\\":\\\"aço inoxidável\\\",\\\"ofertado\\\":\\\"aço inoxidável AISI 420\\\"},{\\\"atributo\\\":\\\"esterilidade\\\",\\\"citacao_item\\\":\\\"AUTOCLAVÁVEL\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Reutilizável e autoclavável\\\",\\\"exigido\\\":\\\"autoclavável\\\",\\\"ofertado\\\":\\\"autoclavável\\\"}]}\",\"saida\":\"{\\\"aceito\\\":true,\\\"resultado\\\":\\\"atende\\\",\\\"validacao\\\":{\\\"citacoes\\\":\\\"conferidas\\\",\\\"cobertura\\\":\\\"nao_verificada\\\",\\\"semantica\\\":\\\"julgamento_modelo\\\"}}\",\"ms\":0.24429200001759455}]"
+      },
+      {
+        "seq": 24,
+        "id": "ev_24",
+        "horario": "2026-11-07T19:16:21.668Z",
+        "tipo": "analise_item",
+        "resumo": "tool: record_fit",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"record_fit\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":39,\\\"product_id\\\":\\\"P2\\\",\\\"attributes\\\":[{\\\"atributo\\\":\\\"modelo\\\",\\\"citacao_item\\\":\\\"modelo 1: metzenbaum - nelson\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Tesoura cirúrgica Metzenbaum\\\",\\\"exigido\\\":\\\"metzenbaum - nelson\\\",\\\"ofertado\\\":\\\"Metzenbaum\\\"},{\\\"atributo\\\":\\\"comprimento\\\",\\\"citacao_item\\\":\\\"comprimento total: cerca de 20\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Comprimento total 20 cm\\\",\\\"exigido\\\":\\\"cerca de 20\\\",\\\"ofertado\\\":\\\"20 cm\\\"},{\\\"atributo\\\":\\\"material\\\",\\\"citacao_item\\\":\\\"material: aço inoxidável\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Material: aço inoxidável\\\",\\\"exigido\\\":\\\"aço inoxidável\\\",\\\"ofertado\\\":\\\"aço inoxidável\\\"},{\\\"atributo\\\":\\\"esterilidade\\\",\\\"citacao_item\\\":\\\"esterilidade: esterilizável\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Esterilizável em autoclave\\\",\\\"exigido\\\":\\\"esterilizável\\\",\\\"ofertado\\\":\\\"esterilizável em autoclave\\\"},{\\\"atributo\\\":\\\"haste\\\",\\\"citacao_item\\\":\\\"haste: haste reta\\\",\\\"veredito\\\":\\\"nao_atende\\\",\\\"citacao_ficha\\\":\\\"Haste curva\\\",\\\"exigido\\\":\\\"haste reta\\\",\\\"ofertado\\\":\\\"haste curva\\\"},{\\\"atributo\\\":\\\"tipo ponta\\\",\\\"citacao_item\\\":\\\"tipo ponta: ponta curva\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"ponta romba\\\",\\\"exigido\\\":\\\"ponta curva\\\",\\\"ofertado\\\":\\\"ponta romba\\\"}]}\",\"saida\":\"{\\\"aceito\\\":true,\\\"resultado\\\":\\\"nao_atende\\\",\\\"validacao\\\":{\\\"citacoes\\\":\\\"conferidas\\\",\\\"cobertura\\\":\\\"nao_verificada\\\",\\\"semantica\\\":\\\"julgamento_modelo\\\"}}\",\"ms\":0.16075000001001172}]"
+      },
+      {
+        "seq": 25,
+        "id": "ev_25",
+        "horario": "2026-11-07T19:16:39.932Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"ms\":18263.552333999978,\"custoUsd\":0.004904054}]"
+      },
+      {
+        "seq": 26,
+        "id": "ev_26",
+        "horario": "2026-11-07T19:16:40.496Z",
+        "tipo": "analise_item",
+        "resumo": "tool: decide_item",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"decide_item\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":4,\\\"product_id\\\":\\\"P1\\\"}\",\"saida\":\"{\\\"estado\\\":\\\"escalar\\\",\\\"motivos\\\":[\\\"encaixe técnico desconhecido\\\"],\\\"tenderId\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":4,\\\"produto\\\":\\\"P1\\\",\\\"product_id\\\":\\\"P1\\\",\\\"precoProposto\\\":7.5,\\\"preco_sugerido\\\":7.5,\\\"preco\\\":{\\\"viavel\\\":true,\\\"precoProposto\\\":7.5,\\\"motivo\\\":\\\"preço com margem dentro da estimativa (R$ 126.97)\\\"},\\\"anvisa\\\":{\\\"cobertura\\\":\\\"nao_comprovada\\\",\\\"classe\\\":\\\"I\\\",\\\"detentor\\\":\\\"PRISMA INSTRUMENTOS ODONTOLÓGICOS LTDA - ME\\\",\\\"regularizacao\\\":\\\"vigente\\\",\\\"status\\\":\\\"ok\\\",\\\"validUntil\\\":null},\\\"docs\\\":[{\\\"exigencia\\\":\\\"AFE ANVISA (afe)\\\",\\\"citacao\\\":\\\"Apresentação da Autorização de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razão da atividade exercida pela licitante e do enquadramento sanitário dos produtos\\\",\\\"documento\\\":\\\"AFE ANVISA (distribuidora de produtos para saúde)\\\",\\\"validade\\\":null,\\\"status\\\":\\\"sem_vencimento\\\"},{\\\"exigencia\\\":\\\"CND Federal (certidoes)\\\",\\\"citacao\\\":\\\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\\\",\\\"documento\\\":\\\"CND Federal (Receita/PGFN)\\\",\\\"validade\\\":\\\"2026-11-15\\\",\\\"status\\\":\\\"vence_antes_sessao\\\"},{\\\"exigencia\\\":\\\"CRF FGTS (certidoes)\\\",\\\"citacao\\\":\\\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\\\",\\\"documento\\\":\\\"CRF FGTS\\\",\\\"validade\\\":\\\"2026-12-20\\\",\\\"status\\\":\\\"vigente\\\"},{\\\"exigencia\\\":\\\"CNDT (certidoes)\\\",\\\"citacao\\\":\\\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\\\",\\\"documento\\\":\\\"CNDT Trabalhista\\\",\\\"validade\\\":\\\"2027-02-10\\\",\\\"status\\\":\\\"vigente\\\"}],\\\"decision\\\":\\\"escalar\\\",\\\"reasons\\\":[\\\"encaixe técnico desconhecido\\\"],\\\"docs_vencidos\\\":[\\\"CND Federal (certidoes)\\\"]}\",\"ms\":562.6828749999986}]"
+      },
+      {
+        "seq": 27,
+        "id": "ev_27",
+        "horario": "2026-11-07T19:16:40.497Z",
+        "tipo": "analise_item",
+        "resumo": "tool: decide_item",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"decide_item\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":39,\\\"product_id\\\":\\\"P2\\\"}\",\"saida\":\"{\\\"estado\\\":\\\"escalar\\\",\\\"motivos\\\":[\\\"encaixe técnico desconhecido\\\"],\\\"tenderId\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":39,\\\"produto\\\":\\\"P2\\\",\\\"product_id\\\":\\\"P2\\\",\\\"precoProposto\\\":27.5,\\\"preco_sugerido\\\":27.5,\\\"preco\\\":{\\\"viavel\\\":true,\\\"precoProposto\\\":27.5,\\\"motivo\\\":\\\"preço com margem dentro da estimativa (R$ 428.26)\\\"},\\\"anvisa\\\":{\\\"cobertura\\\":\\\"nao_comprovada\\\",\\\"classe\\\":\\\"II\\\",\\\"detentor\\\":\\\"CIRURGICA FERNANDES - COMERCIO DE MATERIAIS CIRURGICOS E HOSPITALARES - SOCIEDADE LIMITADA\\\",\\\"regularizacao\\\":\\\"vigente\\\",\\\"status\\\":\\\"ok\\\",\\\"validUntil\\\":null},\\\"docs\\\":[{\\\"exigencia\\\":\\\"AFE ANVISA (afe)\\\",\\\"citacao\\\":\\\"Apresentação da Autorização de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razão da atividade exercida pela licitante e do enquadramento sanitário dos produtos\\\",\\\"documento\\\":\\\"AFE ANVISA (distribuidora de produtos para saúde)\\\",\\\"validade\\\":null,\\\"status\\\":\\\"sem_vencimento\\\"},{\\\"exigencia\\\":\\\"CND Federal (certidoes)\\\",\\\"citacao\\\":\\\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\\\",\\\"documento\\\":\\\"CND Federal (Receita/PGFN)\\\",\\\"validade\\\":\\\"2026-11-15\\\",\\\"status\\\":\\\"vence_antes_sessao\\\"},{\\\"exigencia\\\":\\\"CRF FGTS (certidoes)\\\",\\\"citacao\\\":\\\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\\\",\\\"documento\\\":\\\"CRF FGTS\\\",\\\"validade\\\":\\\"2026-12-20\\\",\\\"status\\\":\\\"vigente\\\"},{\\\"exigencia\\\":\\\"CNDT (certidoes)\\\",\\\"citacao\\\":\\\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\\\",\\\"documento\\\":\\\"CNDT Trabalhista\\\",\\\"validade\\\":\\\"2027-02-10\\\",\\\"status\\\":\\\"vigente\\\"}],\\\"decision\\\":\\\"escalar\\\",\\\"reasons\\\":[\\\"encaixe técnico desconhecido\\\"],\\\"docs_vencidos\\\":[\\\"CND Federal (certidoes)\\\"]}\",\"ms\":0.12825000000884756}]"
+      },
+      {
+        "seq": 28,
+        "id": "ev_28",
+        "horario": "2026-11-07T19:16:55.159Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"ms\":14662.415917000006,\"custoUsd\":0.004891582}]"
+      },
+      {
+        "seq": 29,
+        "id": "ev_29",
+        "horario": "2026-11-07T19:16:55.161Z",
+        "tipo": "analise_item",
+        "resumo": "tool: get_tender_item",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"get_tender_item\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":3,\\\"offset\\\":0}\",\"saida\":\"{\\\"numero\\\":3,\\\"descricao\\\":\\\"Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 3 CABO DE BISTURI Nº3 13 CM AÇO INOX AUTOCLAVÁVEL -  CONFORME DESCRIÇÃO DO EDITAL \\\",\\\"quantidade\\\":20,\\\"valorEstimado\\\":126.97,\\\"catalogCode\\\":299683,\\\"beneficio\\\":\\\"Sem benefício\\\",\\\"criterio\\\":\\\"Menor preço\\\",\\\"temResultado\\\":false,\\\"sigiloso\\\":false,\\\"caracteres_descricao\\\":168,\\\"offset\\\":0,\\\"proximo_offset\\\":null}\",\"ms\":0.12387499999022111}]"
+      },
+      {
+        "seq": 30,
+        "id": "ev_30",
+        "horario": "2026-11-07T19:17:22.739Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"ms\":27577.69962500001,\"custoUsd\":0.005883292}]"
+      },
+      {
+        "seq": 31,
+        "id": "ev_31",
+        "horario": "2026-11-07T19:17:22.741Z",
+        "tipo": "analise_item",
+        "resumo": "tool: record_fit",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"record_fit\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":3,\\\"product_id\\\":\\\"P1\\\",\\\"attributes\\\":[{\\\"atributo\\\":\\\"tipo\\\",\\\"citacao_item\\\":\\\"tamanho: nº 3\\\",\\\"veredito\\\":\\\"nao_atende\\\",\\\"citacao_ficha\\\":\\\"Cabo de bisturi nº 4\\\",\\\"exigido\\\":\\\"nº 3\\\",\\\"ofertado\\\":\\\"nº 4\\\"},{\\\"atributo\\\":\\\"comprimento\\\",\\\"citacao_item\\\":\\\"CABO DE BISTURI Nº3 13 CM\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Comprimento total 13 cm\\\",\\\"exigido\\\":\\\"13 cm\\\",\\\"ofertado\\\":\\\"13 cm\\\"},{\\\"atributo\\\":\\\"material\\\",\\\"citacao_item\\\":\\\"material: aço inoxidável\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Material: aço inoxidável AISI 420\\\",\\\"exigido\\\":\\\"aço inoxidável\\\",\\\"ofertado\\\":\\\"aço inoxidável AISI 420\\\"},{\\\"atributo\\\":\\\"esterilidade\\\",\\\"citacao_item\\\":\\\"AUTOCLAVÁVEL\\\",\\\"veredito\\\":\\\"atende\\\",\\\"citacao_ficha\\\":\\\"Reutilizável e autoclavável\\\",\\\"exigido\\\":\\\"autoclavável\\\",\\\"ofertado\\\":\\\"autoclavável\\\"}]}\",\"saida\":\"{\\\"aceito\\\":true,\\\"resultado\\\":\\\"nao_atende\\\",\\\"validacao\\\":{\\\"citacoes\\\":\\\"conferidas\\\",\\\"cobertura\\\":\\\"nao_verificada\\\",\\\"semantica\\\":\\\"julgamento_modelo\\\"}}\",\"ms\":0.18900000001303852}]"
+      },
+      {
+        "seq": 32,
+        "id": "ev_32",
+        "horario": "2026-11-07T19:17:26.095Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"ms\":3354.072375000018,\"custoUsd\":0.00286254}]"
+      },
+      {
+        "seq": 33,
+        "id": "ev_33",
+        "horario": "2026-11-07T19:17:26.098Z",
+        "tipo": "analise_item",
+        "resumo": "tool: decide_item",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"decide_item\",\"entrada\":\"{\\\"tender_id\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":3,\\\"product_id\\\":\\\"P1\\\"}\",\"saida\":\"{\\\"estado\\\":\\\"escalar\\\",\\\"motivos\\\":[\\\"encaixe técnico desconhecido\\\"],\\\"tenderId\\\":\\\"77816510000166/2026/348\\\",\\\"item\\\":3,\\\"produto\\\":\\\"P1\\\",\\\"product_id\\\":\\\"P1\\\",\\\"precoProposto\\\":7.5,\\\"preco_sugerido\\\":7.5,\\\"preco\\\":{\\\"viavel\\\":true,\\\"precoProposto\\\":7.5,\\\"motivo\\\":\\\"preço com margem dentro da estimativa (R$ 126.97)\\\"},\\\"anvisa\\\":{\\\"cobertura\\\":\\\"nao_comprovada\\\",\\\"classe\\\":\\\"I\\\",\\\"detentor\\\":\\\"PRISMA INSTRUMENTOS ODONTOLÓGICOS LTDA - ME\\\",\\\"regularizacao\\\":\\\"vigente\\\",\\\"status\\\":\\\"ok\\\",\\\"validUntil\\\":null},\\\"docs\\\":[{\\\"exigencia\\\":\\\"AFE ANVISA (afe)\\\",\\\"citacao\\\":\\\"Apresentação da Autorização de Funcionamento de Empresa – AFE, expedida pela ANVISA, quando exigível em razão da atividade exercida pela licitante e do enquadramento sanitário dos produtos\\\",\\\"documento\\\":\\\"AFE ANVISA (distribuidora de produtos para saúde)\\\",\\\"validade\\\":null,\\\"status\\\":\\\"sem_vencimento\\\"},{\\\"exigencia\\\":\\\"CND Federal (certidoes)\\\",\\\"citacao\\\":\\\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\\\",\\\"documento\\\":\\\"CND Federal (Receita/PGFN)\\\",\\\"validade\\\":\\\"2026-11-15\\\",\\\"status\\\":\\\"vence_antes_sessao\\\"},{\\\"exigencia\\\":\\\"CRF FGTS (certidoes)\\\",\\\"citacao\\\":\\\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\\\",\\\"documento\\\":\\\"CRF FGTS\\\",\\\"validade\\\":\\\"2026-12-20\\\",\\\"status\\\":\\\"vigente\\\"},{\\\"exigencia\\\":\\\"CNDT (certidoes)\\\",\\\"citacao\\\":\\\"A habilitação das licitantes será verificada por meio do SICAF, podendo abranger o Nível I ao VI do Cadastro de Pessoa Jurídica, e da documentação especificada neste edital\\\",\\\"documento\\\":\\\"CNDT Trabalhista\\\",\\\"validade\\\":\\\"2027-02-10\\\",\\\"status\\\":\\\"vigente\\\"}],\\\"decision\\\":\\\"escalar\\\",\\\"reasons\\\":[\\\"encaixe técnico desconhecido\\\"],\\\"docs_vencidos\\\":[\\\"CND Federal (certidoes)\\\"]}\",\"ms\":0.9610420000099111}]"
+      },
+      {
+        "seq": 34,
+        "id": "ev_34",
+        "horario": "2026-11-07T19:18:11.178Z",
+        "tipo": "analise_item",
+        "resumo": "Chamada ao modelo",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"llm:moonshotai/Kimi-K2.6\",\"saida\":\"## Resumo da Análise — Pregão 77816510000166/2026/348\\n\\n### ✅ O que ficou pronto\\n\\n| Etapa | Status | Detalhes |\\n|-------|--------|----------|\\n| **Catálogo** | Concluído | 7 produtos listados (P1 a P7). Empresa: Distribuidora Modelo Ltda (EPP/PR) |\\n| **Itens do pregão** | Concluído | 46 itens lidos em 2 páginas. Todos são instrumentais cirúrgicos em aço inox (bacias, bandejas, cabos de bisturi, pinças, tesouras, etc.) |\\n| **Edital** | Concluído | Trechos lidos sobre ANVISA, AFE, amostra, habilitação e certidões |\\n| **Exigências registradas** | Concluído | 4 exigências: registro/regularização ANVISA, AFE, amostra e certidões (SICAF/CND) |\\n| **Fichas técnicas** | Concluído | P1 (Cabo de bisturi nº 4) e P2 (Tesoura Metzenbaum curva 20 cm) |\\n| **Análise técnica (3 itens)** | Concluído | Item 3 (não atende), Item 4 (atende), Item 39 (não atende) |\\n| **Decisões** | Concluído | 3 itens avaliados pelo `decide_item` |\\n\\n---\\n\\n### ⚠️ Pendências\\n\\n| Pendência | Gravidade | Ação necessária |\\n|-----------|-----------|-----------------|\\n| **CND Federal vencida** | 🔴 Alta | Validade 15/11/2026 — vence antes da sessão. **Renovar urgentemente** |\\n| **Cobertura ANVISA não comprovada** | 🟡 Média | P1 (classe I) e P2 (classe II) têm regularização vigente, mas a cobertura da empresa como distribuidora não está comprovada |\\n| **Escala técnica não verificada** | 🟡 Média | O `decide_item` escalou os 3 itens porque a cobertura técnica não foi verificada em escala |\\n| **Item 3 — Cabo bisturi nº 3** | 🔴 Alta | Produto P1 é **nº 4**, item exige **nº 3** → **não atende** |\\n| **Item 39 — Tesoura Metzenbaum** | 🔴 Alta | Item exige **haste reta**, produto P2 é **haste curva** → **não atende** |\\n| **Demais 43 itens** | 🟡 Média | Não analisados. O catálogo só tem 7 produtos; a maioria dos 46 itens não tem correspondência direta |\\n| **Prazo de esclarecimento** | 🟢 Baixa | Lido do edital (até 3º dia útil antes da sessão), mas não registrado como exigência formal |\\n\\n---\\n\\n### 📋 Decisões por item analisado\\n\\n| Item | Produto | Encaixe Técnico | Preço | Decisão |\\n|------|---------|-----------------|-------|---------|\\n| **3** | P1 | ❌ Não atende (nº 3 vs nº 4) | Viável (R$ 7,50) | **Escalar** |\\n| **4** | P1 | ✅ Atende | Viável (R$ 7,50) | **Escalar** |\\n| **39** | P2 | ❌ Não atende (haste reta vs curva) | Viável (R$ 27,50) | **Escalar** |\\n\\n> **Nota:** Todas as decisões escalaram por \\\"encaixe técnico desconhecido\\\", o que significa que o sistema não conseguiu validar automaticamente a cobertura em escala e a compatibilidade completa — exige revisão humana/técnica.\",\"ms\":45079.123374999996,\"custoUsd\":0.007626432}]"
+      },
+      {
+        "seq": 35,
+        "id": "ev_35",
+        "horario": "2026-11-07T19:18:11.181Z",
+        "tipo": "analise_item",
+        "resumo": "stop: final",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": "[{\"ferramenta\":\"stop\",\"saida\":\"final\",\"ms\":0}]"
+      },
+      {
+        "seq": 36,
+        "id": "ev_36",
+        "horario": "2026-11-07T19:18:11.186Z",
+        "tipo": "decisao",
+        "resumo": "encaixe técnico desconhecido",
+        "detalhe": null,
+        "tender": "77816510000166/2026/348",
+        "item": "4",
+        "dossie": 1,
+        "rastro": null
+      },
+      {
+        "seq": 37,
+        "id": "ev_37",
+        "horario": "2026-11-07T19:18:11.187Z",
+        "tipo": "escalada_aberta",
+        "resumo": "encaixe técnico desconhecido",
+        "detalhe": null,
+        "tender": "77816510000166/2026/348",
+        "item": "4",
+        "dossie": null,
+        "rastro": null
+      },
+      {
+        "seq": 38,
+        "id": "ev_38",
+        "horario": "2026-11-07T19:18:11.187Z",
+        "tipo": "decisao",
+        "resumo": "encaixe técnico desconhecido",
+        "detalhe": null,
+        "tender": "77816510000166/2026/348",
+        "item": "39",
+        "dossie": 1,
+        "rastro": null
+      },
+      {
+        "seq": 39,
+        "id": "ev_39",
+        "horario": "2026-11-07T19:18:11.187Z",
+        "tipo": "escalada_aberta",
+        "resumo": "encaixe técnico desconhecido",
+        "detalhe": null,
+        "tender": "77816510000166/2026/348",
+        "item": "39",
+        "dossie": null,
+        "rastro": null
+      },
+      {
+        "seq": 40,
+        "id": "ev_40",
+        "horario": "2026-11-07T19:18:11.188Z",
+        "tipo": "decisao",
+        "resumo": "encaixe técnico desconhecido",
+        "detalhe": null,
+        "tender": "77816510000166/2026/348",
+        "item": "3",
+        "dossie": 1,
+        "rastro": null
+      },
+      {
+        "seq": 41,
+        "id": "ev_41",
+        "horario": "2026-11-07T19:18:11.188Z",
+        "tipo": "escalada_aberta",
+        "resumo": "encaixe técnico desconhecido",
+        "detalhe": null,
+        "tender": "77816510000166/2026/348",
+        "item": "3",
+        "dossie": null,
+        "rastro": null
+      },
+      {
+        "seq": 42,
+        "id": "ev_42",
+        "horario": "2026-11-07T19:18:11.189Z",
+        "tipo": "turno_fim",
+        "resumo": "Análise encerrada: final; 3 decisões persistidas.",
+        "detalhe": null,
+        "tender": null,
+        "item": null,
+        "dossie": null,
+        "rastro": null
+      }
+    ]
+  }
+}
