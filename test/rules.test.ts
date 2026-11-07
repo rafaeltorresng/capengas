@@ -5,6 +5,7 @@ import {
   checkAnvisa, priceStats, suggestPrice, brandConcentration,
   verifyQuote, esclarecimentoDeadline, decideItem, normalizeBrand,
 } from '../src/lib/rules.ts';
+import type { LegacyItemChecks } from '../src/lib/rules.ts';
 
 const d = (s: string) => new Date(s + 'T12:00:00-03:00');
 
@@ -106,15 +107,15 @@ describe('esclarecimentoDeadline (art. 164, 3 dias úteis antes)', () => {
 });
 
 describe('decideItem', () => {
-  const base = { fit: 'atende', anvisa: 'ok', price: { ok: true }, docsOk: true, restrictive: false };
-  test('tudo ok → ofertar', () => assert.equal(decideItem(base as any).decision, 'ofertar'));
-  test('não atende → nao_ofertar', () => assert.equal(decideItem({ ...base, fit: 'nao_atende' } as any).decision, 'nao_ofertar'));
-  test('registro vence antes → nao_ofertar', () => assert.equal(decideItem({ ...base, anvisa: 'vence_antes_entrega' } as any).decision, 'nao_ofertar'));
-  test('preço inviável → nao_ofertar', () => assert.equal(decideItem({ ...base, price: { ok: false, reason: 'x' } } as any).decision, 'nao_ofertar'));
-  test('atributo não informado → escalar', () => assert.equal(decideItem({ ...base, fit: 'nao_informado' } as any).decision, 'escalar'));
-  test('documento vencido → ofertar_com_pendencia', () => assert.equal(decideItem({ ...base, docsOk: false } as any).decision, 'ofertar_com_pendencia'));
+  const base: LegacyItemChecks = { fit: 'atende', anvisa: 'ok', price: { ok: true }, docsOk: true, restrictive: false };
+  test('tudo ok → ofertar', () => assert.equal(decideItem(base as LegacyItemChecks).decision, 'ofertar'));
+  test('não atende → nao_ofertar', () => assert.equal(decideItem({ ...base, fit: 'nao_atende' } as LegacyItemChecks).decision, 'nao_ofertar'));
+  test('registro vence antes → nao_ofertar', () => assert.equal(decideItem({ ...base, anvisa: 'vence_antes_entrega' } as LegacyItemChecks).decision, 'nao_ofertar'));
+  test('preço inviável → nao_ofertar', () => assert.equal(decideItem({ ...base, price: { ok: false, reason: 'x' } } as LegacyItemChecks).decision, 'nao_ofertar'));
+  test('atributo não informado → escalar', () => assert.equal(decideItem({ ...base, fit: 'nao_informado' } as LegacyItemChecks).decision, 'escalar'));
+  test('documento vencido → ofertar_com_pendencia', () => assert.equal(decideItem({ ...base, docsOk: false } as LegacyItemChecks).decision, 'ofertar_com_pendencia'));
   test('especificação restritiva → escalar com esclarecimento', () => {
-    const r = decideItem({ ...base, restrictive: true } as any);
+    const r = decideItem({ ...base, restrictive: true } as LegacyItemChecks);
     assert.equal(r.decision, 'escalar');
     assert.ok(r.reasons.some(x => /esclarecimento/i.test(x)));
   });

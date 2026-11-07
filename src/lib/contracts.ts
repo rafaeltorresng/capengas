@@ -137,6 +137,7 @@ export type ItemRow = {
   tenderId: string; numero: number; descricao: string; catalogCode: number | null;
   quantidade: number; estimativa: number | null; sigiloso: boolean;
 };
+/** atributos: o Dev 2 grava { attributes, validacao } (validacao.cobertura 'nao_verificada' impede envio automático). */
 export type FitRow = { tenderId: string; item: number; produto: string; fit: Fit; atributos: unknown };
 export type RequirementRow = { tenderId: string; tipo: string; citacao: string };
 export type DecisionRow = { tenderId: string; item: number; produto: string } & ItemDecision & { precoProposto: number | null };
@@ -160,5 +161,7 @@ export interface Store {
   getTender(id: string): TenderRow | undefined;
   getItems(tenderId: string): ItemRow[];
   getDecisions(tenderId?: string): DecisionRow[];
+  /** Ações para contar envios confirmados e deduplicar por key (pedido do Dev 2, #2). */
+  getActions(o?: { tenderId?: string; desde?: string; status?: ActionStatus }): Action[];
   getDossie(tenderId: string): unknown | undefined;
 }
