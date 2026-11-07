@@ -1,4 +1,6 @@
 import type { AnvisaCheck } from '../lib/contracts.ts';
+import type { AlertaCofre } from '../lib/cofre.ts';
+export type { AlertaCofre };
 export type { Decision, DecisionResult, SavedDecision, Trace } from '../lib/contracts.ts';
 import type { Decision, DecisionResult, Trace } from '../lib/contracts.ts';
 
@@ -33,6 +35,8 @@ export type Today = {
   data: string; pregoes: number; itens: number; disputar: number; pendencias: number;
   envios: number; escaladasAbertas: number; custoUsd: number | null;
   porDecisao: { estado: string; quantidade: number }[]; eventos: Event[];
+  /** Documentos do cofre que derrubam algum pregão com sessão futura. Lista vazia quando não há calendário. */
+  cofre: AlertaCofre[];
 };
 export type Proof = {
   fonte: string; avaliacoes: { nome: string; valor: string }[];

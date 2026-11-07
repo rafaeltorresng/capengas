@@ -2,7 +2,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createReadModel } from '../src/lib/read-model.ts';
-import type { Action, Event, Decision, DecisionRow, Escalation } from '../src/lib/contracts.ts';
+import type { Action, CofreDoc, Event, Decision, DecisionRow, Escalation } from '../src/lib/contracts.ts';
 
 const TID = '77816510000166/2026/348';
 const NOW = new Date('2026-11-07T16:00:00-03:00');
@@ -49,6 +49,22 @@ describe('projeção do Store para a tela', () => {
     assert.equal(today.pregoes, 1);
     assert.deepEqual(today.porDecisao, [{ estado: 'Escalar', quantidade: 1 }]);
     assert.equal(today.custoUsd, null);
+    assert.deepEqual(today.cofre, []);
+  });
+  test('Hoje lista o documento do cofre que derruba pregão com sessão futura', () => {
+    const s = setup();
+    const cofre: CofreDoc[] = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8')).cofre;
+    const store = {
+      events: () => [], openEscalations: () => [], getTender: () => undefined, getItems: () => [], getDecisions: () => [],
+      getDossie: () => undefined, resolveEscalation: () => ({ status: 'ausente' as const }),
+      getTenders: () => [{ id: TID, orgao: 'X', uf: 'PR', abertura: '2026-11-23T09:00', situacao: 'Divulgada', plataforma: 'Compras.gov.br', arquivosHash: null, ultimoCheck: null }],
+      getRequirements: () => [{ tenderId: TID, tipo: 'certidoes', citacao: 'certidões' }],
+    };
+    const today = createReadModel(store, { actions: () => [], now: () => NOW, cofre }).hoje();
+    assert.equal(today.cofre.length, 1);
+    assert.equal(today.cofre[0].tipo, 'cnd_federal');
+    assert.equal(today.cofre[0].renovarAte, '2026-11-15');
+    assert.deepEqual(today.cofre[0].pregoes, [{ tenderId: TID, sessao: '2026-11-23' }]);
   });
   test('conta envios somente por ações confirmadas, verificadas e únicas', () => {
     const s = setup();

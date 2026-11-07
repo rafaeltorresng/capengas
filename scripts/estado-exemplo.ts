@@ -54,7 +54,7 @@ const sample = {
     naoExecutados: ['Extração do edital', 'Consulta Anvisa', 'Política e recheque', 'Modelo Featherless', 'Envio', 'Agendador', 'Monitor'],
   },
   hoje: { data: '2026-11-07', pregoes: 1, itens: itens.length, disputar: 0, pendencias: 1, envios: 0,
-    escaladasAbertas: 1, custoUsd: null,
+    escaladasAbertas: 1, custoUsd: null, cofre: [],
     porDecisao: [{ estado: 'Escalar', quantidade: 1 }, { estado: 'Não disputar', quantidade: 1 }],
     eventos: [{ id: 'amostra-gerada', horario: st.now.toISOString(), tipo: 'Amostra',
       resumo: 'Amostra de integração preparada; nenhum turno ou envio executado.',

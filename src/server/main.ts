@@ -18,8 +18,9 @@ if (mode === 'amostra' || mode === 'integrado') {
   try {
     await access(new URL('../../web/dist/index.html', import.meta.url));
     const store = mode === 'integrado' ? openStore() : undefined;
+    const company = store ? JSON.parse(await readFile(new URL('../../fixtures/company.json', import.meta.url), 'utf8')) : null;
     const state = store
-      ? createIntegratedStore(store, createReadModel(store, { actions: () => store.getActions() }))
+      ? createIntegratedStore(store, createReadModel(store, { actions: () => store.getActions(), cofre: company.cofre }))
       : createSampleStore(await loadSample());
     const server = createServer(state, webRoot);
     server.on('error', (error: NodeJS.ErrnoException) => {
