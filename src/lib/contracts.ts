@@ -164,6 +164,8 @@ export interface Store {
   getTenders(o?: { reavaliar?: boolean }): TenderRow[];
   setReavaliar(tenderId: string, flag: boolean): void;
   getItems(tenderId: string): ItemRow[];
+  /** Exigências do edital gravadas na análise (base do calendário do cofre). */
+  getRequirements(tenderId: string): RequirementRow[];
   getDecisions(tenderId?: string): DecisionRow[];
   /** Ações para contar envios confirmados e deduplicar por key (pedido do Dev 2, #2). */
   getActions(o?: { tenderId?: string; desde?: string; status?: ActionStatus }): Action[];

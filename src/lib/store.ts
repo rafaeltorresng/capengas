@@ -238,6 +238,10 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
         quantidade: Number(r.quantidade), estimativa: r.estimativa == null ? null : Number(r.estimativa), sigiloso: !!r.sigiloso,
       }));
     },
+    getRequirements(tenderId) {
+      return db.prepare('SELECT tender_id, tipo, citacao FROM requirements WHERE tender_id = ? ORDER BY tipo, citacao').all(tenderId)
+        .map((r: any) => ({ tenderId: r.tender_id, tipo: r.tipo, citacao: r.citacao }));
+    },
     getDecisions(tenderId?: string) {
       const rows = tenderId
         ? db.prepare('SELECT * FROM decisions WHERE tender_id = ? ORDER BY item, produto').all(tenderId)
