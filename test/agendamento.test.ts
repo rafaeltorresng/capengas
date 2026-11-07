@@ -31,7 +31,7 @@ function setup(o: { limite?: number; recheck?: (id: string) => Promise<Recheque>
       calls.analisar.push(ids); calls.estados.push(state);
       for (const id of ids) {
         state.items[id] = [{ numero: 1, descricao: 'cabo de bisturi', quantidade: 10 }];
-        state.decisions[id + '#1'] = { estado: 'escalar', motivos: ['Revisar evidências'], produto: 'P1', precoProposto: null };
+        state.decisions[`${id}#1`] = { estado: 'escalar', motivos: ['cobertura não verificada'], produto: 'P1', precoProposto: null };
       }
       return { stopped: 'final' };
     },
