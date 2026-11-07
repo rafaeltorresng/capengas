@@ -1,8 +1,8 @@
 // Ferramentas do Lance. Princípio: o modelo julga e cita; o código verifica, calcula e monta o que é enviado.
 import type { Tool, Ctx } from './agent.ts';
 import { pncp, compras, anvisa, pdf, catmat } from './data.ts';
-import { checkAnvisa, priceStats, brandConcentration, priceCheck, checkDocs, verifyQuote, esclarecimentoDeadline, decideItem } from './rules.ts';
-import { executarAcao, prazoEsclarecimentoAberto, type ActDeps, type PedidoAcao } from './act.ts';
+import { checkAnvisa, priceStats, brandConcentration, priceCheck, checkDocs, verifyQuote, decideItem } from './rules.ts';
+import { executarAcao, instanteAbertura, prazoEsclarecimentoAberto, type ActDeps, type PedidoAcao } from './act.ts';
 import { leituraDoEdital } from './edital.ts';
 import { recheckTender, situacao } from './recheck.ts';
 import { consultarProtocolo } from './portal.ts';
@@ -181,10 +181,11 @@ export const tools: Tool[] = [
     parameters: { type: 'object', required: ['product_id', 'tender_id'], properties: { product_id: { type: 'string' }, tender_id: { type: 'string' } } },
     async run(a, ctx) {
       const st = S(ctx); const p = product(st, a.product_id);
-      const t = st.tenders[a.tender_id]; const opening = t ? new Date(t.abertura + ':00-03:00') : st.now;
+      const opening = instanteAbertura(st.tenders[a.tender_id]?.abertura);
+      if (!opening) return { erro: 'abertura do pregão ausente ou ilegível; regularização não conferida' };
       const deliveryBy = new Date(opening.getTime() + st.company.empresa.prazoEntregaDias * 86400e3);
       const row = anvisa.byRegistro(p.registroAnvisa);
-      const r = checkAnvisa(row, { today: st.now, deliveryBy });
+      const r = checkAnvisa(row, { today: st.now, deliveryBy, coberturaDeclarada: p.coberturaDeclarada === true });
       return { ...r, registro: p.registroAnvisa, nome_tecnico: row?.NOME_TECNICO, nome_comercial: row?.NOME_COMERCIAL, detentor: row?.DETENTOR_REGISTRO_CADASTRO, entrega_ate: deliveryBy.toISOString().slice(0, 10) };
     },
   },
@@ -262,8 +263,8 @@ export const tools: Tool[] = [
       if (!fit || fit.product_id !== a.product_id) return { erro: 'registre o encaixe (record_fit) antes de decidir' };
       const p = product(st, a.product_id); const t = st.tenders[a.tender_id];
       const raw = t?.abertura ?? '';
-      const opening = new Date(/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(raw) ? raw + ':00-03:00' : raw);
-      if (!Number.isFinite(opening.getTime())) return { erro: 'data da sessão desconhecida; não agir' };
+      const opening = instanteAbertura(raw);
+      if (!opening) return { erro: 'data da sessão desconhecida; não agir' };
       const it = await tenderItem(st, a.tender_id, a.item);
       const policy = st.company.politica;
       const price = policy && Number.isFinite(policy.margemMinima) && Number.isFinite(policy.margemAlvo)
@@ -292,8 +293,11 @@ export const tools: Tool[] = [
     name: 'draft_esclarecimento', description: 'Redige pedido de esclarecimento ao órgão (não envia). Retorna o prazo legal.',
     parameters: { type: 'object', required: ['tender_id', 'item', 'texto'], properties: { tender_id: { type: 'string' }, item: { type: 'integer' }, texto: { type: 'string' } } },
     async run(a, ctx) {
-      const st = S(ctx); const t = st.tenders[a.tender_id]; const prazo = esclarecimentoDeadline(t ? new Date(t.abertura + ':00-03:00') : st.now);
-      st.drafts[key(a.tender_id, a.item)] = { texto: a.texto, prazo }; return { salvo: true, prazo, no_prazo: st.now.toISOString().slice(0, 10) <= prazo };
+      const st = S(ctx);
+      const situacaoPrazo = prazoEsclarecimentoAberto(st.tenders[a.tender_id]?.abertura, st.now);
+      if (!situacaoPrazo.prazo) return { salvo: false, erro: 'abertura do pregão ausente ou ilegível; rascunho não gravado' };
+      st.drafts[key(a.tender_id, a.item)] = { texto: a.texto, prazo: situacaoPrazo.prazo };
+      return { salvo: true, prazo: situacaoPrazo.prazo, no_prazo: situacaoPrazo.aberto };
     },
   },
   {

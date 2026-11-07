@@ -34,6 +34,7 @@ Regras:
 - Leia o edital (read_edital) e registre exigências relevantes com citação: registro_anvisa, afe, amostra, marca_referencia e prazo_esclarecimento.
 - Se o texto do item ou do edital indicar marca de referência, ou o histórico mostrar uma marca dominante, use flag_restrictive e redija um esclarecimento (draft_esclarecimento) respeitando o prazo.
 - Exceções: se uma ferramenta falhar, tente de novo uma vez e siga em frente registrando a pendência. Não analise itens sem produto compatível no catálogo.
+- Resultados antigos de ferramenta são resumidos no histórico. Se faltar uma citação, chame a ferramenta de novo.
 - Ao terminar, chame request_approval com um resumo curto (itens, decisão, preço, pendências, esclarecimentos) e ENCERRE.`;
 
 const USER = mode === 'focado'

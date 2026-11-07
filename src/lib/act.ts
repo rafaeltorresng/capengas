@@ -46,7 +46,7 @@ const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(va
 const portalTipo = (tipo: PedidoAcao['tipo']): 'proposta' | 'esclarecimento' => tipo === 'enviar_proposta' ? 'proposta' : 'esclarecimento';
 const dataRecife = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
 
-function abertura(raw: string | null | undefined): Date | null {
+export function instanteAbertura(raw: string | null | undefined): Date | null {
   if (!raw) return null;
   const iso = /^\d{4}-\d\d-\d\d$/.test(raw) ? `${raw}T12:00:00-03:00` : /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(raw) ? `${raw}:00-03:00` : raw;
   const date = new Date(iso);
@@ -55,7 +55,7 @@ function abertura(raw: string | null | undefined): Date | null {
 
 /** Prazo legal a partir da abertura persistida. Sem abertura, o esclarecimento não segue. */
 export function prazoEsclarecimentoAberto(aberturaRaw: string | null | undefined, now: Date): { aberto: boolean; prazo: string | null } {
-  const opening = abertura(aberturaRaw);
+  const opening = instanteAbertura(aberturaRaw);
   if (!opening) return { aberto: false, prazo: null };
   const prazo = esclarecimentoDeadline(opening);
   return { aberto: dataRecife(now) <= prazo, prazo };
