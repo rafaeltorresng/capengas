@@ -55,6 +55,7 @@ export function buildDossie(st: LanceState, tenderId: string, options: { documen
     if (!decision) pendencias.add(`Item ${n}: decisão ainda não calculada.`);
     if (!fit?.attributes?.length) pendencias.add(`Item ${n}: encaixe técnico ainda não comprovado.`);
     if (fit?.validacao?.cobertura !== 'conferida') pendencias.add(`Item ${n}: cobertura das exigências técnicas não verificada.`);
+    for (const lacuna of fit?.validacao?.lacunas ?? []) pendencias.add(`Item ${n}: campo sem citação própria (${lacuna}).`);
     if (!product) pendencias.add(`Item ${n}: produto do catálogo não localizado.`);
     for (const p of decision?.docs_vencidos ?? []) pendencias.add(p);
     return {

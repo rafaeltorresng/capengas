@@ -93,4 +93,6 @@ Já na `main`: `decide_item` no contrato novo, persistência do turno de anális
 
 `record_fit` inventaria os campos `nome: valor` do item. Cada campo precisa da própria citação literal; uma citação que junta vários campos só cobre um. Sem campo nomeado, ou com algum de fora, `validacao.cobertura` continua `nao_verificada` e `decide_item` segue com `fit: 'desconhecido'`. Isso não julga a semântica do veredito.
 
-Ainda faltam evals distintos e a meta de 3 minutos. As funções legadas de `rules.ts` continuam nos testes e não devem ser removidas sem migrá-los.
+`executarCenarios` (`src/lib/cenarios.ts`) roda os 10 cenários de exceção sem modelo e sem rede. O modo integrado publica o resultado em `prova()`, com o 18/18 histórico separado e a concordância humana ainda nula. O turno publicado continua em 292 s; a meta de 3 minutos não foi atingida.
+
+As funções legadas de `rules.ts` continuam nos testes e não devem ser removidas sem migrá-los.
