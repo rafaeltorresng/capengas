@@ -65,7 +65,8 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
   const iso = () => now().toISOString();
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+  // Agendador e servidor integrado abrem o mesmo arquivo: quem grava espera a trava do outro (até 5 s).
+  db.exec('PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   db.exec(SCHEMA);
   // Migração: bancos criados antes da coluna reavaliar.
   if (!(db.prepare('PRAGMA table_info(tenders)').all() as any[]).some(c => c.name === 'reavaliar'))
