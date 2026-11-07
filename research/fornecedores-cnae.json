@@ -1,0 +1,23 @@
+{
+ "medicao": "Fornecedores ativos no cadastro de fornecedores do governo, por CNAE de saúde",
+ "coletadoEm": "2026-11-07",
+ "fonte": "Compras.gov.br modulo-fornecedor/1_consultarFornecedor (codigoCnae, ativo=true)",
+ "script": "scripts/pesquisa/sancoes.ts (lista do 4645101); contagens por totalRegistros",
+ "resultado": {
+  "4645-1/01 instrumentos e materiais médicos": {
+   "total": 5513,
+   "porte": {
+    "Microempresa": 2001,
+    "Empresa de pequeno porte": 1998,
+    "Demais": 1514
+   }
+  },
+  "4644-3/01 medicamentos": 3270,
+  "4645-1/03 odontológicos": 439,
+  "4645-1/02 próteses e ortopedia": 212
+ },
+ "ressalvas": [
+  "cadastro ativo não é comprador qualificado nem disposição a pagar",
+  "CNAE principal declarado; empresas podem vender saúde com outro CNAE"
+ ]
+}

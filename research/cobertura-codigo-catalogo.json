@@ -1,0 +1,89 @@
+{
+ "medicao": "Itens de pregões abertos de saúde com código de catálogo (CATMAT), por plataforma",
+ "coletadoEm": "2026-11-07",
+ "fonte": "PNCP /api/search (recebendo_proposta) + itens + consulta da compra (usuarioNome)",
+ "script": "scripts/pesquisa/coverage.ts",
+ "resultado": {
+  "pregoes": 40,
+  "pregoesComCodigo": 17,
+  "itens": 2920,
+  "itensComCodigo": 709,
+  "porPlataforma": {
+   "Compras.gov.br": {
+    "pregoes": 17,
+    "comCodigo": 17
+   },
+   "Licitações-E BB": {
+    "pregoes": 3,
+    "comCodigo": 0
+   },
+   "AZ INFORMATICA LTDA": {
+    "pregoes": 2,
+    "comCodigo": 0
+   },
+   "Governançabrasil Tecnologia e Gestão em Serviços": {
+    "pregoes": 2,
+    "comCodigo": 0
+   },
+   "ECustomize Consultoria em Software S.A": {
+    "pregoes": 2,
+    "comCodigo": 0
+   },
+   "?": {
+    "pregoes": 2,
+    "comCodigo": 0
+   },
+   "BR Conectado": {
+    "pregoes": 1,
+    "comCodigo": 0
+   },
+   "Portal de Compras do Estado de Minas Gerais": {
+    "pregoes": 1,
+    "comCodigo": 0
+   },
+   "Bolsa Nacional De Compras - BNC": {
+    "pregoes": 1,
+    "comCodigo": 0
+   },
+   "Licitanet Licitações Eletrônicas LTDA": {
+    "pregoes": 1,
+    "comCodigo": 0
+   },
+   "Fiorilli Software": {
+    "pregoes": 1,
+    "comCodigo": 0
+   },
+   "Megasoft Informática": {
+    "pregoes": 1,
+    "comCodigo": 0
+   },
+   "Licitar Digital - Plataforma de Licitações Online": {
+    "pregoes": 1,
+    "comCodigo": 0
+   },
+   "IPM Sistemas": {
+    "pregoes": 1,
+    "comCodigo": 0
+   },
+   "SH3 Informática Ltda.": {
+    "pregoes": 1,
+    "comCodigo": 0
+   },
+   "BLL Compras": {
+    "pregoes": 1,
+    "comCodigo": 0
+   },
+   "Secretaria do Planejamento e Gestão do Ceará": {
+    "pregoes": 1,
+    "comCodigo": 0
+   },
+   "CENTI": {
+    "pregoes": 1,
+    "comCodigo": 0
+   }
+  }
+ },
+ "ressalvas": [
+  "40 primeiros pregões da busca, não aleatórios"
+ ]
+}
