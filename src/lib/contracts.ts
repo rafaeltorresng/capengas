@@ -89,7 +89,7 @@ export type AvaliacaoPolitica = { permitido: boolean; escalar: boolean; motivo: 
 
 export type Recheque =
   | { status: 'ok'; situacao: string; arquivosHash: string; em: string }
-  | { status: 'bloquear'; motivo: 'suspenso' | 'revogado' | 'anulado' | 'cancelado' | 'arquivos_mudaram' | 'fonte_indisponivel'; em: string };
+  | { status: 'bloquear'; motivo: 'suspenso' | 'revogado' | 'anulado' | 'cancelado' | 'prazo_encerrado' | 'arquivos_mudaram' | 'fonte_indisponivel'; em: string };
 
 export type ActionStatus = 'intencao' | 'enviada' | 'confirmada' | 'falhou' | 'reconciliar';
 export type Action = {

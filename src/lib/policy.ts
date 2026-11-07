@@ -36,6 +36,7 @@ export function evaluate(acao: AcaoTipo, c: AcaoContexto, politica: Politica | u
     if (motivo === 'fonte_indisponivel') return nega(false, 'fonte indisponível no recheque: não age; tenta no próximo ciclo');
     if (motivo === 'arquivos_mudaram') return nega(p.sempreEscalar.includes('pregao_alterado'), 'pregão alterado desde a análise (arquivos novos): reavaliar antes de agir');
     if (motivo === 'recheque ausente') return nega(true, 'recheque ausente: nenhuma ação sem conferir o pregão');
+    if (motivo === 'prazo_encerrado') return nega(false, 'recebimento de propostas encerrado: ação bloqueada');
     return nega(false, `pregão ${motivo}: ação bloqueada`);
   }
 

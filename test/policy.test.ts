@@ -40,6 +40,10 @@ describe('recheque antes de agir', () => {
       assert.equal(r.permitido, false); assert.equal(r.escalar, false); assert.match(r.motivo, new RegExp(motivo));
     });
   }
+  test('propostas encerradas → bloqueia, sem escalar', () => {
+    const r = evaluate('enviar_proposta', ctx({ recheque: { status: 'bloquear', motivo: 'prazo_encerrado', em: ok.em } }), politica);
+    assert.equal(r.permitido, false); assert.equal(r.escalar, false); assert.match(r.motivo, /encerrado/);
+  });
   test('arquivos mudaram → bloqueia e escala (pregao_alterado)', () => {
     const r = evaluate('enviar_proposta', ctx({ recheque: { status: 'bloquear', motivo: 'arquivos_mudaram', em: ok.em } }), politica);
     assert.equal(r.permitido, false); assert.equal(r.escalar, true);
