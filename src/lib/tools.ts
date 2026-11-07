@@ -1,7 +1,7 @@
 // Ferramentas do Lance. Princípio: o modelo julga e cita; o código verifica, calcula e monta o que é enviado.
 import type { Tool, Ctx } from './agent.ts';
 import { pncp, compras, anvisa, pdf, catmat } from './data.ts';
-import { checkAnvisa, priceStats, brandConcentration, suggestPrice, verifyQuote, esclarecimentoDeadline, decideItem, type ItemChecks } from './rules.ts';
+import { checkAnvisa, priceStats, brandConcentration, priceCheck, checkDocs, verifyQuote, esclarecimentoDeadline, decideItem } from './rules.ts';
 import { randomUUID } from 'node:crypto';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -197,23 +197,34 @@ export const tools: Tool[] = [
     },
   },
   {
-    name: 'decide_item', description: 'Calcula a decisão do item (ofertar / ofertar_com_pendencia / nao_ofertar / escalar) a partir do encaixe registrado, ANVISA, preço histórico do catalog_code escolhido, documentos e sinais de restrição. O preço sugerido é calculado aqui.',
-    parameters: { type: 'object', required: ['tender_id', 'item', 'product_id', 'catalog_code'], properties: { tender_id: { type: 'string' }, item: { type: 'integer' }, product_id: { type: 'string' }, catalog_code: { type: 'integer' } } },
+    name: 'decide_item', description: 'Calcula decisão com estimativa do órgão, documentos e regularização. Cobertura técnica não verificada escala. Não exige código CATMAT.',
+    parameters: { type: 'object', required: ['tender_id', 'item', 'product_id'], properties: { tender_id: { type: 'string' }, item: { type: 'integer' }, product_id: { type: 'string' }, catalog_code: { type: 'integer' } } },
     async run(a, ctx) {
       const st = S(ctx); const k = key(a.tender_id, a.item); const fit = st.fits[k];
-      if (!fit || fit.product_id !== a.product_id) return { erro: 'registre o encaixe (record_fit) deste item com este produto antes de decidir' };
+      if (!fit || fit.product_id !== a.product_id) return { erro: 'registre o encaixe (record_fit) antes de decidir' };
       const p = product(st, a.product_id); const t = st.tenders[a.tender_id];
-      const opening = t ? new Date(t.abertura + ':00-03:00') : st.now;
+      const raw = t?.abertura ?? '';
+      const opening = new Date(/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(raw) ? raw + ':00-03:00' : raw);
+      if (!Number.isFinite(opening.getTime())) return { erro: 'data da sessão desconhecida; não agir' };
+      const it = await tenderItem(st, a.tender_id, a.item);
+      const policy = st.company.politica;
+      const price = policy && Number.isFinite(policy.margemMinima) && Number.isFinite(policy.margemAlvo)
+        ? priceCheck({ custo: p.custo, margemMinima: policy.margemMinima, margemAlvo: policy.margemAlvo, estimativa: it.valorEstimado ?? null, sigiloso: it.sigiloso === true })
+        : { viavel: null, precoProposto: null, motivo: 'política de preço ausente' };
       const deliveryBy = new Date(opening.getTime() + st.company.empresa.prazoEntregaDias * 86400e3);
-      const an = checkAnvisa(anvisa.byRegistro(p.registroAnvisa), { today: st.now, deliveryBy });
-      const stats = priceStats(await compras.priceHistory(a.catalog_code));
-      const price = suggestPrice(stats, p.custo, st.company.empresa.margemMinima);
-      const openYmd = opening.toISOString().slice(0, 10);
-      const expired = st.company.cofre.filter((d: any) => d.validade < openYmd);
-      const checks: ItemChecks = { fit: fit.overall, anvisa: an.status, price, docsOk: !expired.length, restrictive: !!st.restrictive[k] };
-      const d = decideItem(checks);
-      const prazo = esclarecimentoDeadline(opening);
-      const dec = { ...d, product_id: a.product_id, catalog_code: a.catalog_code, preco_sugerido: price.ok ? price.price : null, preco: price, anvisa: an, docs_vencidos: expired.map((x: any) => `${x.doc} (vence ${x.validade})`), prazo_esclarecimento: prazo, esclarecimento_no_prazo: st.now.toISOString().slice(0, 10) <= prazo };
+      let an;
+      try { an = checkAnvisa(anvisa.byRegistro(p.registroAnvisa), { today: st.now, deliveryBy, coberturaDeclarada: p.coberturaDeclarada === true }); }
+      catch { an = { regularizacao: 'nao_verificado' as const, cobertura: 'nao_comprovada' as const, classe: null, detentor: null, validUntil: null }; }
+      const requirements = st.requirements.filter(r => r.tender_id === a.tender_id);
+      const docs = checkDocs(st.company.cofre, requirements.map(r => ({ tipo: r.requirement, citacao: r.quote })), raw.slice(0, 10));
+      // Sem extração explícita do prazo, não inferir autorização de esclarecimento.
+      const d = decideItem({ fit: fit.validacao?.cobertura === 'conferida' ? fit.overall : 'desconhecido', regularizacao: an.regularizacao,
+        cobertura: an.cobertura, preco: price, docs, restritivo: !!st.restrictive[k], varianteNaoCoberta: false,
+        prazoEsclarecimentoAberto: null, venceAntesEntrega: 'venceAntesEntrega' in an && an.venceAntesEntrega === true });
+      const legacy: Record<string, string> = { disputar: 'ofertar', disputar_com_pendencia: 'ofertar_com_pendencia', nao_disputar: 'nao_ofertar', esclarecer: 'escalar', escalar: 'escalar' };
+      const dec = { ...d, tenderId: a.tender_id, item: a.item, produto: a.product_id, product_id: a.product_id,
+        precoProposto: price.precoProposto, preco_sugerido: price.precoProposto, preco: price, anvisa: an, docs,
+        decision: legacy[d.estado], reasons: d.motivos, docs_vencidos: docs.filter(x => !['vigente', 'sem_vencimento'].includes(x.status)).map(x => x.exigencia) };
       st.decisions[k] = dec;
       return dec;
     },
