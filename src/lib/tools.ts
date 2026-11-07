@@ -2,6 +2,10 @@
 import type { Tool, Ctx } from './agent.ts';
 import { pncp, compras, anvisa, pdf, catmat } from './data.ts';
 import { checkAnvisa, priceStats, brandConcentration, priceCheck, checkDocs, verifyQuote, esclarecimentoDeadline, decideItem } from './rules.ts';
+import { executarAcao, type ActDeps, type PedidoAcao } from './act.ts';
+import { persistAnalysis } from './persist-analysis.ts';
+import { snapshotTender, recheckTender } from './recheck.ts';
+import type { LanceStore } from './store.ts';
 import { randomUUID } from 'node:crypto';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -14,6 +18,10 @@ export type LanceState = {
   requirements: any[]; fits: Record<string, any>; restrictive: Record<string, any>; decisions: Record<string, any>;
   drafts: Record<string, any>; approvals: Record<string, any>; submissions: any[];
   editalSources?: Record<string, { nome: string; url: string; texto: string }[]>;
+  /** Sem store, as ferramentas de envio não chamam o portal. */
+  store?: LanceStore;
+  recheck?: ActDeps['recheck'];
+  snapshot?: (tenderId: string, store: LanceStore) => Promise<unknown>;
 };
 export const newState = (company: any, sandboxUrl: string, now = new Date()): LanceState =>
   ({ company, now, sandboxUrl, tenders: {}, items: {}, editais: {}, requirements: [], fits: {}, restrictive: {}, decisions: {}, drafts: {}, approvals: {}, submissions: [], editalSources: {} });
@@ -24,6 +32,26 @@ const tenderItem = async (st: LanceState, tid: string, n: number) => {
   const it = st.items[tid].find(i => i.numero === n); if (!it) throw new Error(`item ${n} não existe no pregão ${tid}`); return it;
 };
 const key = (tid: string, n: number) => `${tid}#${n}`;
+
+async function enviarPelaPorta(st: LanceState, pedido: PedidoAcao) {
+  if (!st.store) return { resultado: 'bloqueada' as const, motivo: 'envio indisponível sem estado persistente; nada foi enviado' };
+  persistAnalysis(st, st.store);
+  const tenderId = pedido.tenderId;
+  const gravarFoto = st.snapshot ?? (st.recheck ? undefined : (id: string, store: LanceStore) => snapshotTender(id, store));
+  if (gravarFoto) {
+    try { await gravarFoto(tenderId, st.store); }
+    catch (error: any) {
+      st.store.logEvent({ tipo: 'erro_fonte', resumo: `foto da análise não gravada (${String(error?.message ?? error).slice(0, 120)}); o recheque bloqueia até haver foto`, tender: tenderId });
+    }
+  }
+  const resultado = await executarAcao(pedido, {
+    store: st.store, politica: st.company.politica, sandboxUrl: st.sandboxUrl,
+    empresa: st.company.empresa?.nome ?? '', catalogo: st.company.catalogo ?? [], now: () => st.now,
+    recheck: st.recheck ?? ((id, store) => recheckTender(id, store)),
+  });
+  if (resultado.resultado === 'confirmada') st.submissions.push({ tender_id: tenderId, protocolo: resultado.protocolo });
+  return resultado;
+}
 
 // Somente medidas exatas e isoladas. Faixas, tolerâncias e descrições compostas
 // continuam como julgamento do modelo; este bloqueio não é um validador semântico geral.
@@ -248,28 +276,19 @@ export const tools: Tool[] = [
     },
   },
   {
-    name: 'submit_proposal', description: 'Envia ao portal a proposta de um pregão com os itens aprovados. Exige approval_id aprovado pelo humano. Preços vêm das decisões calculadas, não do modelo.',
-    requiresApproval: true,
-    parameters: { type: 'object', required: ['approval_id', 'tender_id'], properties: { approval_id: { type: 'string' }, tender_id: { type: 'string' } } },
+    name: 'submit_proposal', description: 'Pede o envio da proposta dos itens indicados. O código relê decisão, quantidade e preço no store, passa pela política e pelo recheque, e só então fala com o portal. Preço e aprovação não autorizam o envio.',
+    parameters: { type: 'object', required: ['tender_id', 'itens'], properties: { tender_id: { type: 'string' }, itens: { type: 'array', items: { type: 'integer' } } } },
     async run(a, ctx) {
-      const st = S(ctx); const ap = st.approvals[a.approval_id];
-      const keys = ap.ofertas.filter((k: string) => k.startsWith(a.tender_id + '#'));
-      if (!keys.length) return { erro: 'nenhum item aprovado para este pregão' };
-      const itens = keys.map((k: string) => { const d = st.decisions[k]; const p = product(st, d.product_id); return { numero: Number(k.split('#')[1]), produto: p.id, marca: p.marca, registroAnvisa: p.registroAnvisa, precoUnitario: d.preco_sugerido }; });
-      const res = await fetch(st.sandboxUrl + '/api/propostas', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tender: a.tender_id, empresa: st.company.empresa.nome, itens }) });
-      const j = await res.json(); if (res.status !== 201) return { erro: 'portal rejeitou', detalhes: j };
-      st.submissions.push({ tender_id: a.tender_id, protocolo: j.protocolo, itens }); return { protocolo: j.protocolo, itens: itens.length };
+      return enviarPelaPorta(S(ctx), { tipo: 'enviar_proposta', tenderId: a.tender_id, itens: a.itens });
     },
   },
   {
-    name: 'send_esclarecimento', description: 'Envia ao portal um pedido de esclarecimento já redigido e aprovado. Exige approval_id.',
-    requiresApproval: true,
-    parameters: { type: 'object', required: ['approval_id', 'tender_id', 'item'], properties: { approval_id: { type: 'string' }, tender_id: { type: 'string' }, item: { type: 'integer' } } },
+    name: 'send_esclarecimento', description: 'Pede o envio de um esclarecimento já redigido. O prazo é calculado pela abertura persistida. O texto vem do rascunho, não de um argumento livre desta chamada.',
+    parameters: { type: 'object', required: ['tender_id', 'item', 'motivo'], properties: { tender_id: { type: 'string' }, item: { type: 'integer' }, motivo: { type: 'string', enum: ['nao_informado', 'variante_nao_coberta', 'marca_referencia'] } } },
     async run(a, ctx) {
-      const st = S(ctx); const k = key(a.tender_id, a.item); const dr = st.drafts[k];
-      if (!dr || !st.approvals[a.approval_id].esclarecimentos.includes(k)) return { erro: 'esclarecimento não redigido ou não aprovado' };
-      const res = await fetch(st.sandboxUrl + '/api/esclarecimentos', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tender: a.tender_id, item: a.item, texto: dr.texto }) });
-      return { status: res.status, ...(await res.json()) };
+      const st = S(ctx); const dr = st.drafts[key(a.tender_id, a.item)];
+      if (!dr?.texto) return { resultado: 'bloqueada', motivo: 'esclarecimento sem rascunho; nada foi enviado' };
+      return enviarPelaPorta(st, { tipo: 'enviar_esclarecimento', tenderId: a.tender_id, item: a.item, texto: dr.texto, motivo: a.motivo });
     },
   },
   {

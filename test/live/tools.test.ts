@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { tools, newState, type LanceState } from '../../src/lib/tools.ts';
 import { startSandbox } from '../../src/lib/sandbox.ts';
-import { runAgent, type LLM } from '../../src/lib/agent.ts';
+import { openStore } from '../../src/lib/store.ts';
+import type { Recheque } from '../../src/lib/contracts.ts';
 
 const company = JSON.parse(readFileSync(new URL('../../fixtures/company.json', import.meta.url), 'utf8'));
 const TID = '77816510000166/2026/348';
@@ -48,20 +49,14 @@ describe('ferramentas sobre dados reais', { timeout: 240_000 }, () => {
     const d: any = await T('decide_item').run({ tender_id: TID, item: 40, product_id: 'P2', catalog_code: 471547 }, ctx());
     assert.equal(d.decision, 'nao_ofertar');
   });
-  test('envio bloqueado sem aprovação; liberado com aprovação; verificação confere', async () => {
-    const ap: any = await T('request_approval').run({ resumo: 'teste' }, ctx());
-    assert.equal(ap.ofertas, 1);
-    // Bloqueio é aplicado pelo loop do agente: roteiro tenta enviar sem aprovação.
-    const call = (name: string, args: object) => ({ role: 'assistant', content: null, tool_calls: [{ id: name, type: 'function', function: { name, arguments: JSON.stringify(args) } }] });
-    const script = (turns: any[]): LLM => { let i = 0; return { model: 'roteiro', async chat() { return { message: turns[i++], usage: { prompt_tokens: 0, completion_tokens: 0 }, ms: 0 }; } }; };
-    const blocked = await runAgent({ llm: script([call('submit_proposal', { approval_id: ap.approval_id, tender_id: TID }), { role: 'assistant', content: 'aguardo' }]), tools, system: '', user: '', state: st as any, approvals: new Set() });
-    assert.match(JSON.stringify(blocked.trace[1].result), /aprovação/);
+  test('pendência de cobertura não envia, mesmo com approval_id', async () => {
+    const store = openStore(':memory:');
+    const recheck: Recheque = { status: 'ok', situacao: 'Divulgada no PNCP', arquivosHash: 'abc', em: '2026-11-07T10:00:00.000Z' };
+    st.store = store;
+    st.recheck = async () => recheck;
+    const r: any = await T('submit_proposal').run({ tender_id: TID, itens: [4], approval_id: 'qualquer', precoUnitario: 1 }, ctx());
+    assert.equal(r.resultado, 'escalada');
     assert.equal(sbx.propostas.size, 0);
-    const ok = await runAgent({ llm: script([call('submit_proposal', { approval_id: ap.approval_id, tender_id: TID }), { role: 'assistant', content: 'enviado' }]), tools, system: '', user: '', state: st as any, approvals: new Set([ap.approval_id]) });
-    const sub: any = ok.trace[1].result;
-    assert.match(sub.protocolo, /^SBX-/);
-    const v: any = await T('verify_submission').run({ protocolo: sub.protocolo, tender_id: TID }, ctx());
-    assert.equal(v.portal_confere, true);
-    assert.equal(v.pncp_aberto, true, JSON.stringify(v));
+    store.close();
   });
 });
