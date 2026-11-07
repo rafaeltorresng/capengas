@@ -88,4 +88,6 @@ Já na `main`: `decide_item` no contrato novo, persistência do turno de anális
 
 `executarAcao` aplica a ordem da #2: recheque, `evaluate`, `recordIntent`, POST no sandbox, `consultarProtocolo` e `updateAction`. Sem `recheck` injetado, a função bloqueia. Timeout ou consulta falha depois do POST não gera outro envio. O modelo ainda não recebe `submit_proposal` nem `send_esclarecimento`.
 
-Ainda faltam: extrair `runTurn` para o agendador sem duplicar `turno_inicio`/`turno_fim`; ligar as ferramentas de envio a `executarAcao`; inventário de exigências técnicas e cobertura; evals distintos e a meta de 3 minutos. As funções legadas de `rules.ts` continuam nos testes e não devem ser removidas sem migrá-los.
+`runAnalysisTurn` (`src/lib/turn.ts`) persiste a análise. Com `origem: 'direto'`, grava `turno_inicio` e `turno_fim`. Com `origem: 'agendador'`, não grava esses dois eventos: o `createScheduler` já os grava, e o teste conjunto garante um único par. O `scripts/analisar.ts` usa a origem direta. As ferramentas de envio continuam fora do modelo.
+
+Ainda faltam: ligar as ferramentas de envio a `executarAcao`; inventário de exigências técnicas e cobertura; evals distintos e a meta de 3 minutos. As funções legadas de `rules.ts` continuam nos testes e não devem ser removidas sem migrá-los.

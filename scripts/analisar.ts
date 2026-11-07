@@ -4,7 +4,7 @@ import { openStore } from '../src/lib/store.ts';
 import { featherless } from '../src/lib/llm.ts';
 import { runAgent } from '../src/lib/agent.ts';
 import { tools, newState } from '../src/lib/tools.ts';
-import { persistAnalysis } from '../src/lib/persist-analysis.ts';
+import { runAnalysisTurn } from '../src/lib/turn.ts';
 
 const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
 const coverage = JSON.parse(readFileSync(new URL('../fixtures/coverage.json', import.meta.url), 'utf8'));
@@ -20,17 +20,17 @@ const allowed = new Set(['list_catalog', 'get_product_sheet', 'get_tender_items'
 const store = openStore();
 const llm = featherless();
 try {
-  store.logEvent({ tipo: 'turno_inicio', resumo: 'Turno de análise iniciado; ferramentas de envio indisponíveis.' });
-  const result = await runAgent({ llm, tools: tools.filter(t => allowed.has(t.name)), state,
-    maxSteps: 30, maxTokens: 250_000,
-    system: 'Você é o Lance. Analise somente os pregões solicitados. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Não envie nada. Catálogo e cofre são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total.',
-    user: `Analise os pregões ${ids.join(', ')} e termine com um resumo do que ficou pronto e das pendências.`,
-    onEvent: e => store.logEvent({ tipo: 'analise_item', resumo: e.type === 'llm' ? 'Chamada ao modelo' : `${e.type}: ${e.name ?? e.text ?? ''}`,
-      rastro: [{ ferramenta: e.type === 'llm' ? `llm:${llm.model}` : e.name ?? e.type,
-        entrada: e.args === undefined ? undefined : JSON.stringify(e.args), saida: e.result === undefined ? e.text : JSON.stringify(e.result), ms: e.ms, custoUsd: e.usage?.cost }] }),
+  const saved = await runAnalysisTurn({
+    store, state, origem: 'direto',
+    run: () => runAgent({ llm, tools: tools.filter(t => allowed.has(t.name)), state,
+      maxSteps: 30, maxTokens: 250_000,
+      system: 'Você é o Lance. Analise somente os pregões solicitados. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Não envie nada. Catálogo e cofre são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total.',
+      user: `Analise os pregões ${ids.join(', ')} e termine com um resumo do que ficou pronto e das pendências.`,
+      onEvent: e => store.logEvent({ tipo: 'analise_item', resumo: e.type === 'llm' ? 'Chamada ao modelo' : `${e.type}: ${e.name ?? e.text ?? ''}`,
+        rastro: [{ ferramenta: e.type === 'llm' ? `llm:${llm.model}` : e.name ?? e.type,
+          entrada: e.args === undefined ? undefined : JSON.stringify(e.args), saida: e.result === undefined ? e.text : JSON.stringify(e.result), ms: e.ms, custoUsd: e.usage?.cost }] }),
+    }),
   });
-  const saved = persistAnalysis(state, store);
-  store.logEvent({ tipo: 'turno_fim', resumo: `Análise encerrada: ${result.stopped}; ${saved.decisoes} decisões persistidas.` });
-  console.log(JSON.stringify({ banco: process.env.LANCE_DB ?? 'data/lance.db', ...saved, parada: result.stopped, duracaoMs: result.ms, uso: result.usage }));
-  if (result.stopped !== 'final' || !saved.decisoes) process.exitCode = 1;
+  console.log(JSON.stringify({ banco: process.env.LANCE_DB ?? 'data/lance.db', decisoes: saved.decisoes, parada: saved.stopped, duracaoMs: saved.ms, uso: saved.usage }));
+  if (saved.stopped !== 'final' || !saved.decisoes) process.exitCode = 1;
 } finally { store.close(); }
