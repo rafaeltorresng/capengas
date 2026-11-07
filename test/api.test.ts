@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { test, type TestContext } from 'node:test';
 import { createServer } from '../src/server/api.ts';
+import { createIntegratedStore } from '../src/server/integrated.ts';
 import { createSampleStore } from '../src/server/sample.ts';
 
 async function fixture(t: TestContext, store = createSampleStore()) {
@@ -69,4 +70,22 @@ test('reports an expired escalation as a conflict', async t => {
   const response = await decide('cnd', { decisao: 'aprovar' });
   assert.equal(response.status, 409);
   assert.equal((await response.json()).erro, 'O prazo desta escalada terminou.');
+});
+test('integrated API reads the projection and delegates decisions to the store', async t => {
+  const projection = createSampleStore();
+  const calls: string[] = [];
+  const store = createIntegratedStore({
+    resolveEscalation(id, decision) {
+      calls.push(id);
+      return projection.decidir(id, decision);
+    },
+  }, projection);
+  const { get, decide } = await fixture(t, store);
+  const initial = await (await get('escaladas')).json();
+  assert.equal(initial.origem, 'integrado');
+  assert.equal(initial.dados.length, 1);
+  assert.equal((await decide('cnd', { decisao: 'recusar' })).status, 200);
+  assert.deepEqual(calls, ['cnd']);
+  assert.deepEqual((await (await get('escaladas')).json()).dados, []);
+  assert.equal((await (await get('hoje')).json()).dados.eventos.at(-1).tipo, 'decisao-humana');
 });

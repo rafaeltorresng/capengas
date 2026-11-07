@@ -1,8 +1,13 @@
-import type { DemoStore, Event, SavedDecision } from './contract.ts';
+import type { DemoStore, Dossier, Escalation, Event, Item, Proof, QueueItem, SavedDecision, Today } from './contract.ts';
 import seed from '../../fixtures/dev3-amostra.json' with { type: 'json' };
 
-export function createSampleStore(): DemoStore {
-  const { hoje, fila, itens, dossies, escaladas, prova } = structuredClone(seed);
+export type SampleState = {
+  hoje: Today; fila: QueueItem[]; itens: Item[]; dossies: Dossier[];
+  escaladas: Escalation[]; prova: Proof;
+};
+
+export function createSampleStore(initial: SampleState = seed): DemoStore {
+  const { hoje, fila, itens, dossies, escaladas, prova } = structuredClone(initial);
   const eventos: Event[] = hoje.eventos;
   const decisoes = new Map<string, SavedDecision>();
 
@@ -27,7 +32,8 @@ export function createSampleStore(): DemoStore {
       if (!escalada) return { status: 'ausente' };
       if (decisoes.has(id)) return { status: 'resolvida' };
       // Advance the simulated day's clock after each human decision.
-      const latest = Math.max(...eventos.map(event => Date.parse(event.horario)));
+      const latest = eventos.reduce((latest, event) => Math.max(latest, Date.parse(event.horario)),
+        Date.parse(hoje.data + 'T00:00:00-03:00'));
       const horario = new Date(latest + 1000).toISOString();
       const registro = { id, horario, ...decision };
       decisoes.set(id, registro);

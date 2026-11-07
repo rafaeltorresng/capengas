@@ -114,14 +114,14 @@ function TodayScreen({ data }: { data: Today }) {
       {data.eventos.length === 0 && <p>Nenhum evento registrado neste dia.</p>}
       <ol>{data.eventos.map(event => <li key={event.id}>
         <time dateTime={event.horario}>{time.format(new Date(event.horario))}</time>
-        <div className="event"><small>{event.tipo === 'decisao-humana' ? 'Revisão humana' : event.tipo}</small>
+        <div className="event"><small>{['decisao-humana', 'escalada_decidida'].includes(event.tipo) ? 'Revisão humana' : event.tipo}</small>
           <h3>{event.resumo}</h3>{event.detalhe && <p>{event.detalhe}</p>}
           {event.rastro?.length ? <Trail entries={event.rastro} /> : null}
         </div>
         <div className="evidence-links">
           {event.tender && event.item && <Internal path={itemPath(event.tender, event.item)}>Abrir item {event.item}</Internal>}
           {event.tender && event.dossie && <Internal path={dossierPath(event.tender)}>Abrir dossiê</Internal>}
-          {event.tipo === 'Escalada' && <Internal path="escaladas">Ver escaladas</Internal>}
+          {['Escalada', 'escalada_aberta'].includes(event.tipo) && <Internal path="escaladas">Ver escaladas</Internal>}
         </div>
       </li>)}</ol>
     </section>
@@ -207,7 +207,7 @@ function DossierScreen({ data }: { data: Dossier }) {
     </div>}
     <section className="panel"><h2>Checklist</h2>
       <ul className="checklist">{data.checklist.map((row, index) => <li key={index}>
-        <strong>{row.exigencia}</strong><span>{row.documento}</span><span>{row.status}</span>
+        <strong>{row.exigencia}</strong><span>{row.documento ?? 'Documento indisponível'}</span><span>{row.status}</span>
         {row.detalhe && <p>{row.detalhe}</p>}{row.fonte && <Evidence source={row.fonte} quote />}
       </li>)}</ul>
     </section>

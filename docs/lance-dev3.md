@@ -33,6 +33,8 @@ Abra a URL temporária em outro computador. Visitantes compartilham o estado des
 
 ## Integração pendente
 
-O contrato `DemoStore`, em `src/server/contract.ts`, separa as sete rotas da origem dos dados. O checkout inicial ainda não inclui o SQLite e as operações do Dev1, nem a exportação do turno, do dossiê e das métricas do Dev2. `npm.cmd run integrado` sinaliza essas dependências e encerra com erro.
+O adaptador em `src/server/integrated.ts` recebe a projeção de leitura do Dev2 e delega a decisão ao `resolveEscalation` do Dev1. A execução integrada depende dos módulos concretos do SQLite e da projeção. Quando chegarem, ligar o ponto de entrada e repetir o percurso com um pregão real, verificando a persistência da decisão e do evento.
 
-Quando os contratos chegarem, implementar o adaptador sobre o store do Dev1, gravando a resolução e o evento juntos em uma transação. Depois, repetir o percurso com um pregão real e verificar a persistência. A amostra e o servidor HTTP dispensam a Featherless. A tela **Prova** apresenta os números já documentados no spike e identifica as medições pendentes. O resultado de encaixe cobre seis pares com fichas sintéticas, avaliados três vezes. O protocolo da linha do tempo é fictício e representa uma verificação no sandbox. A tela de item separa regularização na ANVISA de cobertura do produto ofertado.
+Para revisar localmente a amostra sintética do Dev2 quando ela for publicada, gere `fixtures/estado-exemplo.json` conforme a [issue #4](https://github.com/rafaeltorresng/capengas/issues/4) e rode `npm.cmd run demo -- --dev2`. O comando de demo padrão continua usando a amostra interna. Use o padrão para o túnel público.
+
+A tela **Prova** identifica as medições pendentes. O resultado histórico de encaixe cobre seis pares com fichas sintéticas, avaliados três vezes. O protocolo na amostra interna é fictício e representa uma verificação no sandbox. A tela de item separa regularização na ANVISA de cobertura do produto ofertado.
