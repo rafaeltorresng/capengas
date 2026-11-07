@@ -30,6 +30,8 @@ export type Cobertura = 'declarada_pelo_cliente' | 'nao_comprovada';
 export type AnvisaCheck = {
   regularizacao: Regularizacao; cobertura: Cobertura;
   validUntil: string | null; classe: string | null; detentor: string | null;
+  /** true quando o registro vale hoje, mas vence antes do prazo de entrega. */
+  venceAntesEntrega?: boolean;
 };
 
 export type Fit = 'atende' | 'nao_atende' | 'nao_informado' | 'desconhecido';
@@ -40,6 +42,7 @@ export type ItemChecks = {
   preco: PriceCheck;
   docs: DocCheck[];
   restritivo: boolean; varianteNaoCoberta: boolean;
+  venceAntesEntrega?: boolean;
   /** null = prazo desconhecido (tratado como desconhecido → escalar). */
   prazoEsclarecimentoAberto: boolean | null;
 };
@@ -47,9 +50,9 @@ export type ItemChecks = {
  * Ordem de decideItem (a primeira regra que casar vence):
  * 1. qualquer desconhecido (fit, preco.viavel null, regularizacao nao_verificado, prazo null quando relevante) → escalar
  * 2. restritivo ou variante não coberta, com prazo aberto → esclarecer
- * 3. não atende, regularização vencida ou não encontrada, ou preço inviável → nao_disputar
+ * 3. não atende, regularização vencida ou não encontrada, registro vence antes da entrega, ou preço inviável → nao_disputar
  * 4. não informado → esclarecer (prazo aberto) ou escalar (prazo vencido)
- * 5. documento vence_antes_sessao, ausente ou irregular → disputar_com_pendencia
+ * 5. documento vence_antes_sessao, ausente ou irregular, ou cobertura nao_comprovada → disputar_com_pendencia
  * 6. senão → disputar
  */
 export type ItemDecision = { estado: Estado; motivos: string[] };
