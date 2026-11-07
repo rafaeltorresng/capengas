@@ -2,13 +2,16 @@
   "name": "lance",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "setup": "node --disable-warning=ExperimentalWarning scripts/setup.ts",
     "test": "node --disable-warning=ExperimentalWarning --test test/*.test.ts",
     "test:live": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env --test --test-timeout=300000 test/live/*.test.ts",
     "smoke": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env scripts/smoke.ts",
     "turno": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env scripts/turno.ts",
-    "evals": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env scripts/evals.ts"
+    "evals": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env scripts/evals.ts",
+    "demo:preparar": "node --disable-warning=ExperimentalWarning scripts/preparar-demo.ts"
   }
 }

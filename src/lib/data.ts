@@ -14,19 +14,25 @@ export const DATA = process.env.LANCE_DATA_DIR ?? join(ROOT, 'data');
 const FRESH = { ttlMs: 0, allowStale: false, retries: 3 };
 const http = (url: string, extra: object = {}) => fetchJson(url, { cacheDir: CACHE, retries: 5, baseDelayMs: 800, timeoutMs: 45000, ...extra });
 
-export type Tender = { cnpj: string; ano: number; seq: number; abertura: string; objeto: string; orgao: string; uf: string; municipio: string; modalidade: string; url: string };
+export type Tender = { cnpj: string; ano: number; seq: number; abertura: string; objeto: string; orgao: string; uf: string; municipio: string; modalidade: string; url: string; plataforma: string; situacao: string; valorEstimado: number | null };
 export type TenderItem = { numero: number; descricao: string; quantidade: number; valorEstimado: number | null; catalogCode: number | null; beneficio: string; criterio: string; temResultado: boolean; sigiloso: boolean };
+
+/** Converte um resultado da busca do PNCP; plataforma = sistema que publicou (só o Compras.gov.br traz código de catálogo). */
+export function mapSearchItem(i: any): Tender {
+  return {
+    cnpj: i.orgao_cnpj, ano: Number(i.ano), seq: Number(i.numero_sequencial),
+    abertura: String(i.data_fim_vigencia ?? '').slice(0, 16), objeto: i.description ?? '', orgao: i.orgao_nome ?? '',
+    uf: i.uf ?? '', municipio: i.municipio_nome ?? '', modalidade: i.modalidade_licitacao_nome ?? '',
+    url: `https://pncp.gov.br/app/editais/${i.orgao_cnpj}/${i.ano}/${i.numero_sequencial}`,
+    plataforma: i.usuario_nome ?? '', situacao: i.situacao_nome ?? '', valorEstimado: Number(i.valor_total_estimado) || null,
+  };
+}
 
 export const pncp = {
   async searchOpen(q: string, page = 1, size = 20) {
     const u = `https://pncp.gov.br/api/search/?q=${encodeURIComponent(q)}&tipos_documento=edital&ordenacao=-data&pagina=${page}&tam_pagina=${size}&status=recebendo_proposta`;
     const { data } = await http(u, { ttlMs: 30 * 60e3, retries: 8 });
-    const items: Tender[] = (data.items ?? []).map((i: any) => ({
-      cnpj: i.orgao_cnpj, ano: Number(i.ano), seq: Number(i.numero_sequencial),
-      abertura: String(i.data_fim_vigencia ?? '').slice(0, 16), objeto: i.description ?? '', orgao: i.orgao_nome ?? '',
-      uf: i.uf ?? '', municipio: i.municipio_nome ?? '', modalidade: i.modalidade_licitacao_nome ?? '',
-      url: `https://pncp.gov.br/app/editais/${i.orgao_cnpj}/${i.ano}/${i.numero_sequencial}`,
-    }));
+    const items: Tender[] = (data.items ?? []).map(mapSearchItem);
     return { total: Number(data.total ?? 0), items };
   },
   /** fresh: lê na hora, sem cache e sem cache vencido (falha se a fonte não responder). Usado pelo recheque. */
