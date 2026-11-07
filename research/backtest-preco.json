@@ -1,0 +1,61 @@
+{
+ "medicao": "O histórico de preços (congelado antes do pregão) prevê fracasso ou o preço vencedor?",
+ "coletadoEm": "2026-11-07",
+ "fonte": "Compras.gov.br: itens 14.133 de abril/2026 (classes 6515 e 6510) + 1_consultarMaterial com dataCompraFim=2026-03-31",
+ "script": "scripts/pesquisa/backtest.ts",
+ "denominadores": {
+  "itensConcluidosComCodigoEEstimativa": 1715,
+  "comHistoricoMin5Compras": 494,
+  "homologadosComPreco": 392,
+  "codigosSorteados": 350
+ },
+ "taxaFracassoGeralPct": 20.6,
+ "regras": [
+  {
+   "regra": "estimativa < 60% da mediana histórica",
+   "marcados": 53,
+   "fracassoMarcadosPct": 17.0,
+   "naoMarcados": 441,
+   "fracassoNaoMarcadosPct": 21.1,
+   "fracassosPegosPct": 8.8,
+   "itensBonsDescartados": 44
+  },
+  {
+   "regra": "estimativa < 80% da mediana histórica",
+   "marcados": 75,
+   "fracassoMarcadosPct": 18.7,
+   "naoMarcados": 419,
+   "fracassoNaoMarcadosPct": 21.0,
+   "fracassosPegosPct": 13.7,
+   "itensBonsDescartados": 61
+  },
+  {
+   "regra": "estimativa < 100% da mediana histórica",
+   "marcados": 118,
+   "fracassoMarcadosPct": 28.0,
+   "naoMarcados": 376,
+   "fracassoNaoMarcadosPct": 18.4,
+   "fracassosPegosPct": 32.4,
+   "itensBonsDescartados": 85
+  }
+ ],
+ "precoVencedor": {
+  "estimativaDoOrgao": {
+   "erroMedianoPct": 11,
+   "erroP75Pct": 60
+  },
+  "medianaHistorica": {
+   "erroMedianoPct": 32,
+   "erroP75Pct": 77
+  },
+  "p25Historico": {
+   "erroMedianoPct": 40,
+   "erroP75Pct": 77
+  },
+  "0,78×estimativa": {
+   "erroMedianoPct": 22,
+   "erroP75Pct": 25
+  }
+ },
+ "conclusao": "Nas regras testadas, o histórico não forneceu um filtro útil de fracasso nem previu o vencedor melhor que a estimativa do órgão. Isso não prova que o preço não cause fracassos."
+}

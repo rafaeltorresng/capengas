@@ -1,0 +1,36 @@
+{
+ "medicao": "Evals do modelo Kimi-K2.6 (Featherless) com gabarito rotulado manualmente",
+ "coletadoEm": "2026-11-07",
+ "script": "scripts/evals.ts",
+ "gabarito": "fixtures/gold.json",
+ "repeticoes": 3,
+ "resultado": {
+  "encaixeTecnico": {
+   "acertos": 18,
+   "execucoes": 18,
+   "paresDistintos": 6
+  },
+  "exigenciasEdital": {
+   "camposCertos": 21,
+   "campos": 27,
+   "editais": 3
+  },
+  "codigoXDescricao": {
+   "acertos": 13,
+   "execucoes": 18,
+   "casosDistintos": 6
+  },
+  "reescritaCatmat": {
+   "recallAt8Modelo": 5,
+   "recallAt8SemModelo": 4,
+   "itens": 25
+  },
+  "custoTotalUsd": 0.768
+ },
+ "ressalvas": [
+  "18/18 = 6 pares distintos × 3 repetições; fichas técnicas sintéticas; um par aceita dois vereditos",
+  "não mede precisão em produção",
+  "na extração, a UEPG foi contada como erro ao apontar marca por exigência de compatibilidade (leitura defensável)",
+  "código × descrição: 3 erros num caso discutível e 2 respostas vazias"
+ ]
+}

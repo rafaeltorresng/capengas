@@ -1,0 +1,30 @@
+{
+ "medicao": "Pregões de saúde com propostas abertas, deduplicados",
+ "coletadoEm": "2026-11-07T11:00-03:00",
+ "fonte": "PNCP /api/search status=recebendo_proposta, termos: material hospitalar, material medico hospitalar, equipamentos hospitalares, insumos hospitalares (até 40 páginas de 100)",
+ "script": "scripts/pesquisa/abertos.ts",
+ "resultado": {
+  "editaisDistintos": 2002,
+  "pregoes": 1647,
+  "pregoesComValorPublicado": 1171,
+  "valorEstimadoPregoes": 3800000000.0,
+  "valorEstimadoTodosEditais": 7370000000.0,
+  "pregoesComprasGovBr": 686,
+  "valorEstimadoComprasGovBr": 1120000000.0,
+  "medianaPorPregao": 543021,
+  "top1PctConcentraPct": 43,
+  "porEsfera": {
+   "Municipal": 862,
+   "Estadual": 455,
+   "Federal": 163,
+   "Não se aplica": 163,
+   "Distrital": 4
+  }
+ },
+ "ressalvas": [
+  "valor é mínimo: 29% dos pregões sem valor publicado",
+  "busca por termos: pode incluir objetos mistos e excluir saúde descrita com outras palavras",
+  "a busca do termo \"insumos hospitalares\" teve falhas de conexão em uma página",
+  "retrato do momento; muda diariamente"
+ ]
+}
