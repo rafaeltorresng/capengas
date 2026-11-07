@@ -1,4 +1,5 @@
 // Regras determinísticas: tudo que pode ser verificado fica no código, não no modelo.
+import type { AnvisaCheck, Cobertura, PriceInput, PriceCheck, CofreDoc, Exigencia, DocCheck, DocStatus, ItemDecision, ItemChecks as ContractItemChecks } from './contracts.ts';
 
 export type AnvisaRow = Record<string, string>;
 export type AnvisaStatus = 'ok' | 'nao_encontrado' | 'vencido' | 'vence_antes_entrega';
@@ -13,16 +14,56 @@ export function parseBrDate(s: string): string | null {
   return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
 }
 
-export function checkAnvisa(row: AnvisaRow | undefined, o: { today: Date; deliveryBy: Date }) {
-  if (!row) return { status: 'nao_encontrado' as AnvisaStatus, validUntil: null, classe: null };
-  const classe = row.CLASSE_RISCO ?? null;
+/**
+ * Regularização (o número existe e vale) separada da cobertura (o registro cobre o modelo ofertado,
+ * declarado pelo cliente: o registro pode ser de família). O detentor não precisa ser a distribuidora.
+ * Também devolve `status` no formato antigo, usado pelo tools.ts até a migração.
+ */
+export function checkAnvisa(row: AnvisaRow | undefined, o: { today: Date; deliveryBy: Date; coberturaDeclarada?: boolean }): AnvisaCheck & { status: AnvisaStatus } {
+  const cobertura: Cobertura = o.coberturaDeclarada ? 'declarada_pelo_cliente' : 'nao_comprovada';
+  const base = { cobertura, classe: row?.CLASSE_RISCO ?? null, detentor: row?.DETENTOR_REGISTRO_CADASTRO ?? null };
+  if (!row) return { ...base, regularizacao: 'nao_encontrado', status: 'nao_encontrado', validUntil: null };
   const raw = row.VALIDADE_REGISTRO_CADASTRO;
-  if (raw === 'VIGENTE') return { status: 'ok' as AnvisaStatus, validUntil: null, classe };
+  if (raw === 'VIGENTE') return { ...base, regularizacao: 'vigente', status: 'ok', validUntil: null };
   const validUntil = parseBrDate(raw);
-  if (!validUntil) return { status: 'nao_encontrado' as AnvisaStatus, validUntil: null, classe };
-  if (validUntil < ymd(o.today)) return { status: 'vencido' as AnvisaStatus, validUntil, classe };
-  if (validUntil < ymd(o.deliveryBy)) return { status: 'vence_antes_entrega' as AnvisaStatus, validUntil, classe };
-  return { status: 'ok' as AnvisaStatus, validUntil, classe };
+  if (!validUntil) return { ...base, regularizacao: 'nao_verificado', status: 'nao_encontrado', validUntil: null };
+  if (validUntil < ymd(o.today)) return { ...base, regularizacao: 'vencido', status: 'vencido', validUntil };
+  if (validUntil < ymd(o.deliveryBy)) return { ...base, regularizacao: 'vigente', venceAntesEntrega: true, status: 'vence_antes_entrega', validUntil };
+  return { ...base, regularizacao: 'vigente', status: 'ok', validUntil };
+}
+
+/** Preço pela estimativa do órgão (o histórico não previu o vencedor no backtest). */
+export function priceCheck(i: PriceInput): PriceCheck {
+  if (!(i.custo > 0)) return { viavel: null, precoProposto: null, motivo: 'custo inválido ou ausente: escalar' };
+  if (i.sigiloso || !(Number(i.estimativa) > 0)) return { viavel: null, precoProposto: null, motivo: 'sem estimativa (orçamento sigiloso ou ausente): escalar' };
+  const est = Number(i.estimativa);
+  const piso = i.custo * (1 + i.margemMinima);
+  if (piso > est) return { viavel: false, precoProposto: null, motivo: `custo + margem mínima (R$ ${piso.toFixed(2)}) acima da estimativa (R$ ${est.toFixed(2)})` };
+  const preco = Math.round(Math.min(est, Math.max(piso, i.custo * (1 + i.margemAlvo))) * 100) / 100;
+  return { viavel: true, precoProposto: preco, motivo: `preço com margem dentro da estimativa (R$ ${est.toFixed(2)})` };
+}
+
+// Exigências do edital que são atendidas por documentos do cofre (as demais, como registro ANVISA, não viram linha).
+const DOC_REQS: Record<string, { tipo: string; nome: string }[]> = {
+  afe: [{ tipo: 'afe', nome: 'AFE ANVISA' }],
+  certidoes: [{ tipo: 'cnd_federal', nome: 'CND Federal' }, { tipo: 'crf_fgts', nome: 'CRF FGTS' }, { tipo: 'cndt', nome: 'CNDT' }],
+  balanco: [{ tipo: 'balanco', nome: 'Balanço patrimonial' }],
+  atestado: [{ tipo: 'atestado', nome: 'Atestado de capacidade técnica' }],
+};
+
+/** Cofre × data da sessão. `validade: null` significa documento sem vencimento (ex.: AFE). */
+export function checkDocs(cofre: CofreDoc[], exigencias: Exigencia[], dataSessao: string): DocCheck[] {
+  const out: DocCheck[] = [];
+  for (const e of exigencias) {
+    for (const req of DOC_REQS[e.tipo] ?? []) {
+      const doc = cofre.find(c => c.tipo === req.tipo);
+      const exigencia = `${req.nome} (${e.tipo})`;
+      if (!doc) { out.push({ exigencia, citacao: e.citacao, documento: null, validade: null, status: 'ausente' }); continue; }
+      const status: DocStatus = doc.irregular ? 'irregular' : doc.validade === null ? 'sem_vencimento' : doc.validade < dataSessao ? 'vence_antes_sessao' : 'vigente';
+      out.push({ exigencia, citacao: e.citacao, documento: doc.doc, validade: doc.validade, status });
+    }
+  }
+  return out;
 }
 
 const IGNORED_BRANDS = new Set(['PROPRIO', 'PROPRIA', 'GENERICO', 'DIVERSOS', 'DIVERSAS', 'SEM MARCA', 'NAO INFORMADO', 'NI', 'NA']);
@@ -99,16 +140,20 @@ export function esclarecimentoDeadline(opening: Date, businessDays = 3) {
   return cur.toISOString().slice(0, 10);
 }
 
-export type ItemChecks = {
+// ── Decisão por item ────────────────────────────────────────────────────────
+
+/** Formato antigo, ainda usado pelo tools.ts. Removido quando o Dev 2 migrar para o contrato novo. */
+export type LegacyItemChecks = {
   fit: 'atende' | 'nao_atende' | 'nao_informado';
   anvisa: AnvisaStatus;
   price: { ok: boolean; reason?: string };
   docsOk: boolean;
   restrictive: boolean;
 };
+export type ItemChecks = LegacyItemChecks;
 export type Decision = 'ofertar' | 'ofertar_com_pendencia' | 'nao_ofertar' | 'escalar';
 
-export function decideItem(c: ItemChecks): { decision: Decision; reasons: string[] } {
+function decideLegacy(c: LegacyItemChecks): { decision: Decision; reasons: string[] } {
   if (c.restrictive) return { decision: 'escalar', reasons: ['especificação possivelmente restritiva: sugerir pedido de esclarecimento'] };
   const no: string[] = [];
   if (c.fit === 'nao_atende') no.push('produto não atende à especificação');
@@ -118,4 +163,47 @@ export function decideItem(c: ItemChecks): { decision: Decision; reasons: string
   if (c.fit === 'nao_informado') return { decision: 'escalar', reasons: ['atributo não informado na ficha técnica'] };
   if (!c.docsOk) return { decision: 'ofertar_com_pendencia', reasons: ['documento da empresa vencido ou ausente'] };
   return { decision: 'ofertar', reasons: ['atende, registro válido, preço viável'] };
+}
+
+const PENDENTES: DocStatus[] = ['vence_antes_sessao', 'ausente', 'irregular'];
+
+/** Decisão do contrato (contracts.ts). A primeira regra que casar vence; qualquer desconhecido escala. */
+function decideContract(c: NewItemChecks): ItemDecision {
+  const desconhecido: string[] = [];
+  if (c.fit === 'desconhecido') desconhecido.push('encaixe técnico desconhecido');
+  if (c.preco.viavel === null) desconhecido.push(`preço: ${c.preco.motivo}`);
+  if (c.regularizacao === 'nao_verificado') desconhecido.push('registro ANVISA não verificado');
+  if (desconhecido.length) return { estado: 'escalar', motivos: desconhecido };
+
+  if (c.restritivo || c.varianteNaoCoberta) {
+    const motivo = c.restritivo ? 'especificação possivelmente restritiva (marca de referência ou compatibilidade)' : 'variante pedida não coberta pelo produto';
+    if (c.prazoEsclarecimentoAberto === true) return { estado: 'esclarecer', motivos: [motivo, 'prazo de esclarecimento aberto'] };
+    if (c.prazoEsclarecimentoAberto === null) return { estado: 'escalar', motivos: [motivo, 'prazo de esclarecimento desconhecido'] };
+  }
+
+  const nao: string[] = [];
+  if (c.fit === 'nao_atende') nao.push('produto não atende à especificação');
+  if (c.regularizacao === 'vencido' || c.regularizacao === 'nao_encontrado') nao.push(`registro ANVISA ${c.regularizacao.replace('_', ' ')}`);
+  if (c.venceAntesEntrega) nao.push('registro ANVISA vence antes da entrega');
+  if (c.preco.viavel === false) nao.push(`preço: ${c.preco.motivo}`);
+  if (nao.length) return { estado: 'nao_disputar', motivos: nao };
+
+  if (c.fit === 'nao_informado') {
+    if (c.prazoEsclarecimentoAberto === true) return { estado: 'esclarecer', motivos: ['atributo exigido não informado na ficha', 'prazo de esclarecimento aberto'] };
+    return { estado: 'escalar', motivos: ['atributo exigido não informado na ficha', c.prazoEsclarecimentoAberto === false ? 'prazo de esclarecimento vencido' : 'prazo de esclarecimento desconhecido'] };
+  }
+
+  const pend = c.docs.filter(x => PENDENTES.includes(x.status)).map(x => `${x.exigencia}: ${x.status.replaceAll('_', ' ')}`);
+  if (c.cobertura === 'nao_comprovada') pend.push('confirmar que o registro ANVISA cobre o modelo ofertado');
+  if (pend.length) return { estado: 'disputar_com_pendencia', motivos: pend };
+  return { estado: 'disputar', motivos: ['atende, registro vigente, documentos em dia e preço dentro da estimativa'] };
+}
+
+type NewItemChecks = ContractItemChecks & { venceAntesEntrega?: boolean };
+
+/** Aceita o contrato novo ({ estado, motivos }) e, até a migração do tools.ts, o formato antigo ({ decision, reasons }). */
+export function decideItem(c: NewItemChecks): ItemDecision;
+export function decideItem(c: LegacyItemChecks): { decision: Decision; reasons: string[] };
+export function decideItem(c: any): any {
+  return 'preco' in c ? decideContract(c) : decideLegacy(c);
 }
