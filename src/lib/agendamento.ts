@@ -37,7 +37,7 @@ export type ResumoAcoes = { esclarecimentos: Contagem; propostas: Contagem; bloq
 
 /** Mais específico primeiro: marca de referência e variante pesam mais que "não informado". */
 const ORDEM_MOTIVO = ['marca_referencia', 'variante_nao_coberta', 'nao_informado'] as const;
-const SEM_EVIDENCIA = 'rascunho de esclarecimento sem evidência gravada no encaixe: conferir antes de enviar';
+const SEM_EVIDENCIA = 'rascunho de esclarecimento sem evidência no encaixe gravado nesta análise: conferir antes de enviar';
 
 export async function executarAcoesDoTurno(d: {
   store: LanceStore; company: any; state: LanceState; ids: string[]; sandboxUrl: string;
@@ -58,7 +58,8 @@ export async function executarAcoesDoTurno(d: {
     for (const [k, draft] of Object.entries(d.state.drafts)) {
       if (!k.startsWith(id + '#') || !draft?.texto) continue;
       const item = Number(k.split('#')[1]);
-      const evidencias = motivosDaEvidencia(d.store, id, item);
+      // Evidência só vale se o encaixe foi gravado nesta análise, não num turno anterior à errata.
+      const evidencias = d.state.fits[k] ? motivosDaEvidencia(d.store, id, item) : new Set<string>();
       const motivo = ORDEM_MOTIVO.find(m => evidencias.has(m));
       if (!motivo) {
         if (!d.store.openEscalations().some(e => e.tender === id && e.item === String(item) && e.motivo === SEM_EVIDENCIA)) {
@@ -70,7 +71,9 @@ export async function executarAcoesDoTurno(d: {
       }
       conta(r.esclarecimentos, (await executarAcao({ tipo: 'enviar_esclarecimento', tenderId: id, item, texto: draft.texto, motivo }, deps)).resultado);
     }
-    const disputar = [...new Set(d.store.getDecisions(id).filter(x => x.estado === 'disputar').map(x => x.item))];
+    // Só decisões calculadas nesta análise: uma decisão antiga no store não ganha autorização nova.
+    const disputar = [...new Set(d.store.getDecisions(id)
+      .filter(x => x.estado === 'disputar' && d.state.decisions[`${id}#${x.item}`]?.estado === 'disputar').map(x => x.item))];
     if (disputar.length) conta(r.propostas, (await executarAcao({ tipo: 'enviar_proposta', tenderId: id, itens: disputar }, deps)).resultado);
   }
   return r;
@@ -80,7 +83,8 @@ const ROTULO: Record<ResultadoAcao['resultado'], [string, string]> = {
   confirmada: ['confirmado', 'confirmada'], escalada: ['escalado', 'escalada'], bloqueada: ['bloqueado', 'bloqueada'],
   reconciliar: ['a reconciliar', 'a reconciliar'], falhou: ['com falha', 'com falha'],
 };
-const plural = (n: number, s: string) => n === 1 ? s : s.split(' ').map(w => w === 'a' || w === 'com' ? w : w + 's').join(' ');
+const PLURAL: Record<string, string> = { 'pregão': 'pregões', a: 'a', com: 'com', falha: 'falha', reconciliar: 'reconciliar' };
+const plural = (n: number, s: string) => n === 1 ? s : s.split(' ').map(w => PLURAL[w] ?? w + 's').join(' ');
 export function textoAcoes(r: ResumoAcoes): string {
   const partes: string[] = [];
   for (const [k, n] of Object.entries(r.esclarecimentos) as [ResultadoAcao['resultado'], number][]) partes.push(`${n} ${plural(n, `esclarecimento ${ROTULO[k][0]}`)}`);
