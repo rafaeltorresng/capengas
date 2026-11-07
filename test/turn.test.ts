@@ -53,6 +53,18 @@ test('falha no caminho direto registra o fim e segue sem evento quando vem do ag
   agendado.store.close();
 });
 
+test('análise sem decisão nova não renova a foto nem tira a marca de reavaliar', async () => {
+  const { store, state } = prepared();
+  delete state.decisions[id + '#1'];
+  store.upsertTender({ id, orgao: 'Teste', uf: 'PE', abertura: '2026-11-23T09:00', situacao: 'Divulgada', plataforma: 'Compras.gov.br', arquivosHash: 'foto-antiga', ultimoCheck: null, reavaliar: true });
+  const fotos: string[] = [];
+  await runAnalysisTurn({ store, state, origem: 'agendador', run: async () => ({ stopped: 'final' }), snapshot: async tenderId => { fotos.push(tenderId); } });
+  assert.deepEqual(fotos, []);
+  assert.equal(store.getTender(id)?.arquivosHash, 'foto-antiga');
+  assert.equal(store.getTender(id)?.reavaliar, true);
+  store.close();
+});
+
 test('a foto da análise é pedida depois de persistir e a falha dela não apaga a decisão', async () => {
   const ok = prepared();
   const fotos: string[] = [];
