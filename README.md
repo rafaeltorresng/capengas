@@ -35,6 +35,28 @@ Projeto da equipe Capengas para o Converge Challenge 2026 (Recife, 7–8/11/2026
 
 Fontes e metodologia em [docs/lance-pesquisa.md](docs/lance-pesquisa.md).
 
+## Como rodar
+
+Requer **Node 24+** e **pdftotext** (`brew install poppler` no macOS). Não há dependências npm.
+
+```bash
+npm run setup        # baixa a base da ANVISA (~28 MB) e o CATMAT de saúde; monta os bancos locais
+cp .env.example .env # preencha AI_API_KEY com a chave da Featherless
+npm test             # testes unitários (sem rede)
+npm run test:live    # testes contra as APIs reais (PNCP, Compras.gov.br, ANVISA)
+npm run smoke        # confere a chave e o tool calling do modelo
+npm run turno        # turno ponta a ponta em 3 pregões reais (usa o modelo; ~US$ 0,20)
+npm run evals        # evals do modelo com gabarito (~US$ 0,80)
+```
+
+| Pasta | Conteúdo |
+|---|---|
+| `src/lib/` | Núcleo: HTTP resiliente, dados públicos, regras, agente, modelo, ferramentas, sandbox |
+| `test/` | Testes unitários · `test/live/`: testes com rede |
+| `fixtures/` | Empresa fictícia (catálogo, cofre), gabarito dos evals, respostas reais de APIs |
+| `scripts/` | Setup, turno, evals · `scripts/pesquisa/`: scripts que geraram os números da pesquisa |
+| `cache/`, `data/`, `out/` | Gerados localmente; fora do Git |
+
 ## Segredos
 
 A chave do modelo (Featherless) fica em `.env`, que está no `.gitignore`. Nunca a versione.

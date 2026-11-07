@@ -1,0 +1,24 @@
+{
+  "_nota": "Empresa FICTÍCIA. Números de registro ANVISA são reais (base aberta TA_PRODUTO_SAUDE_SITE); custos, fichas técnicas e documentos são sintéticos.",
+  "empresa": { "nome": "Distribuidora Modelo Ltda (fictícia)", "porte": "EPP", "uf": "PR", "margemMinima": 0.15, "prazoEntregaDias": 60 },
+  "cofre": [
+    { "doc": "AFE ANVISA (distribuidora de produtos para saúde)", "validade": "2027-05-31" },
+    { "doc": "CND Federal (Receita/PGFN)", "validade": "2026-11-15" },
+    { "doc": "CRF FGTS", "validade": "2026-12-20" },
+    { "doc": "CNDT Trabalhista", "validade": "2027-02-10" }
+  ],
+  "catalogo": [
+    { "id": "P1", "nome": "Cabo de bisturi nº 4", "marca": "Allplan", "registroAnvisa": "80243520033", "custo": 6.00,
+      "ficha": "Cabo de bisturi nº 4. Comprimento total 13 cm. Material: aço inoxidável AISI 420. Reutilizável e autoclavável. Encaixe para lâminas nº 18 a 36. Embalagem individual." },
+    { "id": "P2", "nome": "Tesoura Metzenbaum curva 20 cm", "marca": "Professional", "registroAnvisa": "10150470165", "custo": 22.00,
+      "ficha": "Tesoura cirúrgica Metzenbaum. Comprimento total 20 cm. Haste curva, ponta romba. Material: aço inoxidável. Esterilizável em autoclave." },
+    { "id": "P4", "nome": "Cadeira de rodas manual dobrável", "marca": "Modelo", "registroAnvisa": "82052410001", "custo": 780.00,
+      "ficha": "Cadeira de rodas manual adulto, dobrável em X, com desengate rápido das rodas. Estrutura em liga de alumínio com pintura epóxi. Rodas dianteiras: rodízios com pneu maciço. Rodas traseiras: pneu maciço. Freios bilaterais com trava. Assento e encosto em nylon impermeável almofadado; encosto fixo. Apoio de braços fixo. Apoio de pés removível. Capacidade 120 kg." },
+    { "id": "P5", "nome": "Escova para degermação com clorexidina 2%", "marca": "Oxetil", "registroAnvisa": "10356160001", "custo": 1.10,
+      "ficha": "Escova descartável para antissepsia cirúrgica das mãos. Dupla face: cerdas macias e esponja impregnada com digliconato de clorexidina 2%. Estéril, uso único. Acompanha limpador de unhas." },
+    { "id": "P6", "nome": "Kit CPAP nasal com pronga neonatal", "marca": "Solumed", "registroAnvisa": "80019169010", "custo": 38.00,
+      "ficha": "Conjunto completo para CPAP nasal neonatal: pronga nasal em silicone (tamanhos 0 a 5, incluindo nº 4), traqueias corrugadas, linha de pressão, conectores padrão 15/22 mm e fixador tipo touca. Embalagem individual, estéril." },
+    { "id": "P7", "nome": "Pinça tripolar para eletrocirurgia", "marca": "Taimin", "registroAnvisa": "80082910158", "custo": 900.00,
+      "ficha": "Pinça tripolar para alta frequência, reutilizável, comprimento 20 cm, cabo de conexão incluso." }
+  ]
+}

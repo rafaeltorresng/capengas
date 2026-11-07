@@ -1,0 +1,24 @@
+{
+  "_nota": "Gabarito rotulado manualmente a partir do texto real dos editais e itens (PNCP, 07/11/2026). Fichas técnicas são sintéticas e foram escritas para produzir cada veredito.",
+  "extract": [
+    { "tender": "77816510000166/2026/348", "gold": { "registro_anvisa": true, "afe": true, "marca_referencia": false }, "_fonte": "12.3.3.2/12.3.3.3 do edital" },
+    { "tender": "03648344000108/2026/14", "gold": { "registro_anvisa": "parcial", "afe": false, "marca_referencia": true }, "_fonte": "registro só para um equipamento; 'marca de referência' no item 3 do anexo" },
+    { "tender": "80257355000108/2026/493", "gold": { "registro_anvisa": true, "afe": true, "marca_referencia": false }, "_fonte": "1.2.3.8 e 'Autorização de Funcionamento (AF)'" }
+  ],
+  "fit": [
+    { "id": "F1", "tender": "77816510000166/2026/348", "item": 4, "product": "P1", "accept": ["atende", "nao_informado"], "_porque": "nº4, 13 cm, inox, autoclavável; 'longo' do CATMAT não consta na ficha" },
+    { "id": "F2", "tender": "77816510000166/2026/348", "item": 40, "product": "P2", "accept": ["nao_atende"], "_porque": "item pede haste reta; ficha diz curva" },
+    { "id": "F3", "tender": "03648344000108/2026/14", "item": 54, "product": "P4", "accept": ["nao_atende"], "_porque": "item pede pneu traseiro inflável e apoio de braços móvel; ficha: maciço e fixo" },
+    { "id": "F4", "tender": "03648344000108/2026/14", "item": 18, "product": "P5", "accept": ["nao_informado"], "_porque": "embalagem individual não consta na ficha" },
+    { "id": "F5", "tender": "80257355000108/2026/493", "item": 23, "product": "P6", "accept": ["atende"], "_porque": "pronga silicone nº4, traqueias, linha de pressão, touca, conectores padrão, conjunto completo" },
+    { "id": "F6", "tender": "77816510000166/2026/348", "item": 22, "product": "P2", "accept": ["nao_atende"], "_porque": "item é pinça Foerster; produto é tesoura" }
+  ],
+  "code_match": [
+    { "tender": "76205699000198/2026/113", "item": 73, "accept": ["produto_diferente"], "_porque": "código de atadura crepom; órgão pede esparadrapo impermeável" },
+    { "tender": "76205699000198/2026/113", "item": 74, "accept": ["produto_diferente"], "_porque": "código de atadura crepom; órgão pede fita microporosa" },
+    { "tender": "76205699000198/2026/113", "item": 75, "accept": ["variante_diferente"], "_porque": "atadura crepom, mas 15 cm e 80% algodão vs 30 cm 100% algodão" },
+    { "tender": "03648344000108/2026/14", "item": 33, "accept": ["produto_diferente", "variante_diferente"], "_porque": "código de pinça back biter giratória; órgão pede pinça Adson" },
+    { "tender": "77816510000166/2026/348", "item": 4, "accept": ["corresponde"], "_porque": "cabo de bisturi nº4 em ambos" },
+    { "tender": "80257355000108/2026/493", "item": 23, "accept": ["corresponde"], "_porque": "mesmo texto" }
+  ]
+}
