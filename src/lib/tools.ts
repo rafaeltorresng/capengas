@@ -3,8 +3,7 @@ import type { Tool, Ctx } from './agent.ts';
 import { pncp, compras, anvisa, pdf, catmat } from './data.ts';
 import { checkAnvisa, priceStats, brandConcentration, priceCheck, checkDocs, verifyQuote, esclarecimentoDeadline, decideItem } from './rules.ts';
 import { executarAcao, type ActDeps, type PedidoAcao } from './act.ts';
-import { persistAnalysis } from './persist-analysis.ts';
-import { snapshotTender, recheckTender } from './recheck.ts';
+import { recheckTender } from './recheck.ts';
 import type { LanceStore } from './store.ts';
 import { randomUUID } from 'node:crypto';
 
@@ -33,23 +32,33 @@ const tenderItem = async (st: LanceState, tid: string, n: number) => {
 };
 const key = (tid: string, n: number) => `${tid}#${n}`;
 
+function motivosDaEvidencia(store: LanceStore, tenderId: string, item: number) {
+  const motivos = new Set<'nao_informado' | 'variante_nao_coberta' | 'marca_referencia'>();
+  for (const fit of store.getFits(tenderId)) {
+    if (fit.item !== item) continue;
+    const atributos = fit.atributos as { attributes?: { atributo?: string; veredito?: string }[]; restritivo?: unknown; varianteNaoCoberta?: boolean } | null;
+    for (const atributo of atributos?.attributes ?? []) {
+      if (atributo.veredito === 'nao_informado') motivos.add('nao_informado');
+      if (atributo.veredito === 'nao_atende' && norm(atributo.atributo ?? '').includes('variante')) motivos.add('variante_nao_coberta');
+    }
+    if (atributos?.varianteNaoCoberta === true) motivos.add('variante_nao_coberta');
+    if (atributos?.restritivo) motivos.add('marca_referencia');
+  }
+  return motivos;
+}
+
 async function enviarPelaPorta(st: LanceState, pedido: PedidoAcao) {
   if (!st.store) return { resultado: 'bloqueada' as const, motivo: 'envio indisponível sem estado persistente; nada foi enviado' };
-  persistAnalysis(st, st.store);
-  const tenderId = pedido.tenderId;
-  const gravarFoto = st.snapshot ?? (st.recheck ? undefined : (id: string, store: LanceStore) => snapshotTender(id, store));
-  if (gravarFoto) {
-    try { await gravarFoto(tenderId, st.store); }
-    catch (error: any) {
-      st.store.logEvent({ tipo: 'erro_fonte', resumo: `foto da análise não gravada (${String(error?.message ?? error).slice(0, 120)}); o recheque bloqueia até haver foto`, tender: tenderId });
-    }
+  const tender = st.store.getTender(pedido.tenderId);
+  if (!tender?.arquivosHash || tender.reavaliar === true) {
+    return { resultado: 'bloqueada' as const, motivo: 'reavaliar antes de agir: a foto da análise está ausente ou o monitor marcou o pregão' };
   }
   const resultado = await executarAcao(pedido, {
     store: st.store, politica: st.company.politica, sandboxUrl: st.sandboxUrl,
     empresa: st.company.empresa?.nome ?? '', catalogo: st.company.catalogo ?? [], now: () => st.now,
     recheck: st.recheck ?? ((id, store) => recheckTender(id, store)),
   });
-  if (resultado.resultado === 'confirmada') st.submissions.push({ tender_id: tenderId, protocolo: resultado.protocolo });
+  if (resultado.resultado === 'confirmada') st.submissions.push({ tender_id: pedido.tenderId, protocolo: resultado.protocolo });
   return resultado;
 }
 
@@ -283,11 +292,14 @@ export const tools: Tool[] = [
     },
   },
   {
-    name: 'send_esclarecimento', description: 'Pede o envio de um esclarecimento já redigido. O prazo é calculado pela abertura persistida. O texto vem do rascunho, não de um argumento livre desta chamada.',
+    name: 'send_esclarecimento', description: 'Pede o envio de um esclarecimento já redigido. O motivo precisa coincidir com a evidência gravada no encaixe ou na sinalização restritiva. O prazo sai da abertura persistida. O texto vem do rascunho.',
     parameters: { type: 'object', required: ['tender_id', 'item', 'motivo'], properties: { tender_id: { type: 'string' }, item: { type: 'integer' }, motivo: { type: 'string', enum: ['nao_informado', 'variante_nao_coberta', 'marca_referencia'] } } },
     async run(a, ctx) {
       const st = S(ctx); const dr = st.drafts[key(a.tender_id, a.item)];
       if (!dr?.texto) return { resultado: 'bloqueada', motivo: 'esclarecimento sem rascunho; nada foi enviado' };
+      if (!st.store) return { resultado: 'bloqueada', motivo: 'envio indisponível sem estado persistente; nada foi enviado' };
+      const evidencias = motivosDaEvidencia(st.store, a.tender_id, a.item);
+      if (!evidencias.has(a.motivo)) return { resultado: 'escalada', motivo: 'motivo do esclarecimento não confere com a evidência gravada' };
       return enviarPelaPorta(st, { tipo: 'enviar_esclarecimento', tenderId: a.tender_id, item: a.item, texto: dr.texto, motivo: a.motivo });
     },
   },

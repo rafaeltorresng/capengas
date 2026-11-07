@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { tools, newState, type LanceState } from '../../src/lib/tools.ts';
 import { startSandbox } from '../../src/lib/sandbox.ts';
 import { openStore } from '../../src/lib/store.ts';
+import { persistAnalysis } from '../../src/lib/persist-analysis.ts';
 import type { Recheque } from '../../src/lib/contracts.ts';
 
 const company = JSON.parse(readFileSync(new URL('../../fixtures/company.json', import.meta.url), 'utf8'));
@@ -54,6 +55,9 @@ describe('ferramentas sobre dados reais', { timeout: 240_000 }, () => {
     const recheck: Recheque = { status: 'ok', situacao: 'Divulgada no PNCP', arquivosHash: 'abc', em: '2026-11-07T10:00:00.000Z' };
     st.store = store;
     st.recheck = async () => recheck;
+    persistAnalysis(st, store);
+    const gravado = store.getTender(TID);
+    if (gravado) store.upsertTender({ ...gravado, arquivosHash: 'foto-analise', reavaliar: false });
     const r: any = await T('submit_proposal').run({ tender_id: TID, itens: [4], approval_id: 'qualquer', precoUnitario: 1 }, ctx());
     assert.equal(r.resultado, 'escalada');
     assert.equal(sbx.propostas.size, 0);
