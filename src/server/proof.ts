@@ -34,7 +34,7 @@ function lastCompletedTurn(events: readonly Event[]) {
 export function buildProof(report: Proof, events: readonly Event[]): Proof {
   const turn = lastCompletedTurn(events);
   const time = turn ? new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'America/Fortaleza', dateStyle: 'short', timeStyle: 'short',
+    timeZone: 'America/Recife', dateStyle: 'short', timeStyle: 'short',
   }).format(new Date(turn.horario)) : null;
   return {
     ...report,

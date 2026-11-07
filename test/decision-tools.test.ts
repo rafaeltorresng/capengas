@@ -24,6 +24,33 @@ test('decide_item usa estimativa sem exigir código e escala cobertura técnica 
   assert.equal(d.precoProposto, 7.5);
   assert.equal(d.anvisa.cobertura, 'nao_comprovada');
 });
+test('rascunho usa o mesmo prazo com abertura só em data, com hora ou já com fuso', async () => {
+  const tool = tools.find(t => t.name === 'draft_esclarecimento')!;
+  const texto = 'Solicito esclarecer o diâmetro exigido no item, que não consta da descrição.';
+  const prazos = [];
+  for (const abertura of ['2026-11-18', '2026-11-18T09:00', '2026-11-18T09:00:00-03:00']) {
+    const ctx = setup();
+    ctx.state.tenders[tid].abertura = abertura;
+    const r: any = await tool.run({ tender_id: tid, item: 1, texto }, ctx);
+    assert.equal(r.salvo, true, abertura);
+    prazos.push(r.prazo);
+  }
+  assert.deepEqual(prazos, ['2026-11-13', '2026-11-13', '2026-11-13']);
+  const sem = setup();
+  delete sem.state.tenders[tid].abertura;
+  const recusado: any = await tool.run({ tender_id: tid, item: 1, texto }, sem);
+  assert.equal(recusado.salvo, false);
+  assert.equal(sem.state.drafts[tid + '#1'], undefined);
+});
+test('consulta ANVISA usa a abertura só com data e a cobertura declarada no catálogo', async () => {
+  const ctx = setup();
+  ctx.state.tenders[tid].abertura = '2026-11-18';
+  ctx.state.company.catalogo.find((p: any) => p.id === 'P1').coberturaDeclarada = true;
+  const r: any = await tools.find(t => t.name === 'check_anvisa')!.run({ tender_id: tid, product_id: 'P1' }, ctx);
+  assert.equal(r.erro, undefined);
+  assert.equal(r.cobertura, 'declarada_pelo_cliente');
+  assert.match(r.entrega_ate, /^\d{4}-\d\d-\d\d$/);
+});
 test('orçamento sigiloso não produz preço', async () => {
   const ctx = setup(); ctx.state.items[tid][0].sigiloso = true;
   const d: any = await tools.find(t => t.name === 'decide_item')!.run({ tender_id: tid, item: 1, product_id: 'P1' }, ctx);

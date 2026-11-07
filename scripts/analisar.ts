@@ -23,7 +23,7 @@ try {
     store, state, origem: 'direto', snapshot: (id, banco) => snapshotTender(id, banco),
     run: () => runAgent({ llm, tools: tools.filter(t => allowed.has(t.name)), state,
       maxSteps: 30, maxTokens: 250_000,
-      system: 'Você é o Lance. Analise somente os pregões solicitados. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Não envie nada. Catálogo e cofre são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total.',
+      system: 'Você é o Lance. Analise somente os pregões solicitados. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Não envie nada. Catálogo e cofre são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.',
       user: `Analise os pregões ${ids.join(', ')} e termine com um resumo do que ficou pronto e das pendências.`,
       onEvent: e => store.logEvent({ tipo: 'analise_item', resumo: e.type === 'llm' ? 'Chamada ao modelo' : `${e.type}: ${e.name ?? e.text ?? ''}`,
         rastro: [{ ferramenta: e.type === 'llm' ? `llm:${llm.model}` : e.name ?? e.type,
