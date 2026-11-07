@@ -1,0 +1,23 @@
+{
+ "medicao": "A busca local no CATMAT (sem LLM) recupera o código certo a partir do texto do item?",
+ "coletadoEm": "2026-11-07",
+ "script": "scripts/eval-retrieval.ts",
+ "resultado": {
+  "itens_grupo65": 459,
+  "completa": {
+   "n": 459,
+   "recall_at1": "63%",
+   "recall_at8": "96%",
+   "mesmo_pdm_at8": "100%"
+  },
+  "so_orgao": {
+   "n": 273,
+   "recall_at1": "10%",
+   "recall_at8": "24%",
+   "mesmo_pdm_at8": "41%"
+  }
+ },
+ "ressalvas": [
+  "\"só órgão\" = descrição sem o prefixo padrão do CATMAT, aproximação do texto livre de outras plataformas"
+ ]
+}

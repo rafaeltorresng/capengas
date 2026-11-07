@@ -32,10 +32,10 @@ Projeto da equipe Capengas para o Converge Challenge 2026 (Recife, 7–8/11/2026
 | Pregões de saúde abertos (07/11) | 1.647, somando ≥ R$ 3,8 bi |
 | Itens de saúde que fracassam no Compras.gov.br | 16–21%, contra 4,6% em material de escritório |
 | Distribuidoras de material médico cadastradas para vender ao governo | 5.513 (145 com sanção vigente) |
-| Acerto do modelo no encaixe técnico (evals) | 18 de 18 |
+| Acerto do modelo no encaixe técnico (evals) | 18 de 18 (6 pares × 3 repetições, fichas sintéticas) |
 | Custo de um turno real (3 pregões, 15 itens) | US$ 0,22 |
 
-Fontes e metodologia em [docs/lance-pesquisa.md](docs/lance-pesquisa.md).
+Fontes e metodologia em [docs/lance-pesquisa.md](docs/lance-pesquisa.md); medições próprias agregadas em [research/](research/README.md). O que é real e o que é sintético nas fixtures: [fixtures/README.md](fixtures/README.md).
 
 ## Como rodar
 
