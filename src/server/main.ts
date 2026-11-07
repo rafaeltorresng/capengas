@@ -5,6 +5,7 @@ import { createReadModel } from '../lib/read-model.ts';
 import { createIntegratedStore } from './integrated.ts';
 import { createServer } from './api.ts';
 import { createSampleStore, type SampleState } from './sample.ts';
+import { relatorioProva } from '../lib/cenarios.ts';
 
 async function loadSample(): Promise<SampleState | undefined> {
   if (process.argv[3] !== '--dev2') return undefined;
@@ -19,8 +20,9 @@ if (mode === 'amostra' || mode === 'integrado') {
     await access(new URL('../../web/dist/index.html', import.meta.url));
     const store = mode === 'integrado' ? openStore() : undefined;
     const company = store ? JSON.parse(await readFile(new URL('../../fixtures/company.json', import.meta.url), 'utf8')) : null;
+    const prova = store ? await relatorioProva() : null;
     const state = store
-      ? createIntegratedStore(store, createReadModel(store, { actions: () => store.getActions(), cofre: company.cofre }))
+      ? createIntegratedStore(store, createReadModel(store, { actions: () => store.getActions(), cofre: company.cofre, proof: () => prova! }))
       : createSampleStore(await loadSample());
     const server = createServer(state, webRoot);
     server.on('error', (error: NodeJS.ErrnoException) => {
