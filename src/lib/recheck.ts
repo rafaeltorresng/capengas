@@ -18,13 +18,15 @@ const parseId = (id: string) => {
 };
 
 /** Hash estável da lista de arquivos (independe da ordem em que a API devolve). */
+export { parseId };
+
 export function filesHash(files: PncpFile[]): string {
   const norm = files.map(f => `${f.seq}|${f.tipo}|${f.titulo}|${f.url}`).sort();
   return createHash('sha256').update(norm.join('\n')).digest('hex').slice(0, 16);
 }
 
-type Situacao = 'aberto' | 'suspenso' | 'revogado' | 'anulado' | 'cancelado' | 'desconhecida';
-function situacao(nome: string): Situacao {
+export type Situacao = 'aberto' | 'suspenso' | 'revogado' | 'anulado' | 'cancelado' | 'desconhecida';
+export function situacao(nome: string): Situacao {
   const n = (nome ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   if (n.includes('suspens')) return 'suspenso';
   if (n.includes('revog')) return 'revogado';
@@ -34,7 +36,7 @@ function situacao(nome: string): Situacao {
   return 'desconhecida';
 }
 
-const defaults = (d: RecheckDeps) => ({
+export const defaults = (d: RecheckDeps) => ({
   fetchCompra: d.fetchCompra ?? ((c: string, a: number, s: number) => pncp.compra(c, a, s, { fresh: true })),
   fetchFiles: d.fetchFiles ?? ((c: string, a: number, s: number) => pncp.files(c, a, s, { fresh: true })),
   now: d.now ?? (() => new Date()),
@@ -52,7 +54,7 @@ export async function snapshotTender(tenderId: string, store: LanceStore, d: Rec
     uf: d.base?.uf ?? prev?.uf ?? c?.unidadeOrgao?.ufSigla ?? '',
     abertura: d.base?.abertura ?? prev?.abertura ?? (c?.dataEncerramentoProposta ? String(c.dataEncerramentoProposta).slice(0, 10) : null),
     situacao: c?.situacaoCompraNome ?? 'desconhecida', plataforma: d.base?.plataforma ?? prev?.plataforma ?? c?.usuarioNome ?? '',
-    arquivosHash: filesHash(files), ultimoCheck: now().toISOString(),
+    arquivosHash: filesHash(files), ultimoCheck: now().toISOString(), reavaliar: false,
   };
   store.upsertTender(row);
   return row;

@@ -25,7 +25,7 @@ export type LanceStore = Store & {
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS tenders (
   id TEXT PRIMARY KEY, orgao TEXT, uf TEXT, abertura TEXT, situacao TEXT, plataforma TEXT,
-  arquivos_hash TEXT, ultimo_check TEXT, atualizado_em TEXT NOT NULL);
+  arquivos_hash TEXT, ultimo_check TEXT, reavaliar INTEGER NOT NULL DEFAULT 0, atualizado_em TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS items (
   tender_id TEXT NOT NULL, numero INTEGER NOT NULL, descricao TEXT, catalog_code INTEGER,
   quantidade REAL, estimativa REAL, sigiloso INTEGER NOT NULL DEFAULT 0, atualizado_em TEXT NOT NULL,
@@ -67,12 +67,19 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
   const db = new DatabaseSync(path);
   db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   db.exec(SCHEMA);
+  // Migração: bancos criados antes da coluna reavaliar.
+  if (!(db.prepare('PRAGMA table_info(tenders)').all() as any[]).some(c => c.name === 'reavaliar'))
+    db.exec('ALTER TABLE tenders ADD COLUMN reavaliar INTEGER NOT NULL DEFAULT 0');
 
   const tx = <T>(fn: () => T): T => {
     db.exec('BEGIN IMMEDIATE');
     try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { db.exec('ROLLBACK'); throw e; }
   };
 
+  const toTender = (r: any): TenderRow => ({
+    id: r.id, orgao: r.orgao, uf: r.uf, abertura: r.abertura, situacao: r.situacao, plataforma: r.plataforma,
+    arquivosHash: r.arquivos_hash, ultimoCheck: r.ultimo_check, reavaliar: !!r.reavaliar,
+  });
   const toAction = (r: any): Action => ({
     key: r.key, tipo: r.tipo, tenderId: r.tender_id, ...(r.item != null ? { item: Number(r.item) } : {}),
     payload: parse(r.payload), status: r.status as ActionStatus,
@@ -107,11 +114,13 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
 
   return {
     upsertTender(t: TenderRow) {
-      db.prepare(`INSERT INTO tenders (id, orgao, uf, abertura, situacao, plataforma, arquivos_hash, ultimo_check, atualizado_em)
-        VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET orgao=excluded.orgao, uf=excluded.uf, abertura=excluded.abertura,
+      // reavaliar omitido mantém o valor gravado.
+      const rv = t.reavaliar == null ? null : Number(t.reavaliar);
+      db.prepare(`INSERT INTO tenders (id, orgao, uf, abertura, situacao, plataforma, arquivos_hash, ultimo_check, reavaliar, atualizado_em)
+        VALUES (?,?,?,?,?,?,?,?,COALESCE(?, 0),?) ON CONFLICT(id) DO UPDATE SET orgao=excluded.orgao, uf=excluded.uf, abertura=excluded.abertura,
         situacao=excluded.situacao, plataforma=excluded.plataforma, arquivos_hash=excluded.arquivos_hash,
-        ultimo_check=excluded.ultimo_check, atualizado_em=excluded.atualizado_em`)
-        .run(t.id, t.orgao, t.uf, t.abertura, t.situacao, t.plataforma, t.arquivosHash, t.ultimoCheck, iso());
+        ultimo_check=excluded.ultimo_check, reavaliar=COALESCE(?, tenders.reavaliar), atualizado_em=excluded.atualizado_em`)
+        .run(t.id, t.orgao, t.uf, t.abertura, t.situacao, t.plataforma, t.arquivosHash, t.ultimoCheck, rv, iso(), rv);
     },
     upsertItems(tenderId: string, items: ItemRow[]) {
       const st = db.prepare(`INSERT INTO items (tender_id, numero, descricao, catalog_code, quantidade, estimativa, sigiloso, atualizado_em)
@@ -212,7 +221,16 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
 
     getTender(id) {
       const r: any = db.prepare('SELECT * FROM tenders WHERE id = ?').get(id);
-      return r ? { id: r.id, orgao: r.orgao, uf: r.uf, abertura: r.abertura, situacao: r.situacao, plataforma: r.plataforma, arquivosHash: r.arquivos_hash, ultimoCheck: r.ultimo_check } : undefined;
+      return r ? toTender(r) : undefined;
+    },
+    getTenders(f = {}) {
+      const rows = f.reavaliar == null
+        ? db.prepare('SELECT * FROM tenders ORDER BY id').all()
+        : db.prepare('SELECT * FROM tenders WHERE reavaliar = ? ORDER BY id').all(Number(f.reavaliar));
+      return rows.map(toTender);
+    },
+    setReavaliar(tenderId, flag) {
+      db.prepare('UPDATE tenders SET reavaliar = ?, atualizado_em = ? WHERE id = ?').run(Number(flag), iso(), tenderId);
     },
     getItems(tenderId) {
       return db.prepare('SELECT * FROM items WHERE tender_id = ? ORDER BY numero').all(tenderId).map((r: any) => ({

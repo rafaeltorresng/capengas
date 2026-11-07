@@ -32,6 +32,10 @@ export async function startSandbox(port = 0) {
       esclarecimentos.push({ ...j, protocolo, recebidoEm: new Date().toISOString() });
       return send(201, { protocolo });
     }
+    if (req.method === 'GET' && req.url?.startsWith('/api/esclarecimentos/')) {
+      const e = esclarecimentos.find(x => x.protocolo === req.url!.split('/').pop());
+      return e ? send(200, e) : send(404, { erro: 'protocolo não encontrado' });
+    }
     send(404, { erro: 'rota inexistente' });
   });
   await new Promise<void>(r => srv.listen(port, '127.0.0.1', r));
