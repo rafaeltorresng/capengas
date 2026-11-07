@@ -4,6 +4,7 @@ import './_out.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { pncp, pdf, compras, anvisa, type Tender } from '../src/lib/data.ts';
 import { matchCatalog, rankCandidates, type Candidato } from '../src/lib/demo.ts';
+import { semaforoFiscal } from '../src/lib/siconfi.ts';
 
 const company = JSON.parse(readFileSync('fixtures/company.json', 'utf8'));
 const hoje = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife' }).format(new Date());
@@ -85,6 +86,12 @@ for (const rk of ranking) {
 }
 if (pregoes.length < PRINCIPAIS) avisos.push(`só ${pregoes.length} pregões com edital legível e itens do catálogo`);
 console.log(`escolhidos: ${pregoes.map(p => p.id).join(', ') || 'nenhum'}`);
+
+// 5. Semáforo fiscal do órgão (SICONFI, RGF Anexo 1), também em cache para o modo offline.
+for (const p of [...pregoes, editalIlegivel].filter(Boolean) as any[]) {
+  p.semaforoFiscal = await semaforoFiscal(p.id.split('/')[0]);
+  if (p.semaforoFiscal.status === 'sem_dado' && /indisponível/.test(p.semaforoFiscal.resumo)) avisos.push(`semáforo fiscal de ${p.id}: ${p.semaforoFiscal.resumo}`);
+}
 
 const out = {
   _nota: 'Pregões reais escolhidos para a demo (dados públicos do PNCP), retrato do momento em geradoEm: rode de novo antes da apresentação. O cache fica em cache/ (fora do Git); com LANCE_OFFLINE=1 a demo roda só do cache. O casamento item × produto é um pré-filtro por termos: o encaixe técnico é do agente.',
