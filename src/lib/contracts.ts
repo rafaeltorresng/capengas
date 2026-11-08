@@ -124,7 +124,7 @@ export type Escalation = {
   prazo: string; status: EscalationStatus; analiseId?: string;
 };
 export type Decision = { decisao: 'aprovar' | 'recusar' | 'ajustar'; ajuste?: string };
-export type SavedDecision = Decision & { id: string; horario: string };
+export type SavedDecision = Decision & { id: string; horario: string; turno?: string };
 export type DecisionResult =
   | { status: 'salva'; registro: SavedDecision }
   | { status: 'ausente' | 'resolvida' | 'expirada' };

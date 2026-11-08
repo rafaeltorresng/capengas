@@ -3,7 +3,8 @@ import type { DemoStore } from './contract.ts';
 
 export type StoreProjection = Omit<DemoStore, 'origem' | 'decidir'>;
 
-export function createIntegratedStore(store: Pick<Store, 'resolveEscalation'>, projection: StoreProjection): DemoStore {
+export function createIntegratedStore(store: Pick<Store, 'resolveEscalation'>, projection: StoreProjection,
+  decidir: DemoStore['decidir'] = (id, decision) => store.resolveEscalation(id, decision)): DemoStore {
   return {
     origem: 'integrado',
     hoje: () => projection.hoje(),
@@ -15,6 +16,6 @@ export function createIntegratedStore(store: Pick<Store, 'resolveEscalation'>, p
     pauta: () => projection.pauta(),
     turnos: () => projection.turnos(),
     historico: () => projection.historico(),
-    decidir: (id, decision) => store.resolveEscalation(id, decision),
+    decidir,
   };
 }

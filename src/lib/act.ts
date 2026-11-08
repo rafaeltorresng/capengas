@@ -131,6 +131,10 @@ async function postJson(url: string, body: unknown): Promise<Envio> {
 }
 
 export async function executarAcao(pedido: PedidoAcao, deps: ActDeps): Promise<ResultadoAcao> {
+  const dossie = deps.store.getDossie(pedido.tenderId) as { continuacaoSimulada?: boolean } | undefined;
+  if (pedido.tipo === 'enviar_proposta' && dossie?.continuacaoSimulada) {
+    return { resultado: 'bloqueada', motivo: 'a proposta da retomada simulada é exclusiva da demonstração' };
+  }
   const now = (deps.now ?? (() => new Date()))();
   const consultar = deps.consultar ?? consultarProtocolo;
   const enviar = deps.enviar ?? postJson;
@@ -158,7 +162,10 @@ export async function executarAcao(pedido: PedidoAcao, deps: ActDeps): Promise<R
     return { resultado: 'bloqueada', motivo: 'pregão marcado para reavaliar durante o recheque; nenhuma intenção criada' };
   }
   const analiseId = pedido.tipo === 'enviar_proposta' ? pedido.analiseId : undefined;
-  const atual = deps.store.getDossie(pedido.tenderId) as { analiseId?: string } | undefined;
+  const atual = deps.store.getDossie(pedido.tenderId) as { analiseId?: string; continuacaoSimulada?: boolean } | undefined;
+  if (pedido.tipo === 'enviar_proposta' && atual?.continuacaoSimulada) {
+    return { resultado: 'bloqueada', motivo: 'a proposta da retomada simulada é exclusiva da demonstração' };
+  }
   if (analiseId && atual?.analiseId !== analiseId) {
     return { resultado: 'bloqueada', motivo: 'a análise mudou antes do envio' };
   }
