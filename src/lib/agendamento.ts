@@ -129,6 +129,8 @@ export function createAnalysisTurn(d: {
   recheck: (tenderId: string, store: LanceStore) => Promise<Recheque>;
   /** Fase de ações depois da análise e da foto (executarAcoesDoTurno). Sem ela, o turno só analisa. */
   agir?: (state: LanceState, ids: string[]) => Promise<ResumoAcoes>;
+  /** Progresso ao vivo na tela. Desligado nos testes que travam o par início/fim. */
+  acompanhar?: boolean;
   now?: () => Date;
 }) {
   const now = d.now ?? (() => new Date());
@@ -142,7 +144,7 @@ export function createAnalysisTurn(d: {
     const state = newState(d.company, 'http://127.0.0.1:9', now());
     const porId = new Map(d.demo.pregoes.concat(d.demo.editalIlegivel ?? []).map(p => [p.id, p]));
     for (const id of ids) state.tenders[id] = tenderRef(id, porId.get(id) ?? d.store.getTender(id));
-    const r = await runAnalysisTurn({ store: d.store, state, origem: ctx.origem, run: () => d.analisar(state, ids), snapshot: d.snapshot });
+    const r = await runAnalysisTurn({ store: d.store, state, origem: ctx.origem, run: () => d.analisar(state, ids), snapshot: d.snapshot, acompanhar: d.acompanhar });
     const acoes = d.agir ? `; ${textoAcoes(await d.agir(state, ids))}` : '';
     return { resumo: `${ids.join(', ')}: ${r.resumo}${acoes}` };
   };

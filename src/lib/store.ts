@@ -18,6 +18,7 @@ export type StoreOptions = {
 };
 
 export type LanceStore = Store & {
+  transaction<T>(fn: () => T): T;
   /** Diff de errata calculado pelo monitor (fase 1 da #25). Guarda o histórico; a leitura devolve o mais recente. */
   saveErrataDiff(d: DiffErrata): void;
   getErrataDiff(tenderId: string): DiffErrata | undefined;
@@ -88,6 +89,7 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
     db.exec('ALTER TABLE tenders ADD COLUMN abertura_analise TEXT');
 
   const tx = <T>(fn: () => T): T => {
+    if (db.isTransaction) return fn();
     db.exec('BEGIN IMMEDIATE');
     try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { db.exec('ROLLBACK'); throw e; }
   };
@@ -140,6 +142,7 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
   });
 
   return {
+    transaction: tx,
     upsertTender(t: TenderRow) {
       // reavaliar omitido mantém o valor gravado.
       const rv = t.reavaliar == null ? null : Number(t.reavaliar);
@@ -252,8 +255,14 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
 
     logEvent(e) { return insertEvent(e); },
     events(f = {}) {
-      const args: any[] = []; let where = '';
-      if (f.desde) { where = 'WHERE horario >= ?'; args.push(f.desde); }
+      const args: string[] = [];
+      const filters: string[] = [];
+      if (f.desde) { filters.push('horario >= ?'); args.push(f.desde); }
+      if (f.tipos?.length) {
+        filters.push(`tipo IN (${f.tipos.map(() => '?').join(',')})`);
+        args.push(...f.tipos);
+      }
+      const where = filters.length ? 'WHERE ' + filters.join(' AND ') : '';
       const rows = f.limite
         ? db.prepare(`SELECT * FROM (SELECT * FROM events ${where} ORDER BY seq DESC LIMIT ?) ORDER BY seq`).all(...args, f.limite)
         : db.prepare(`SELECT * FROM events ${where} ORDER BY seq`).all(...args);

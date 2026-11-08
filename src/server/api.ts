@@ -84,6 +84,8 @@ export function createServer(store: DemoStore, webRoot?: string) {
           if (route === 'escaladas') dados = store.escaladas();
           if (route === 'prova') dados = store.prova();
           if (route === 'pauta') dados = store.pauta();
+          if (route === 'turnos') dados = store.turnos();
+          if (route === 'historico') dados = store.historico();
         } else {
           if (route === 'itens' && params.length === 2) dados = store.item(params[0], params[1]);
           if (route === 'dossies' && params.length === 1) dados = store.dossie(params[0]);

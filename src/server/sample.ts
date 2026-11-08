@@ -1,5 +1,6 @@
 import type { DemoStore, Dossier, Escalation, Event, Item, Pauta, Proof, QueueItem, SavedDecision, Today } from './contract.ts';
 import seed from '../../fixtures/dev3-amostra.json' with { type: 'json' };
+import { agruparResultados, pncpUrl } from '../lib/turnos.ts';
 
 export type SampleState = {
   hoje: Today; fila: QueueItem[]; itens: Item[]; dossies: Dossier[];
@@ -12,6 +13,8 @@ export function createSampleStore(initial: SampleState = seed): DemoStore {
   const { hoje, fila, itens, dossies, escaladas, prova, pauta } = structuredClone(initial as SampleState);
   const eventos: Event[] = hoje.eventos;
   const decisoes = new Map<string, SavedDecision>();
+  const inicioAnterior = hoje.data + 'T08:00:00-03:00';
+  const fimAnterior = hoje.data + 'T09:00:00-03:00';
 
   function abertas() {
     return escaladas.filter(escalada => !decisoes.has(escalada.id));
@@ -19,6 +22,18 @@ export function createSampleStore(initial: SampleState = seed): DemoStore {
 
   return {
     origem: 'amostra',
+    turnos: () => {
+      const nomesEditais = Object.fromEntries(fila.map(row => [row.tender, row.pregao]));
+      const pregoes = Object.keys(nomesEditais);
+      return { aprovacoes: abertas().length, turnos: pregoes.length ? [
+        { id: 'amostra-concluida', inicio: inicioAnterior, atualizadoEm: fimAnterior, status: 'concluido', pregoes, nomesEditais,
+          etapas: [{ horario: fimAnterior, atividade: 'Registrando a análise', estado: 'concluida' }] },
+      ] : [] };
+    },
+    historico: () => agruparResultados(fila, tender => dossies.find(row => row.tender === tender)).map(resultado => ({
+      ...resultado, turno: 'amostra-concluida', concluidoEm: fimAnterior,
+      pncp: pncpUrl(resultado.tender),
+    })),
     hoje: () => ({
       ...hoje,
       escaladasAbertas: abertas().length,

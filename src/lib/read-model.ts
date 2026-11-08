@@ -8,6 +8,7 @@ import type { SemaforoFiscal } from './siconfi.ts';
 import type { buildDossie, DossierSource } from './dossie.ts';
 import type { EvidenceValidation } from '../server/contract.ts';
 import type { VersaoRetificacao } from './versao.ts';
+import { agruparResultados, pncpUrl, projetarTurnos } from './turnos.ts';
 
 export type ReadStore = Pick<Store, 'events' | 'openEscalations' | 'getTender' | 'getItems' | 'getDecisions' | 'getDossie' | 'resolveEscalation'>
   & Partial<Pick<Store, 'getTenders' | 'getRequirements'>> & {
@@ -84,7 +85,7 @@ export function createReadModel(store: ReadStore, options: {
     const dossier = dossie(tender);
     const evidence = dossier?.itens.find(i => String(i.item) === number && i.produto?.id === decision.produto);
     const row = store.getItems(tender).find(i => String(i.numero) === number);
-    const pncp = /^\d{14}\/\d{4}\/\d+$/.test(tender) ? `https://pncp.gov.br/app/editais/${tender}` : null;
+    const pncp = pncpUrl(tender);
     const fontes: DossierSource[] = [...(dossier?.documentos ?? [])];
     if (pncp) fontes.push({ nome: 'Publicação do pregão no PNCP', url: pncp });
     const anvisa = evidence?.anvisa as Partial<AnvisaCheck> | null | undefined;
@@ -163,8 +164,24 @@ export function createReadModel(store: ReadStore, options: {
         .sort((a, b) => Date.parse(a.horario) - Date.parse(b.horario)), cofre,
     };
   }
+  function atividade() {
+    const events = store.events({ tipos: ['turno_inicio', 'turno_progresso', 'turno_fim', 'decisao'] });
+    const latest = new Map(events.filter(e => e.tipo === 'decisao').map(e => [`${e.tender}#${e.item}`, e.id]));
+    return projetarTurnos(events, now(), decisions => {
+      const keys = new Set(decisions.filter(e => latest.get(`${e.tender}#${e.item}`) === e.id).map(e => `${e.tender}#${e.item}`));
+      return agruparResultados(fila().filter(row => keys.has(`${row.tender}#${row.item}`)), dossie);
+    });
+  }
   return {
     origem: options.origem ?? 'integrado', hoje, fila, item, dossie, escaladas, pauta,
+    turnos: () => ({ turnos: atividade().turnos.map(turno => ({
+      ...turno,
+      nomesEditais: Object.fromEntries(turno.pregoes.map(id => {
+        const nome = turno.nomesEditais?.[id] || dossie(id)?.pregao;
+        return [id, nome && nome !== id ? nome : store.getTender(id)?.orgao ?? ''];
+      })),
+    })), aprovacoes: store.openEscalations().length }),
+    historico: () => atividade().historico,
     prova: (): Proof => options.proof ? structuredClone(options.proof()) : {
       fonte: 'Nenhum relatório de avaliação foi integrado a esta execução.', avaliacoes: [], cenarios: [],
       concordancia: null, custoUsd: null, duracaoMs: null,

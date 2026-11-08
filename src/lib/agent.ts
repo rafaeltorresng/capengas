@@ -11,6 +11,7 @@ export type RunOpts = {
   llm: LLM; tools: Tool[]; system: string; user: string;
   maxSteps?: number; maxTokens?: number; maxToolChars?: number;
   approvals?: Set<string>; state?: Record<string, any>; onEvent?: (e: TraceEvent) => void;
+  onToolStart?: (name: string) => void;
   history?: any[];
 };
 
@@ -107,6 +108,7 @@ export async function runAgent(o: RunOpts) {
         else if (tool.requiresApproval && !ctx.approvals.has(String(args.approval_id))) {
           result = { error: 'ação bloqueada: requer aprovação humana válida (approval_id)' }; error = true;
         } else {
+          o.onToolStart?.(tool.name);
           try { result = await tool.run(args, ctx); }
           catch (e: any) { result = { error: `falha na ferramenta: ${e?.message ?? e}` }; error = true; }
         }

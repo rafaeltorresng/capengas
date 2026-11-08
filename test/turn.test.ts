@@ -5,7 +5,8 @@ import { readFileSync } from 'node:fs';
 import { openStore } from '../src/lib/store.ts';
 import { pncp, pdf } from '../src/lib/data.ts';
 import { newState, tools } from '../src/lib/tools.ts';
-import { runAnalysisTurn } from '../src/lib/turn.ts';
+import { runAnalysisTurn, acompanhamentoDe } from '../src/lib/turn.ts';
+import { createReadModel } from '../src/lib/read-model.ts';
 import { createScheduler } from '../src/lib/scheduler.ts';
 import type { Politica } from '../src/lib/contracts.ts';
 
@@ -119,4 +120,43 @@ test('o turno de análise registra na fila humana um edital ZIP ilegível', asyn
     assert.equal(state.store, undefined);
     assert.equal(store.getActions().length, 0);
   } finally { store.close(); }
+});
+
+test('o acompanhamento publica o histórico sem abrir um segundo par de início e fim', async () => {
+  const { store, state } = prepared();
+  await runAnalysisTurn({
+    store, state, origem: 'direto', acompanhar: true,
+    run: async () => {
+      acompanhamentoDe(state)?.atividade('Lendo o edital');
+      acompanhamentoDe(state)?.resultado(true);
+      return { stopped: 'final', final: 'pronto' };
+    },
+  });
+  assert.equal(tipos(store, 'turno_inicio').length, 1);
+  assert.equal(tipos(store, 'turno_fim').length, 1);
+  assert.equal(tipos(store, 'turno_inicio')[0]?.detalhe, undefined);
+  const model = createReadModel(store, { actions: () => store.getActions() });
+  assert.equal(model.historico()[0]?.itens[0]?.estado, 'Escalar');
+  assert.equal(model.turnos().turnos.length, 1);
+  assert.equal(model.turnos().turnos[0]?.status, 'concluido');
+  store.close();
+});
+
+test('turno incompleto fica persistido e fora do histórico', async () => {
+  const { store, state } = prepared();
+  await runAnalysisTurn({ store, state, origem: 'direto', acompanhar: true, run: async () => ({ stopped: 'max_steps' }) });
+  assert.equal(store.getDecisions(id).length, 1);
+  const model = createReadModel(store, { actions: () => store.getActions() });
+  assert.equal(model.historico().length, 0);
+  assert.equal(model.turnos().turnos[0]?.status, 'incompleto');
+  store.close();
+});
+
+test('o agendador acompanhado não grava turno_inicio nem turno_fim', async () => {
+  const { store, state } = prepared();
+  await runAnalysisTurn({ store, state, origem: 'agendador', acompanhar: true, run: async () => ({ stopped: 'final' }) });
+  assert.equal(tipos(store, 'turno_inicio').length, 0);
+  assert.equal(tipos(store, 'turno_fim').length, 0);
+  assert.ok(tipos(store, 'turno_progresso').length > 0);
+  store.close();
 });

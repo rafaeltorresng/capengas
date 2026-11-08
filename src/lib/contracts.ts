@@ -106,7 +106,7 @@ export type Action = {
 
 export type Trace = { ferramenta: string; entrada?: string; saida?: string; ms?: number; custoUsd?: number };
 export type EventTipo =
-  | 'turno_inicio' | 'turno_fim' | 'analise_item' | 'decisao'
+  | 'turno_inicio' | 'turno_fim' | 'turno_progresso' | 'analise_item' | 'decisao'
   | 'esclarecimento_enviado' | 'proposta_enviada' | 'verificacao' | 'bloqueio'
   | 'escalada_aberta' | 'escalada_decidida' | 'monitor_mudanca' | 'erro_fonte';
 export type Event = {
@@ -160,7 +160,7 @@ export interface Store {
   /** Grava a decisão humana e o evento escalada_decidida na mesma transação. */
   resolveEscalation(id: string, d: Decision): DecisionResult;
   logEvent(e: Omit<Event, 'id' | 'horario'>): Event;
-  events(o?: { desde?: string; limite?: number }): Event[];
+  events(o?: { desde?: string; limite?: number; tipos?: EventTipo[] }): Event[];
   openEscalations(): Escalation[];
   getTender(id: string): TenderRow | undefined;
   getTenders(o?: { reavaliar?: boolean }): TenderRow[];

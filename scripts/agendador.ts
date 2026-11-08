@@ -9,6 +9,8 @@ import { readFileSync } from 'node:fs';
 import { openStore } from '../src/lib/store.ts';
 import { featherless } from '../src/lib/llm.ts';
 import { runAgent } from '../src/lib/agent.ts';
+import { acompanhamentoDe } from '../src/lib/turn.ts';
+import { atividadeDaFerramenta } from '../src/lib/turnos.ts';
 import { tools } from '../src/lib/tools.ts';
 import { snapshotTender, recheckTender } from '../src/lib/recheck.ts';
 import { createScheduler } from '../src/lib/scheduler.ts';
@@ -33,14 +35,22 @@ const runTurn = createAnalysisTurn({
   store, company, demo, limite: Number(process.env.LANCE_PREGOES_POR_TURNO ?? 1),
   snapshot: (id, s) => snapshotTender(id, s),
   recheck: (id, s) => recheckTender(id, s),
+  acompanhar: true,
   agir: (state, ids) => executarAcoesDoTurno({ store, company, state, ids, sandboxUrl, recheck: id => recheckTender(id, store), anvisa: n => anvisa.byRegistro(n) }),
   analisar: (state, ids) => runAgent({ llm, tools: tools.filter(t => allowed.has(t.name)), state,
     maxSteps: 30, maxTokens: 250_000,
     system: 'Você é o Lance. Analise somente os pregões solicitados. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Se o edital exige marca de referência, use flag_restrictive. Para atributo nao_informado, variante não coberta ou marca de referência, rascunhe o pedido de esclarecimento com draft_esclarecimento (texto objetivo citando o item). Não envie nada: o envio é feito pelo código, conforme a política. Catálogo e cofre são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.',
     user: `Analise os pregões ${ids.join(', ')} e termine com um resumo do que ficou pronto e das pendências.`,
-    onEvent: e => store.logEvent({ tipo: 'analise_item', resumo: e.type === 'llm' ? 'Chamada ao modelo' : `${e.type}: ${e.name ?? e.text ?? ''}`,
-      rastro: [{ ferramenta: e.type === 'llm' ? `llm:${llm.model}` : e.name ?? e.type,
-        entrada: e.args === undefined ? undefined : JSON.stringify(e.args), saida: e.result === undefined ? e.text : JSON.stringify(e.result), ms: e.ms, custoUsd: e.usage?.cost }] }),
+    onToolStart: name => acompanhamentoDe(state)?.atividade(atividadeDaFerramenta(name)),
+    onEvent: e => {
+      if (e.type === 'tool') {
+        const resultado = e.result as { aceito?: boolean; error?: unknown; erro?: unknown } | undefined;
+        acompanhamentoDe(state)?.resultado(!e.error && resultado?.aceito !== false && !resultado?.error && !resultado?.erro);
+      }
+      store.logEvent({ tipo: 'analise_item', resumo: e.type === 'llm' ? 'Chamada ao modelo' : `${e.type}: ${e.name ?? e.text ?? ''}`,
+        rastro: [{ ferramenta: e.type === 'llm' ? `llm:${llm.model}` : e.name ?? e.type,
+          entrada: e.args === undefined ? undefined : JSON.stringify(e.args), saida: e.result === undefined ? e.text : JSON.stringify(e.result), ms: e.ms, custoUsd: e.usage?.cost }] });
+    },
   }),
 });
 

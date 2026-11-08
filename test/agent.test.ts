@@ -24,7 +24,14 @@ const echo: Tool = { name: 'echo', description: 'eco', parameters: { type: 'obje
 
 describe('runAgent', () => {
   test('executa ferramenta e termina com resposta final', async () => {
-    const r = await runAgent({ llm: scripted([call('echo', { x: 'oi' }), { role: 'assistant', content: 'pronto' }]), tools: [echo], system: 's', user: 'u' });
+    const ordem: string[] = [];
+    const tool = { ...echo, run: async (args: unknown, ctx: Parameters<Tool['run']>[1]) => {
+      ordem.push('executou');
+      return echo.run(args, ctx);
+    } };
+    const r = await runAgent({ llm: scripted([call('echo', { x: 'oi' }), { role: 'assistant', content: 'pronto' }]),
+      tools: [tool], system: 's', user: 'u', onToolStart: name => ordem.push(name) });
+    assert.deepEqual(ordem, ['echo', 'executou']);
     assert.equal(r.final, 'pronto');
     assert.equal(r.trace.filter(e => e.type === 'tool').length, 1);
     assert.deepEqual(r.trace.find(e => e.type === 'tool')!.result, { got: 'oi' });

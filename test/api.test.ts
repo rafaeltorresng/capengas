@@ -119,7 +119,7 @@ test('persists a decision and one audit event through HTTP and SQLite', async t 
   const { get, decide } = await fixture(t, api);
   try {
     const tender = encodeURIComponent(row.tender);
-    for (const route of ['hoje', 'fila', 'itens/' + tender + '/40', 'dossies/' + tender, 'escaladas', 'prova']) {
+    for (const route of ['hoje', 'fila', 'itens/' + tender + '/40', 'dossies/' + tender, 'escaladas', 'prova', 'turnos', 'historico']) {
       const response = await get(route);
       assert.equal(response.status, 200, route);
       assert.equal((await response.json()).origem, 'integrado');
