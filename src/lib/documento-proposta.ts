@@ -42,6 +42,9 @@ const COLUNAS: { chave: Chave; re: RegExp }[] = [
 ];
 const chaveDe = (titulo: string) => COLUNAS.find(c => c.re.test(norm(titulo)))?.chave ?? null;
 
+// Texto copiado do edital já termina em pontuação; o documento acrescenta a sua.
+const semPonto = (s: string) => s.trim().replace(/[\s.;:,]+$/, '');
+
 const PADRAO = ['Item', 'Descrição', 'Unidade', 'Quantidade', 'Marca', 'Fabricante', 'Registro ANVISA', 'Valor unitário (R$)', 'Valor total (R$)'];
 
 function separarColunas(valor: string) {
@@ -60,11 +63,13 @@ export function escolherColunas(regras: RegraProposta[]) {
   const tem = (k: Chave[]) => colunas.some(t => k.includes(chaveDe(t)!));
   if (!tem(['numero'])) colunas.unshift('Item');
   if (!tem(['descricao'])) colunas.splice(1, 0, 'Descrição');
-  if (doCampo(regras, 'marca_fabricante').length && !tem(['marca', 'marca_modelo'])) colunas.push('Marca');
-  if (doCampo(regras, 'registro_anvisa').length && !tem(['registro'])) colunas.push('Registro ANVISA');
+  // Com as colunas citadas pelo edital, a tabela não ganha colunas novas: marca e registro exigidos vão na especificação.
+  const naDescricao: ('marca' | 'registro')[] = [];
+  if (doCampo(regras, 'marca_fabricante').length && !tem(['marca', 'marca_modelo'])) { if (escolhida) naDescricao.push('marca'); else colunas.push('Marca'); }
+  if (doCampo(regras, 'registro_anvisa').length && !tem(['registro'])) { if (escolhida) naDescricao.push('registro'); else colunas.push('Registro ANVISA'); }
   if (!tem(['unitario'])) colunas.push('Valor unitário (R$)');
   if (!tem(['total'])) colunas.push('Valor total (R$)');
-  return { colunas, doEdital: !!escolhida };
+  return { colunas, doEdital: !!escolhida, naDescricao };
 }
 
 const EXTENSO: Record<string, number> = { uma: 1, um: 1, duas: 2, dois: 2, tres: 3, quatro: 4 };
@@ -138,7 +143,7 @@ export function gerarDocumentoProposta(o: {
   const pendencias: string[] = [];
   const pendente = (p: string) => { if (!pendencias.includes(p)) pendencias.push(p); return PREENCHER; };
   const casas = casasDecimaisDe(regras);
-  const { colunas, doEdital } = escolherColunas(regras);
+  const { colunas, doEdital, naDescricao } = escolherColunas(regras);
   const linhas: string[] = [];
   const add = (...l: string[]) => linhas.push(...l);
 
@@ -146,7 +151,7 @@ export function gerarDocumentoProposta(o: {
   add(`**Ao(À) ${pregao.orgao}**${pregao.municipio ? ` — ${pregao.municipio}${pregao.uf ? `/${pregao.uf}` : ''}` : ''}  `);
   add(`**Pregão eletrônico** — PNCP ${pregao.id}${pregao.abertura ? `, sessão em ${pregao.abertura.replace('T', ' às ')}` : ''}`, '');
   const modelo = doCampo(regras, 'modelo_proposta')[0];
-  if (modelo) add(`_Elaborada conforme ${modelo.valor}._`, '');
+  if (modelo) add(`_Elaborada conforme ${semPonto(modelo.valor)}._`, '');
 
   add('## 1. Dados da proponente', '');
   const pedidos = norm(doCampo(regras, 'dados_empresa').map(r => `${r.valor} ${r.citacao}`).join(' '));
@@ -169,7 +174,8 @@ export function gerarDocumentoProposta(o: {
     const valor = (titulo: string): string => {
       switch (chaveDe(titulo)) {
         case 'numero': return String(it.numero);
-        case 'descricao': return it.descricao;
+        case 'descricao': return it.descricao + (naDescricao.includes('marca') ? ` — Marca: ${it.marca}` : '')
+          + (naDescricao.includes('registro') ? ` — Registro ANVISA: ${it.registroAnvisa}` : '');
         case 'unidade': return it.unidade || pendente(`item ${it.numero}: unidade de fornecimento`);
         case 'quantidade': return String(it.quantidade);
         case 'marca_modelo': return `${it.marca} / ${it.modelo || pendente(`item ${it.numero}: modelo`)}`;
@@ -189,9 +195,9 @@ export function gerarDocumentoProposta(o: {
 
   add('## 3. Condições', '');
   const validade = doCampo(regras, 'validade_proposta');
-  add(`- **Validade da proposta:** ${validade.length ? validade.map(r => r.citacao).join('; ') : 'não identificada na análise (conferir)'}.`);
-  for (const r of doCampo(regras, 'quantidade')) add(`- **Quantidade:** ${r.valor}.`);
-  for (const r of doCampo(regras, 'marca_fabricante')) add(`- **Marca e fabricante:** ${r.valor}.`);
+  add(`- **Validade da proposta:** ${validade.length ? validade.map(r => semPonto(r.citacao)).join('; ') : 'não identificada na análise (conferir)'}.`);
+  for (const r of doCampo(regras, 'quantidade')) add(`- **Quantidade:** ${semPonto(r.valor)}.`);
+  for (const r of doCampo(regras, 'marca_fabricante')) add(`- **Marca e fabricante:** ${semPonto(r.valor)}.`);
   if (doCampo(regras, 'registro_anvisa').length) add(`- **Registro na ANVISA:** informado por item na tabela acima.`);
   add('- Nos preços estão incluídos todos os custos e despesas diretos e indiretos, tributos, encargos, frete e demais ônus para o fornecimento.', '');
 
@@ -199,7 +205,7 @@ export function gerarDocumentoProposta(o: {
   const noDocumento = declaracoes.filter(r => !noSistema(r));
   if (noDocumento.length) {
     add('## 4. Declarações', '', 'A proponente declara:', '');
-    for (const r of noDocumento) add(`- ${r.valor.replace(/^declara(ção)?( de)?( que)?\s*/i, '')}.`);
+    for (const r of noDocumento) add(`- ${semPonto(r.valor.replace(/^declara(ção)?( de)?( que)?\s*/i, ''))}.`);
     add('');
   }
 
@@ -226,7 +232,7 @@ export function gerarDocumentoProposta(o: {
   add(empresa.representante?.nome || pendente('dado da empresa: Representante legal'));
   add([empresa.representante?.cargo, empresa.representante?.cpf ? `CPF ${empresa.representante.cpf}` : null].filter(Boolean).join(' — ') || PREENCHER);
   add(empresa.nome);
-  for (const r of doCampo(regras, 'assinatura').filter(r => !doContrato(r))) add('', `_Assinatura: ${r.valor}._`);
+  for (const r of doCampo(regras, 'assinatura').filter(r => !doContrato(r))) add('', `_Assinatura: ${semPonto(r.valor)}._`);
   add('');
 
   const lacunas = lacunasDe(regras);

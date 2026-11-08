@@ -32,9 +32,21 @@ test('preenche cada coluna com o dado certo e calcula o total', () => {
   assert.match(doc.markdown, /Valor global da proposta: R\$ 167,53/);
 });
 
-test('sem colunas no edital usa o padrão e marca a pendência; marca e registro entram quando o edital exige', () => {
-  const { colunas } = escolherColunas([regra('colunas_itens', 'Item, Especificação, Valor Unitário R$, Valor Total R$'), regra('marca_fabricante', 'informar marca'), regra('registro_anvisa', 'número do registro')]);
-  assert.deepEqual(colunas.slice(-2), ['Marca', 'Registro ANVISA']);
+test('colunas citadas pelo edital ficam exatamente como no edital; marca e registro exigidos vão na especificação', () => {
+  // Colunas citadas no edital real 77816510000166/2026/348. Antes, a minuta acrescentava "Marca" e "Registro ANVISA"
+  // ao fim da tabela, fugindo do layout que o órgão pediu.
+  const regras = [regra('colunas_itens', 'Item, Especificação, Unidade, Quantidade, Valor Unitário R$, Valor Total R$'),
+    regra('marca_fabricante', 'informar marca'), regra('registro_anvisa', 'número do registro')];
+  const { colunas, naDescricao } = escolherColunas(regras);
+  assert.deepEqual(colunas, ['Item', 'Especificação', 'Unidade', 'Quantidade', 'Valor Unitário R$', 'Valor Total R$']);
+  assert.deepEqual(naDescricao, ['marca', 'registro']);
+  const doc = gerarDocumentoProposta({ pregao, empresa, hoje, itens: [item], regras });
+  assert.match(doc.markdown, /\| 225 \| Tesoura Instrumental, Ponta Curva \\\| 12 cm — Marca: Professional — Registro ANVISA: 10150470165 \| Unidade \| 5 \| 27,50 \| 137,50 \|/);
+  assert.ok(!/\| Marca \||\| Registro ANVISA \|/.test(doc.markdown));
+});
+
+test('sem colunas no edital usa o padrão, com marca e registro, e marca a pendência', () => {
+  assert.deepEqual(escolherColunas([]).naDescricao, []);
   const doc = gerarDocumentoProposta({ pregao, empresa, hoje, itens: [item], regras: [] });
   assert.ok(doc.pendencias.some(p => p.startsWith('colunas da tabela não identificadas na análise')));
   assert.ok(doc.colunas.includes('Registro ANVISA'));
@@ -175,4 +187,16 @@ test('modelo que pede o responsável pela assinatura do contrato ou da ata ganha
   assert.doesNotMatch(doc.markdown.split('## Conferência')[0], /_Assinatura: responsável pelo contrato/);
   const sem = gerarDocumentoProposta({ pregao, empresa, hoje, itens: [item], regras: [regra('assinatura', 'Assinatura e carimbo do responsável da empresa')] });
   assert.doesNotMatch(sem.markdown, /Responsável pela assinatura do contrato/);
+});
+
+test('texto copiado do edital não sai com pontuação dobrada', () => {
+  // Citações reais do edital 348: terminam em ponto e eram unidas com "; " e um ponto final a mais ("pedido..").
+  const doc = gerarDocumentoProposta({ pregao, empresa, hoje, itens: [item], regras: [
+    regra('validade_proposta', '120 dias', 'A validade desta proposta e de 120 (cento e vinte) dias corridos, contados da data da abertura da sessao publica de PREGAO ELETRONICO.'),
+    regra('validade_proposta', 'prorrogação', 'Podera ser solicitado ao licitante a prorrogaçao do prazo de validade da PROPOSTA por ate 30 (trinta) dias.'),
+    regra('quantidade', 'mínimo de 10% da quantidade total do item.')] });
+  const condicoes = doc.markdown.split('## 3. Condições')[1].split('##')[0];
+  assert.ok(!/\.\.|\.;/.test(condicoes), condicoes);
+  assert.match(condicoes, /PREGAO ELETRONICO; Podera ser solicitado .* 30 \(trinta\) dias\./);
+  assert.match(condicoes, /\*\*Quantidade:\*\* mínimo de 10% da quantidade total do item\./);
 });
