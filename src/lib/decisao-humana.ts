@@ -2,7 +2,8 @@
 // Aprovar libera as pendências da escalada no envio; recusar tira o item da análise e do envio; ajustar reanalisa o item com o texto.
 import type { LanceStore } from './store.ts';
 
-type Decidida = { item?: string; motivo: string; decisao: 'aprovar' | 'recusar' | 'ajustar'; ajuste?: string };
+type Decidida = { item?: string; motivo: string; decisao: 'aprovar' | 'recusar' | 'ajustar'; ajuste?: string; motivosAprovados?: string[] };
+const cobertos = (d: Decidida) => new Set(d.motivosAprovados ?? d.motivo.split('; '));
 const decididas = (store: Pick<LanceStore, 'decidedEscalations'>, tenderId: string): Decidida[] =>
   store.decidedEscalations?.(tenderId) ?? [];
 
@@ -20,16 +21,13 @@ export function instrucaoHumana(store: Pick<LanceStore, 'decidedEscalations'>, t
 export const itensRecusados = (store: Pick<LanceStore, 'decidedEscalations'>, tenderId: string) =>
   [...new Set(decididas(store, tenderId).filter(d => d.decisao === 'recusar' && d.item).map(d => Number(d.item)))];
 
-/** A mesma pendência já decidida (aprovada ou recusada) não reabre na análise seguinte. */
-export const jaDecidida = (store: Pick<LanceStore, 'decidedEscalations'>, tenderId: string, item: string, motivo: string) =>
-  decididas(store, tenderId).some(d => d.item === item && d.motivo === motivo && d.decisao !== 'ajustar');
+/** A mesma pendência já decidida não reabre: recusa pelo motivo; aprovação só se cobre todos os motivos atuais do item. */
+export const jaDecidida = (store: Pick<LanceStore, 'decidedEscalations'>, tenderId: string, item: string, motivo: string, motivosAtuais: string[] = []) =>
+  decididas(store, tenderId).some(d => d.item === item && d.motivo === motivo
+    && (d.decisao === 'recusar' || (d.decisao === 'aprovar' && motivosAtuais.every(m => cobertos(d).has(m)))));
 
-/** Pendências atuais da decisão cobertas por uma aprovação do humano para o item. */
+/** Pendências atuais da decisão cobertas por uma aprovação do humano para o item (motivos exatos da hora da aprovação). */
 export function pendenciasAprovadas(store: Pick<LanceStore, 'decidedEscalations'>, tenderId: string, item: number, motivos: string[]): string[] {
   const aprovadas = decididas(store, tenderId).filter(d => d.decisao === 'aprovar' && d.item === String(item));
-  if (!aprovadas.length) return [];
-  const textos = new Set(aprovadas.flatMap(d => d.motivo.split('; ')));
-  // A escalada operacional resume as condições numa frase; a aprovação dela cobre as linhas "Operação: ...".
-  const operacao = aprovadas.some(d => d.motivo.includes('Operação: '));
-  return motivos.filter(m => textos.has(m) || (operacao && m.startsWith('Operação: ')));
+  return motivos.filter(m => aprovadas.some(d => cobertos(d).has(m)));
 }

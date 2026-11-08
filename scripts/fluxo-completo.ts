@@ -119,7 +119,7 @@ for (let rodada = 0; rodada < 3; rodada++) {
   resumoRodadas.push({ rodada: rodada + 1, analiseId, stopped: r.stopped, s: Math.round(r.ms / 1000), custo: r.usage.cost, humano,
     decisoes: Object.fromEntries(Object.entries(st.decisions).map(([k, d]: any) => [k, d.estado])), anexos: anexos.map(a => a.nome) });
   const abertas = store.openEscalations().filter(e => e.tender === tenderId);
-  let ajuste = false;
+  let refazer = false;
   for (const e of abertas) {
     console.log(`  PENDENTE ${e.id} · item ${e.item ?? '-'}: ${e.motivo}`);
     const resposta = (await lerDecisao(rodada, 'Decisão (aprovar / recusar / ajustar: <texto>):')).trim();
@@ -128,13 +128,19 @@ for (let rodada = 0; rodada < 3; rodada++) {
     const decisao = m[1].toLowerCase() as 'aprovar' | 'recusar' | 'ajustar';
     store.resolveEscalation(e.id, { decisao, ...(decisao === 'ajustar' ? { ajuste: m[2] } : {}) });
     console.log(`  humano: ${decisao}${decisao === 'ajustar' ? ` "${m[2]}"` : ''} (gravado no store, como pela tela)`);
-    ajuste ||= decisao === 'ajustar';
+    refazer ||= decisao !== 'aprovar';
   }
-  if (ajuste) { console.log('  ajuste pedido: o agente retoma a análise com o texto do humano'); continue; }
+  if (refazer) { console.log('  ajuste ou recusa: o agente retoma a análise com a decisão do humano e refaz os documentos'); continue; }
 
   const itens = viaveis.filter(d => !itensRecusados(store, tenderId).includes(d.item));
   const aprovadas = itens.flatMap(d => d.estado === 'disputar_com_pendencia' ? pendenciasAprovadas(store, tenderId, d.item, d.motivos) : []);
   const liberados = itens.filter(d => d.estado === 'disputar' || pendenciasAprovadas(store, tenderId, d.item, d.motivos).length === d.motivos.length);
+  // Os anexos precisam ter exatamente os itens do POST: proposta com item recusado ou não liberado não sai.
+  const naProposta = [...new Set((dossie?.proposta?.itens ?? []).map((i: { numero: number }) => i.numero))].sort((a, b) => a - b);
+  const noEnvio = liberados.map(d => d.item).sort((a, b) => a - b);
+  if (liberados.length && anexos.length && naProposta.join() !== noEnvio.join()) {
+    resultado = `proposta gerada com os itens ${naProposta.join(', ')} e envio liberado para ${noEnvio.join(', ')}: nada enviado; rode de novo para refazer os documentos`; break;
+  }
   if (!liberados.length || !anexos.length) { resultado = itens.length ? 'pendências sem aprovação do humano: nada enviado' : 'sem item viável ou item recusado pelo humano: nada a enviar'; break; }
   console.log(`  itens liberados: ${liberados.map(d => `${d.item} (${d.estado}, R$ ${d.precoProposto})`).join(', ')}; anexos: ${anexos.map(a => a.nome).join(', ')}`);
   for (const p of aprovadas) console.log(`  pendência aprovada pelo humano: ${p}`);
