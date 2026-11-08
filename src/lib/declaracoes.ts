@@ -82,6 +82,15 @@ function paragrafos(texto: string) {
 // "[XX.XXX.XXX/XXXX-XX]" é uma lacuna só, não cinco.
 const LACUNA = /\[[^\]\n]{0,60}?(x{2,}|_{3,}|\.{4,})[^\]\n]{0,60}?\]|_{3,}|\.{4,}|…{2,}|\bx{2,}\b/gi;
 const PREENCHER = '[preencher]';
+// Porte citado numa cláusula; "ME/EPP" cita os dois.
+const PORTES: Record<string, RegExp> = { ME: /microempresa|\bme\b/, EPP: /pequeno porte|\bepp\b/, MEI: /microempreendedor|\bmei\b/ };
+const citaPorte = (s: string) => Object.values(PORTES).some(re => re.test(s));
+const sustenta = (s: string, porte?: string) => !!porte && !!PORTES[porte]?.test(s);
+// Verbo que declara porte; o "não" só conta quando está colado a ele ("não se enquadra"), não a outro assunto da frase.
+const DECLARA_PORTE = /(\bnao\s+(se\s+)?)?(enquadr\w*|(?<=\b(empresa|licitante|proponente|declarante)\s)e\s+(uma\s+)?(?=microempre|empresa de pequeno porte|me\b|epp\b)|condicao de (?=micro|empresa de pequeno|me\b|epp\b)|qualificad\w* como)/g;
+/** Cláusulas de porte do trecho: o que vem depois do verbo até o fim da frase, e se é negada. */
+const clausulasDePorte = (s: string) => [...s.matchAll(DECLARA_PORTE)].map(m => ({
+  negada: !!m[1], texto: s.slice(m.index! + m[0].length).split(/[;]|\.\s/)[0].slice(0, 160) }));
 // "nº", "n.º", "no", "sob o nº", "número", com ou sem dois-pontos.
 const NUM = String.raw`( sob o)?( (n\.?[ºo°]?\.?|numero))?\s*:?`;
 type Campo = { re: RegExp; rotulo: string; valor: (e: EmpresaDeclarante) => string | undefined };
@@ -113,6 +122,11 @@ export function preencherModelo(texto: string, empresa: EmpresaDeclarante, hoje:
   const pendente = (p: string) => { if (!pendencias.includes(p)) pendencias.push(p); return PREENCHER; };
   const valorDe = (campo: Campo) => campo.valor(empresa) || pendente(`dado da empresa: ${campo.rotulo}`);
   let t = paragrafos(texto);
+  // Afirmação de ME/EPP fora de caixa de opção não pode ser desmarcada: só o porte do cadastro a sustenta.
+  if (t.split('\n\n').some(par => {
+    const p = norm(par);
+    return !/^\(\s?x?\s?\)/.test(p) && clausulasDePorte(p).some(c => !c.negada && citaPorte(c.texto) && !sustenta(c.texto, empresa.porte));
+  })) pendente(`o modelo afirma que a empresa é ME/EPP e o cadastro ${empresa.porte ? `diz porte ${empresa.porte}` : 'não informa o porte'}: não assinar sem confirmar o porte ou ajustar com o órgão`);
   const data = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Recife', day: 'numeric', month: 'long', year: 'numeric' });
   const local = () => `${empresa.municipio || pendente('local da assinatura')}, ${data}`;
   t = t.replace(/\blocal e data\.?/i, () => `${local()}.`);
@@ -149,11 +163,11 @@ export function preencherModelo(texto: string, empresa: EmpresaDeclarante, hoje:
   t = t.replace(/\(\s?\)/g, (m, pos: number) => {
     const resto = t.slice(pos + m.length);
     const proxima = resto.search(/\(\s?X?\s?\)/i);
-    const opcao = norm(proxima < 0 ? resto.slice(0, 200) : resto.slice(0, proxima));
-    const micro = /microempre|\bme\b/.test(opcao), pequeno = /pequeno porte|\bepp\b/.test(opcao);
-    if (!micro && !pequeno) { pendente('marcar as opções do modelo que se aplicam à empresa'); return '( )'; }
-    const marca = micro && pequeno ? ['ME', 'EPP', 'MEI'].includes(empresa.porte ?? '') : micro ? empresa.porte === 'ME' : empresa.porte === 'EPP';
-    if (!empresa.porte) pendente('porte da empresa: marcar a opção de ME/EPP só se for verdade');
+    const opcao = norm((proxima < 0 ? resto.slice(0, 200) : resto.slice(0, proxima)).split('\n\n')[0]);
+    if (!citaPorte(opcao)) { pendente('marcar as opções do modelo que se aplicam à empresa'); return '( )'; }
+    if (!empresa.porte) { pendente('porte da empresa: marcar a opção de ME/EPP só se for verdade'); return '( )'; }
+    const [clausula] = clausulasDePorte(opcao);
+    const marca = clausula?.negada ? !sustenta(clausula.texto, empresa.porte) : sustenta(opcao, empresa.porte);
     return marca ? '(X)' : '( )';
   });
   return { texto: t, pendencias };
