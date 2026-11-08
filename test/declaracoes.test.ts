@@ -147,6 +147,14 @@ test('modelo que afirma ME/EPP fora de caixa de opção vira pendência quando o
   // Em caixa de opção a caixa fica em branco; negação não afirma nada.
   assert.ok(!preencherModelo(UNIFICADA, { ...empresa, porte: 'Demais' }, hoje).pendencias.some(afirma));
   assert.ok(!preencherModelo('- que não se enquadra como microempresa ou empresa de pequeno porte.', { ...empresa, porte: 'Demais' }, hoje).pendencias.some(afirma));
+  // A negação de outro assunto não inverte a declaração de porte.
+  const impedimento = preencherModelo('( ) Enquadra-se como ME/EPP.\nNão possui impedimento para licitar.', { ...empresa, porte: 'Demais' }, hoje);
+  assert.match(impedimento.texto, /\( \) Enquadra-se/);
+  assert.ok(preencherModelo('A empresa declara que não possui impedimento e se enquadra como microempresa.', { ...empresa, porte: 'Demais' }, hoje).pendencias.some(afirma));
+  // Porte afirmado tem de ser o do cadastro; cláusula que aceita mais de um enquadramento vale para qualquer um deles.
+  assert.ok(preencherModelo('A empresa declara que se enquadra como microempresa.', empresa, hoje).pendencias.some(afirma));
+  assert.ok(!preencherModelo('A empresa declara que se enquadra como microempresa ou empresa de pequeno porte.', empresa, hoje).pendencias.some(afirma));
+  assert.ok(preencherModelo('A licitante é microempresa, nos termos da LC 123.', empresa, hoje).pendencias.some(afirma));
   const d = gerarDeclaracao({ tipo: 'declaracao_outra', modelo: { tipo: 'declaracao_outra', titulo: 'DECLARAÇÃO UNIFICADA', texto: modelo, fonte: { nome: 'EDITAL.pdf', url: 'https://pncp.gov.br/edital.pdf' } },
     pregao: { id: 'x/2026/1', orgao: 'Órgão' }, empresa: { ...empresa, porte: 'Demais' }, hoje });
   assert.ok(d.pendencias.some(afirma));
