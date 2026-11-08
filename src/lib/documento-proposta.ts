@@ -49,27 +49,49 @@ const PADRAO = ['Item', 'Descrição', 'Unidade', 'Quantidade', 'Marca', 'Fabric
 
 function separarColunas(valor: string) {
   const semPrefixo = valor.includes(':') ? valor.slice(valor.indexOf(':') + 1) : valor;
-  return semPrefixo.split(/[,;]| e (?=[a-záéíóúâêôãõç])/i).map(s => s.replace(/\.$/, '').trim()).filter(s => s.length > 0 && s.length < 40);
+  const partes = semPrefixo.split(/[,;]/).map(s => s.replace(/\.$/, '').trim()).filter(Boolean);
+  // " e " só separa o último elemento de uma enumeração ("a, b e c"). No meio da lista é rótulo composto
+  // ("Marca e Modelo"), e quebrar mudaria a tabela pedida pelo edital.
+  const ultima = partes.pop() ?? '';
+  return [...partes, ...ultima.split(/ e (?=[a-záéíóúâêôãõç])/i)].map(s => s.trim()).filter(s => s.length > 0 && s.length < 40);
 }
 
 /** Prefere a tabela do modelo de proposta à lista de campos do sistema; entre elas, a com mais colunas reconhecidas. */
 export function escolherColunas(regras: RegraProposta[]) {
+  // Sem modelo de proposta e com "preenchimento, no sistema eletrônico, dos seguintes campos" (edital real 22617),
+  // a lista de colunas vem citada à parte, mas é de campos do sistema, não layout de modelo.
+  const camposDoSistema = !doCampo(regras, 'modelo_proposta').length && regras.some(r => /seguintes campos/.test(norm(r.citacao)) && noSistema(r));
   const candidatas = doCampo(regras, 'colunas_itens').map(r => ({ regra: r, colunas: separarColunas(r.valor) }))
     .filter(c => c.colunas.length >= 2)
-    .map(c => ({ ...c, reconhecidas: c.colunas.filter(t => chaveDe(t)).length, sistema: /^sistema/i.test(c.regra.valor.trim()) || noSistema(c.regra) }))
+    .map(c => ({ ...c, reconhecidas: c.colunas.filter(t => chaveDe(t)).length, sistema: camposDoSistema || /^sistema/i.test(c.regra.valor.trim()) || noSistema(c.regra) }))
     .sort((a, b) => Number(a.sistema) - Number(b.sistema) || b.reconhecidas - a.reconhecidas);
   const escolhida = candidatas[0];
   const colunas = escolhida ? [...escolhida.colunas] : [...PADRAO];
   const tem = (k: Chave[]) => colunas.some(t => k.includes(chaveDe(t)!));
-  if (!tem(['numero'])) colunas.unshift('Item');
-  if (!tem(['descricao'])) colunas.splice(1, 0, 'Descrição');
-  // Com as colunas citadas pelo edital, a tabela não ganha colunas novas: marca e registro exigidos vão na especificação.
+  // Com a tabela citada pelo edital, nenhuma coluna é acrescentada nem quebrada. Marca e registro exigidos vão na
+  // especificação; o que não cabe vira pendência para conferir com o modelo do órgão.
   const naDescricao: ('marca' | 'registro')[] = [];
-  if (doCampo(regras, 'marca_fabricante').length && !tem(['marca', 'marca_modelo'])) { if (escolhida) naDescricao.push('marca'); else colunas.push('Marca'); }
-  if (doCampo(regras, 'registro_anvisa').length && !tem(['registro'])) { if (escolhida) naDescricao.push('registro'); else colunas.push('Registro ANVISA'); }
-  if (!tem(['unitario'])) colunas.push('Valor unitário (R$)');
-  if (!tem(['total'])) colunas.push('Valor total (R$)');
-  return { colunas, doEdital: !!escolhida, naDescricao };
+  const faltam: string[] = [];
+  const exige = (campo: Campo, chaves: Chave[], qual: 'marca' | 'registro', rotulo: string) => {
+    if (!doCampo(regras, campo).length || tem(chaves)) return;
+    if (tem(['descricao'])) naDescricao.push(qual); else faltam.push(rotulo);
+  };
+  // Lista de campos do sistema não é layout de modelo de proposta: ali as colunas estruturais podem entrar.
+  if (!escolhida || escolhida.sistema) {
+    if (!tem(['numero'])) colunas.unshift('Item');
+    if (!tem(['descricao'])) colunas.splice(1, 0, 'Descrição');
+    if (doCampo(regras, 'marca_fabricante').length && !tem(['marca', 'marca_modelo'])) colunas.push('Marca');
+    if (doCampo(regras, 'registro_anvisa').length && !tem(['registro'])) colunas.push('Registro ANVISA');
+    if (!tem(['unitario'])) colunas.push('Valor unitário (R$)');
+    if (!tem(['total'])) colunas.push('Valor total (R$)');
+  } else {
+    if (!tem(['numero'])) faltam.push('número do item');
+    if (!tem(['descricao'])) faltam.push('descrição do item');
+    if (!tem(['unitario', 'total'])) faltam.push('preço');
+    exige('marca_fabricante', ['marca', 'marca_modelo'], 'marca', 'marca');
+    exige('registro_anvisa', ['registro'], 'registro', 'registro ANVISA');
+  }
+  return { colunas, doEdital: !!escolhida, naDescricao, faltam };
 }
 
 const EXTENSO: Record<string, number> = { uma: 1, um: 1, duas: 2, dois: 2, tres: 3, quatro: 4 };
@@ -143,7 +165,7 @@ export function gerarDocumentoProposta(o: {
   const pendencias: string[] = [];
   const pendente = (p: string) => { if (!pendencias.includes(p)) pendencias.push(p); return PREENCHER; };
   const casas = casasDecimaisDe(regras);
-  const { colunas, doEdital, naDescricao } = escolherColunas(regras);
+  const { colunas, doEdital, naDescricao, faltam } = escolherColunas(regras);
   const linhas: string[] = [];
   const add = (...l: string[]) => linhas.push(...l);
 
@@ -165,6 +187,7 @@ export function gerarDocumentoProposta(o: {
 
   add('## 2. Itens cotados', '');
   if (!doEdital) pendente('colunas da tabela não identificadas na análise; conferir com o modelo do órgão');
+  for (const f of faltam) pendente(`tabela do edital sem coluna de ${f}; conferir com o modelo do órgão`);
   add(`| ${colunas.map(celula).join(' | ')} |`, `| ${colunas.map(() => '---').join(' | ')} |`);
   let total = 0;
   for (const it of itens) {
