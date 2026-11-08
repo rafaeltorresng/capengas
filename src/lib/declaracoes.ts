@@ -82,6 +82,8 @@ function paragrafos(texto: string) {
 // "[XX.XXX.XXX/XXXX-XX]" é uma lacuna só, não cinco.
 const LACUNA = /\[[^\]\n]{0,60}?(x{2,}|_{3,}|\.{4,})[^\]\n]{0,60}?\]|_{3,}|\.{4,}|…{2,}|\bx{2,}\b/gi;
 const PREENCHER = '[preencher]';
+const ME_EPP = /microempre|pequeno porte|\bme ?\/ ?epp\b/;
+const NEGA = /\bnao\b[^.;]{0,40}(enquadr|\be\b|possui|condicao|qualifica)/;
 // "nº", "n.º", "no", "sob o nº", "número", com ou sem dois-pontos.
 const NUM = String.raw`( sob o)?( (n\.?[ºo°]?\.?|numero))?\s*:?`;
 type Campo = { re: RegExp; rotulo: string; valor: (e: EmpresaDeclarante) => string | undefined };
@@ -113,6 +115,11 @@ export function preencherModelo(texto: string, empresa: EmpresaDeclarante, hoje:
   const pendente = (p: string) => { if (!pendencias.includes(p)) pendencias.push(p); return PREENCHER; };
   const valorDe = (campo: Campo) => campo.valor(empresa) || pendente(`dado da empresa: ${campo.rotulo}`);
   let t = paragrafos(texto);
+  // Afirmação de ME/EPP fora de caixa de opção não pode ser desmarcada: só o porte do cadastro a sustenta.
+  if (!['ME', 'EPP', 'MEI'].includes(empresa.porte ?? '') && t.split('\n\n').some(par => {
+    const p = norm(par);
+    return !/^\(\s?x?\s?\)/.test(p) && ME_EPP.test(p) && /enquadr|condicao de|qualifica|\be (uma )?(micro|empresa de pequeno)/.test(p) && !NEGA.test(p);
+  })) pendente(`o modelo afirma que a empresa é ME/EPP e o cadastro ${empresa.porte ? `diz porte ${empresa.porte}` : 'não informa o porte'}: não assinar sem confirmar o porte ou ajustar com o órgão`);
   const data = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Recife', day: 'numeric', month: 'long', year: 'numeric' });
   const local = () => `${empresa.municipio || pendente('local da assinatura')}, ${data}`;
   t = t.replace(/\blocal e data\.?/i, () => `${local()}.`);
@@ -152,8 +159,9 @@ export function preencherModelo(texto: string, empresa: EmpresaDeclarante, hoje:
     const opcao = norm(proxima < 0 ? resto.slice(0, 200) : resto.slice(0, proxima));
     const micro = /microempre|\bme\b/.test(opcao), pequeno = /pequeno porte|\bepp\b/.test(opcao);
     if (!micro && !pequeno) { pendente('marcar as opções do modelo que se aplicam à empresa'); return '( )'; }
-    const marca = micro && pequeno ? ['ME', 'EPP', 'MEI'].includes(empresa.porte ?? '') : micro ? empresa.porte === 'ME' : empresa.porte === 'EPP';
-    if (!empresa.porte) pendente('porte da empresa: marcar a opção de ME/EPP só se for verdade');
+    if (!empresa.porte) { pendente('porte da empresa: marcar a opção de ME/EPP só se for verdade'); return '( )'; }
+    const enquadrada = ['ME', 'EPP', 'MEI'].includes(empresa.porte);
+    const marca = NEGA.test(opcao) ? !enquadrada : micro && pequeno ? enquadrada : micro ? empresa.porte === 'ME' : empresa.porte === 'EPP';
     return marca ? '(X)' : '( )';
   });
   return { texto: t, pendencias };

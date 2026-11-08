@@ -125,6 +125,33 @@ test('caixa de ME/EPP não é marcada quando o cadastro não sustenta', () => {
   assert.match(preencherModelo(m.texto, empresa, hoje).texto, /\(X\) Declara, sob as penas do artigo 299/);
 });
 
+test('opção negativa ("Não se enquadra") só é marcada quando o porte do cadastro não é ME/EPP', () => {
+  const modelo = `( ) Não se enquadra como ME/EPP.\n( ) Enquadra-se como ME/EPP, nos termos da Lei Complementar nº 123/06.`;
+  const epp = preencherModelo(modelo, empresa, hoje).texto;
+  assert.match(epp, /\( \) Não se enquadra/);
+  assert.match(epp, /\(X\) Enquadra-se/);
+  const demais = preencherModelo(modelo, { ...empresa, porte: 'Demais' }, hoje).texto;
+  assert.match(demais, /\(X\) Não se enquadra/);
+  assert.match(demais, /\( \) Enquadra-se/);
+  const semPorte = preencherModelo(modelo, { ...empresa, porte: undefined }, hoje);
+  assert.doesNotMatch(semPorte.texto, /\(X\)/);
+  assert.ok(semPorte.pendencias.some(p => /porte da empresa/.test(p)));
+});
+
+test('modelo que afirma ME/EPP fora de caixa de opção vira pendência quando o cadastro não sustenta', () => {
+  const modelo = `A empresa ________, CNPJ nº ________, DECLARA:\n- que se enquadra como microempresa ou empresa de pequeno porte, nos termos da Lei Complementar nº 123/06;\n- que não emprega menor de 18 anos em trabalho noturno, perigoso ou insalubre.`;
+  const afirma = (p: string) => /afirma que a empresa é ME\/EPP/.test(p);
+  assert.ok(preencherModelo(modelo, { ...empresa, porte: 'Demais' }, hoje).pendencias.some(afirma));
+  assert.ok(preencherModelo(modelo, { ...empresa, porte: undefined }, hoje).pendencias.some(afirma));
+  assert.ok(!preencherModelo(modelo, empresa, hoje).pendencias.some(afirma));
+  // Em caixa de opção a caixa fica em branco; negação não afirma nada.
+  assert.ok(!preencherModelo(UNIFICADA, { ...empresa, porte: 'Demais' }, hoje).pendencias.some(afirma));
+  assert.ok(!preencherModelo('- que não se enquadra como microempresa ou empresa de pequeno porte.', { ...empresa, porte: 'Demais' }, hoje).pendencias.some(afirma));
+  const d = gerarDeclaracao({ tipo: 'declaracao_outra', modelo: { tipo: 'declaracao_outra', titulo: 'DECLARAÇÃO UNIFICADA', texto: modelo, fonte: { nome: 'EDITAL.pdf', url: 'https://pncp.gov.br/edital.pdf' } },
+    pregao: { id: 'x/2026/1', orgao: 'Órgão' }, empresa: { ...empresa, porte: 'Demais' }, hoje });
+  assert.ok(d.pendencias.some(afirma));
+});
+
 test('declaração ME/EPP só sai para ME ou EPP; integridade só com o programa declarado no cadastro', () => {
   assert.equal(impedimentoDeclaracao('declaracao_me_epp', { ...empresa, porte: undefined })?.status, 'conferir');
   assert.equal(impedimentoDeclaracao('declaracao_me_epp', { ...empresa, porte: 'Demais' })?.status, 'nao_se_aplica');
