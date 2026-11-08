@@ -3,6 +3,7 @@
 import type { LanceState } from './tools.ts';
 import type { DocCheck, DocStatus as RuleDocStatus } from './contracts.ts';
 import { planoDoEstado } from './plano-documentos.ts';
+import { operacaoDoEstado } from './operacao.ts';
 
 export type DossierSource = { nome: string; url: string; citacao?: string };
 export type DocStatus = RuleDocStatus | 'nao_verificado';
@@ -28,6 +29,8 @@ export function buildDossie(st: LanceState, tenderId: string, options: { documen
   const prefix = `${tenderId}#`;
   const keys = [...new Set([...Object.keys(st.fits), ...Object.keys(st.decisions)])].filter(k => k.startsWith(prefix));
   const pendencias = new Set<string>();
+  const operacao = operacaoDoEstado(st, tenderId);
+  for (const p of operacao?.pendencias ?? []) pendencias.add('Operação: ' + p);
   const checks = options.documentos ?? [];
   const checklist: DossierChecklist[] = [];
   for (const requirement of requirements) {
@@ -87,6 +90,7 @@ export function buildDossie(st: LanceState, tenderId: string, options: { documen
     empresa: st.company.empresa?.nome ?? '', checklist, pendencias: [...pendencias], documentos: documents,
     exigencias: requirements.map(r => ({ ...r })), itens, ...(escopo ? { escopo } : {}),
     planoDocumentos: planoDoEstado(st, tenderId) ?? undefined,
+    operacao,
     // Uma apresentação de dossiê nunca substitui evaluate/recheck no caminho de envio.
     envioAutomaticoLiberado: false,
   };

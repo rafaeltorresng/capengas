@@ -2,6 +2,7 @@ import type { Store } from './contracts.ts';
 import type { LanceState } from './tools.ts';
 import { buildDossie } from './dossie.ts';
 import { checkDocs } from './rules.ts';
+import { aplicarOperacao } from './operacao.ts';
 import type { QueueItem } from '../server/contract.ts';
 
 // Persiste somente o resultado da análise; não autoriza ou executa ações no portal.
@@ -10,6 +11,7 @@ export function persistAnalysis(state: LanceState, store: Store, options: { anal
   const items: Pick<QueueItem, 'tender' | 'item'>[] = [];
   for (const [id, tender] of Object.entries(state.tenders)) {
     if (!state.items[id]) continue;
+    aplicarOperacao(state, id);
     const previous = store.getTender(id);
     store.upsertTender({ id, orgao: tender.orgao ?? '', uf: tender.uf ?? '', abertura: tender.abertura ?? null,
       situacao: previous?.situacao ?? 'nao_verificada', plataforma: tender.sistema ?? previous?.plataforma ?? '',
@@ -34,8 +36,14 @@ export function persistAnalysis(state: LanceState, store: Store, options: { anal
       decisions++;
       items.push({ tender: id, item: String(item) });
       if (['escalar', 'disputar_com_pendencia'].includes(d.estado) && tender.abertura) {
-        const exists = store.openEscalations().some(e => e.tender === id && e.item === String(item));
-        if (!exists) store.openEscalation({ tender: id, item: String(item), motivo: d.motivos.join('; '), recomendacao: 'Revisar as evidências e recalcular a decisão antes de agir.',
+        const operacional = d.motivos.some((m: string) => m.startsWith('Operação: '));
+        // A condição detalhada vive no dossiê atual. Mudança de texto/estado da mesma ressalva
+        // não abre outra tarefa idêntica a cada reanálise.
+        const motivo = operacional
+          ? [...d.motivos.filter((m: string) => !m.startsWith('Operação: ')), 'Operação: conferir condições para fornecer antes de participar.'].join('; ')
+          : d.motivos.join('; ');
+        const exists = store.openEscalations().some(e => e.tender === id && e.item === String(item) && (!operacional || e.motivo === motivo));
+        if (!exists) store.openEscalation({ tender: id, item: String(item), motivo, recomendacao: operacional ? 'Conferir as cláusulas e a capacidade de fornecimento antes de participar. Aprovar esta pendência não altera os dados nem libera o envio.' : 'Revisar as evidências e recalcular a decisão antes de agir.',
           prazo: /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(tender.abertura) ? tender.abertura + ':00-03:00' : tender.abertura });
       }
     }

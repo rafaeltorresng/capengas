@@ -74,6 +74,7 @@ export async function runAnalysisTurn(o: {
   }
   if (direto) o.store.logEvent({ tipo: 'turno_inicio', resumo: 'Turno de análise iniciado; ferramentas de envio indisponíveis.' });
   try {
+    o.state.operationalConditions ??= {};
     o.state.analysisStore = { openEscalation: (request, options) => o.store.openEscalation(request, options) };
     const result = await o.run();
     registrar({ tipo: 'atividade', atividade: 'Salvando as conclusões e os documentos', ferramenta: 'salvar_analise' });

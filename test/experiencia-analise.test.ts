@@ -35,4 +35,6 @@ test('veredito é parcial por itens, desconhecido exige revisão e retificação
   assert.equal(concluirAnalise([]).estado, 'revisao_necessaria');
   assert.equal(concluirAnalise([item('disputar')], true).estado, 'revisao_necessaria');
   assert.equal(concluirAnalise([item('disputar')], false, false, true).estado, 'revisao_necessaria');
+  assert.equal(concluirAnalise([item('disputar')], false, false, false, 0, true).estado, 'com_pendencias');
+  assert.equal(concluirAnalise([item('nao_disputar')], false, false, false, 0, true).estado, 'nao_recomendada');
 });
