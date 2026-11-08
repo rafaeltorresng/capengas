@@ -1,6 +1,7 @@
 // Entrada da demonstração: somente fixtures preparadas. A análise usa o mesmo agente e store do produto.
 import { randomUUID } from 'node:crypto';
-import { runAgent, type LLM, type Tool } from '../lib/agent.ts';
+import { type LLM, type Tool } from '../lib/agent.ts';
+import { runAgentWithOperationalReview as runAgent } from '../lib/agente-operacional.ts';
 import { tools, newState } from '../lib/tools.ts';
 import { acompanhamentoDe, runAnalysisTurn } from '../lib/turn.ts';
 import { atividadeDaFerramenta } from '../lib/turnos.ts';
@@ -8,6 +9,7 @@ import { resolverPregoesSolicitados, type DemoSelecao } from '../lib/agendamento
 import { snapshotTender } from '../lib/recheck.ts';
 import { featherless } from '../lib/llm.ts';
 import { createReadModel } from '../lib/read-model.ts';
+import { INSTRUCAO_OPERACIONAL } from '../lib/operacao.ts';
 import type { LanceStore } from '../lib/store.ts';
 import type { CofreDoc, Politica } from '../lib/contracts.ts';
 
@@ -33,7 +35,7 @@ export class OnboardingError extends Error {
 }
 const permitidas = new Set(['list_catalog', 'get_product_sheet', 'get_tender_items', 'get_tender_item', 'read_edital',
   'record_requirement', 'record_fit', 'check_anvisa', 'decide_item', 'flag_restrictive', 'draft_esclarecimento',
-  'read_proposal_docs', 'read_proposal_excerpt', 'record_proposal_rule', 'draft_proposal_document', 'record_document_requirement', 'draft_document_plan']);
+  'read_proposal_docs', 'read_proposal_excerpt', 'record_proposal_rule', 'draft_proposal_document', 'record_document_requirement', 'draft_document_plan', 'record_operational_condition', 'read_operational_excerpt']);
 
 export async function runOnboardingAnalysis(o: AnalysisStarted & {
   company: DemoCompany; demo: PreparedDemo; store: LanceStore;
@@ -51,8 +53,8 @@ export async function runOnboardingAnalysis(o: AnalysisStarted & {
     snapshot: o.snapshot ?? snapshotTender,
     run: () => {
       const llm = (o.llm ?? featherless)();
-      return runAgent({ llm, tools: (o.ferramentas ?? tools).filter(t => permitidas.has(t.name)), state, maxSteps: 30, maxTokens: 250_000,
-        system: 'Você é o Lance. Analise somente o pregão solicitado. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Se houver marca de referência, use flag_restrictive; para dúvida técnica sustentada, prepare draft_esclarecimento. Somente depois de decide_item resultar em disputar ou disputar_com_pendencia: use read_proposal_docs para ler os documentos; registre as regras com record_proposal_rule, cada documento exigido com record_document_requirement (fase, condição e prazo citados), prepare draft_proposal_document e draft_document_plan. Campos ausentes continuam pendências; não invente dados cadastrais ou declarações de conformidade. Não gere proposta para item escalado ou incompatível. Não envie nada. Empresa, catálogo, fichas, custos, cofre e política são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. O pré-filtro aponta candidatos, não comprova encaixe. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.',
+      return runAgent({ llm, operationalLLM: o.llm ? llm : featherless(undefined, { maxTokens: 8192 }), tools: (o.ferramentas ?? tools).filter(t => permitidas.has(t.name)), state, maxSteps: 30, maxTokens: 250_000,
+        system: 'Você é o Lance. Analise somente o pregão solicitado. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Se houver marca de referência, use flag_restrictive; para dúvida técnica sustentada, prepare draft_esclarecimento. Somente depois de decide_item resultar em disputar ou disputar_com_pendencia: use read_proposal_docs para ler os documentos; registre as regras com record_proposal_rule, cada documento exigido com record_document_requirement (fase, condição e prazo citados), prepare draft_proposal_document e draft_document_plan. Campos ausentes continuam pendências; não invente dados cadastrais ou declarações de conformidade. Não gere proposta para item escalado ou incompatível. Não envie nada. Empresa, catálogo, fichas, custos, cofre e política são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. O pré-filtro aponta candidatos, não comprova encaixe. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.' + ' ' + INSTRUCAO_OPERACIONAL,
         user: `Analise o pregão ${o.tenderId} e termine com um resumo do que ficou pronto e das pendências.${candidatos}`,
         onToolStart: name => acompanhamentoDe(state)?.atividade(atividadeDaFerramenta(name), name),
         onEvent: e => {

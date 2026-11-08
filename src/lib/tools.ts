@@ -14,6 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { buscarNosDocumentos, carregarDocumentos, lerTrecho, preLeitura, registrarRegra, PARAMETROS_REGRA, type Documento, type RegraProposta } from './regras-proposta.ts';
 import { gerarDocumentoProposta, type DocumentoProposta, type ItemProposta } from './documento-proposta.ts';
 import { planoDoEstado, registrarExigencia, PARAMETROS_EXIGENCIA, type ExigenciaDocumental, type PlanoDocumentos } from './plano-documentos.ts';
+import { CAMPOS_OPERACIONAIS, registrarCondicao, fontesOperacionais, aplicarOperacao, type CondicaoOperacional, type RevisaoOperacional } from './operacao.ts';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const parseId = (id: string) => { const [cnpj, ano, seq] = id.split('/'); return { cnpj, ano: +ano, seq: +seq }; };
@@ -30,6 +31,8 @@ export type LanceState = {
   proposals?: Record<string, DocumentoProposta>;
   documentRequirements?: Record<string, ExigenciaDocumental[]>;
   documentPlans?: Record<string, PlanoDocumentos>;
+  operationalConditions?: Record<string, CondicaoOperacional[]>;
+  operationalReviews?: Record<string, RevisaoOperacional>;
   /** Sem store, as ferramentas de envio não chamam o portal. */
   store?: LanceStore;
   analysisStore?: Pick<LanceStore, 'openEscalation'>;
@@ -178,7 +181,24 @@ export const tools: Tool[] = [
         let from = 0; let n = 0;
         while (n < 3) { const i = nf.indexOf(norm(t), from); if (i < 0) break; out.push({ topico: t, trecho: flat.slice(Math.max(0, i - 350), i + 450) }); from = i + 800; n++; }
       }
-      return { caracteres_edital: flat.length, trechos: out.slice(0, 12) };
+      const docs = fontesOperacionais(st, a.tender_id);
+      return { caracteres_edital: flat.length, trechos: out.slice(0, 12), arquivos: docs.map(d => d.nome) };
+    },
+  },
+  {
+    name: 'read_operational_excerpt', description: 'Lê contexto de um arquivo já consultado (edital/TR ou documento da proposta). Use o nome devolvido por read_edital; comece na posição 0 e siga proxima_posicao para paginar o texto normalizado. Não faz nova consulta externa e não exige decisão viável.',
+    parameters: { type: 'object', required: ['tender_id', 'arquivo', 'posicao'], properties: {
+      tender_id: { type: 'string' }, arquivo: { type: 'string' }, posicao: { type: 'number' }, tamanho: { type: 'number' } } },
+    async run(a, ctx) { return lerTrecho(fontesOperacionais(S(ctx), a.tender_id), a.arquivo, a.posicao, a.tamanho); },
+  },
+  {
+    name: 'record_operational_condition', description: 'Registra cláusula operacional literal: entrega, fornecimento/local, amostra, validade do produto ou pagamento. Copie também condições e marco de contagem. Informe item se a cláusula for específica. O código calcula prazos e comparações; não recebe duração ou conclusão do modelo. Use somente arquivos já consultados.',
+    parameters: { type: 'object', required: ['tender_id', 'campo', 'arquivo', 'citacao'], properties: {
+      tender_id: { type: 'string' }, campo: { type: 'string', enum: [...CAMPOS_OPERACIONAIS] }, arquivo: { type: 'string' }, citacao: { type: 'string' }, item: { type: 'integer' } } },
+    async run(a, ctx) {
+      const st = S(ctx);
+      if (!st.tenders[a.tender_id]) return { aceito: false, motivo: 'pregão não consultado' };
+      return registrarCondicao(fontesOperacionais(st, a.tender_id), ((st.operationalConditions ??= {})[a.tender_id] ??= []), a, (st.items[a.tender_id] ?? []).map(i => i.numero));
     },
   },
   {
@@ -329,6 +349,7 @@ export const tools: Tool[] = [
         precoProposto: price.precoProposto, preco_sugerido: price.precoProposto, preco: price, anvisa: { ...an, conferencia }, docs,
         decision: legacy[d.estado], reasons: d.motivos, docs_vencidos: docs.filter(x => !['vigente', 'sem_vencimento'].includes(x.status)).map(x => x.exigencia) };
       st.decisions[k] = dec;
+      aplicarOperacao(st, a.tender_id);
       return dec;
     },
   },

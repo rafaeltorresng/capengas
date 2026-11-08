@@ -19,6 +19,7 @@ import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/comp
 import { Spinner } from '@/components/ui/spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { OperationalConditions } from '@/components/operational-conditions';
 
 const estadoFase: Record<string, string> = { aguardando: 'A seguir', consultada: 'Percorrida', concluida: 'Conferida', atencao: 'Com pendência', em_andamento: 'Em curso' };
 
@@ -118,7 +119,7 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
   const recurso = useApi<Dossier>('dossies/' + encodeURIComponent(resultado.tender));
   const dossier = recurso.data?.dados;
   const atual = dossier?.analiseId === turno.id;
-  const veredito = concluirAnalise(resultado.itens, atual && dossier?.reavaliar, atual && dossier?.desatualizado, atual && dossier?.publicacao?.conferida === false, atual ? dossier?.escopo?.naoAnalisados.length : 0);
+  const veredito = concluirAnalise(resultado.itens, atual && dossier?.reavaliar, atual && dossier?.desatualizado, atual && dossier?.publicacao?.conferida === false, atual ? dossier?.escopo?.naoAnalisados.length : 0, atual && dossier?.operacao?.requerRevisao);
   const proposta = atual ? dossier?.proposta : undefined;
   const revisao = veredito.estado === 'revisao_necessaria' || veredito.estado === 'com_pendencias';
   if (!recurso.data && !recurso.error) return <p role="status" className="text-sm text-muted-foreground">Conferindo a versão da análise e os documentos…</p>;
@@ -154,6 +155,7 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
             </li>)}
           </ul>
         </section>
+        {atual && <OperationalConditions operacao={dossier?.operacao} />}
         {atual && <TenderActions tender={resultado.tender} />}
       </TabsContent>
       <TabsContent value="documentos" className="mt-4 flex flex-col gap-6">
@@ -168,6 +170,7 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
               <TriangleAlertIcon /><AlertTitle>Publicação ainda não confirmada</AlertTitle>
               <AlertDescription>{dossier.publicacao.motivo}</AlertDescription>
             </Alert>}
+            {dossier?.operacao?.requerRevisao && <Alert><AlertDescription>Há condições operacionais a confirmar. Confira “Condições para fornecer” no resultado antes de utilizar a minuta.</AlertDescription></Alert>}
             {proposta.pendencias.length > 0 && <div className="border-y py-3">
               <h4 className="mb-2 font-medium">Complete antes de utilizar</h4>
               <ul className="list-disc space-y-1 pl-5 text-muted-foreground">{proposta.pendencias.map(p => <li className="wrap-anywhere" key={p}>{p}</li>)}</ul>

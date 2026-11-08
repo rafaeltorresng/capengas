@@ -1,0 +1,192 @@
+{
+  "data": "2026-11-08",
+  "fuso": "America/Recife",
+  "pregao": "77816510000166/2026/348",
+  "origem": "Modelo real somente na extração operacional sobre PDFs públicos previamente baixados. Encaixe e decisões técnicas preservados da análise 4ab3963b-5194-419d-ab04-a491ca7aecd6. Sem conferência atual do PNCP.",
+  "modelo": "moonshotai/Kimi-K2.6",
+  "tentativa1": {
+    "resultado": "timeout local de 60 segundos antes de resposta",
+    "custoUsd": null,
+    "tokensEntrada": null,
+    "tokensSaida": null
+  },
+  "tentativas": [
+    {
+      "tentativa": 2,
+      "inicio": "2026-11-08T05:36:26.991Z",
+      "fim": "2026-11-08T05:38:18.749Z",
+      "duracaoMs": 111758,
+      "limitePassos": 4,
+      "parada": "max_steps",
+      "chamadasModelo": 4,
+      "registrosAceitos": 0,
+      "tokensEntrada": 27816,
+      "tokensSaida": 3797,
+      "custoUsd": 0.024717426,
+      "linhas": [
+        {
+          "campo": "entrega",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "fornecimento",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "amostra",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "validade_produto",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "pagamento",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        }
+      ],
+      "acoes": 0
+    },
+    {
+      "tentativa": 3,
+      "inicio": "2026-11-08T05:39:32.940Z",
+      "fim": "2026-11-08T05:40:32.882Z",
+      "duracaoMs": 59942,
+      "limitePassos": 4,
+      "parada": "final",
+      "chamadasModelo": 1,
+      "registrosAceitos": 0,
+      "tokensEntrada": 8252,
+      "tokensSaida": 2048,
+      "custoUsd": 0.0135648,
+      "linhas": [
+        {
+          "campo": "entrega",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "fornecimento",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "amostra",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "validade_produto",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "pagamento",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        }
+      ],
+      "acoes": 0
+    },
+    {
+      "tentativa": 4,
+      "inicio": "2026-11-08T05:41:27.276Z",
+      "fim": "2026-11-08T05:45:45.744Z",
+      "duracaoMs": 258468,
+      "limitePassos": 3,
+      "parada": "max_steps",
+      "chamadasModelo": 3,
+      "registrosAceitos": 1,
+      "tokensEntrada": 13026,
+      "tokensSaida": 8796,
+      "custoUsd": 0.035102997999999996,
+      "linhas": [
+        {
+          "campo": "entrega",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "fornecimento",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "amostra",
+          "estado": "confirmar",
+          "citacoes": 1
+        },
+        {
+          "campo": "amostra",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "validade_produto",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "pagamento",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        }
+      ],
+      "acoes": 0
+    },
+    {
+      "tentativa": 5,
+      "inicio": "2026-11-08T11:51:39.944Z",
+      "fim": "2026-11-08T11:53:38.639Z",
+      "duracaoMs": 118695,
+      "limitePassos": 2,
+      "parada": "final",
+      "chamadasModelo": 2,
+      "registrosAceitos": 5,
+      "tokensEntrada": 7704,
+      "tokensSaida": 4774,
+      "custoUsd": 0.020694528,
+      "linhas": [
+        {
+          "campo": "entrega",
+          "estado": "confirmar",
+          "citacoes": 2
+        },
+        {
+          "campo": "fornecimento",
+          "estado": "informada",
+          "citacoes": 1
+        },
+        {
+          "campo": "amostra",
+          "estado": "confirmar",
+          "citacoes": 1
+        },
+        {
+          "campo": "validade_produto",
+          "estado": "nao_identificada",
+          "citacoes": 0
+        },
+        {
+          "campo": "pagamento",
+          "estado": "informada",
+          "citacoes": 1
+        }
+      ],
+      "acoes": 0
+    }
+  ],
+  "concordanciaHumana": null,
+  "economia": null,
+  "limites": [
+    "A última tentativa valida extração em um edital, não precisão geral ou turno completo novo.",
+    "A primeira tentativa falhou; as tentativas intermediárias tiveram registros ausentes ou rejeitados.",
+    "A etapa operacional usa limite de saída de 8192 tokens, como na última validação; configuração da análise técnica preservada. A revisão operacional limita-se a duas chamadas por pregão.",
+    "Empresa e catálogo sintéticos; fonte pública em cache não comprova publicação atual."
+  ]
+}

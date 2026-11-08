@@ -4,6 +4,7 @@ import { Lexer } from 'marked';
 import type { Dossier } from './contract.ts';
 import { concluirAnalise } from '../lib/experiencia-analise.ts';
 import { numerosConferem } from '../lib/regras-proposta.ts';
+import { ESTADOS_OPERACIONAIS, ESTADOS_REVISAO_OPERACIONAL, REVISAO_NAO_REGISTRADA } from '../lib/operacao.ts';
 
 export class DocumentoError extends Error {
   readonly status: number;
@@ -40,10 +41,10 @@ export function prepararDocumento(dossie: Dossier, tipo: 'proposta' | 'relatorio
     const corpo = proposta.markdown.split('## Conferência antes do envio')[0];
     const pendencias = proposta.pendencias.length ? `## Complete antes de utilizar\n\n${proposta.pendencias.map(p => '- ' + p).join('\n')}\n\n` : '';
     return { titulo: 'Proposta de preços - minuta', nomeArquivo, paisagem: true,
-      markdown: `# MINUTA PARA REVISÃO E ASSINATURA\n\n${origem}\n\nDocumento não assinado e não enviado. Confira o modelo do órgão, os dados cadastrais e as pendências antes de utilizá-lo. As fontes e o checklist estão no relatório da análise.\n\n${dossie.publicacao && !dossie.publicacao.conferida ? dossie.publicacao.motivo : ''}\n\nAnálise: ${dossie.analiseId ?? 'legada'} · Dados de ${dataHora(proposta.geradoEm)}.\n\n${pendencias}${corpo}` };
+      markdown: `# MINUTA PARA REVISÃO E ASSINATURA\n\n${origem}\n\nDocumento não assinado e não enviado. Confira o modelo do órgão, os dados cadastrais e as pendências antes de utilizá-lo. As fontes e o checklist estão no relatório da análise.\n\n${dossie.publicacao && !dossie.publicacao.conferida ? dossie.publicacao.motivo : ''}\n\n${dossie.operacao?.requerRevisao ? 'Condições operacionais com pendências. Confira entrega, fornecimento, amostra, validade dos produtos e pagamento no relatório antes de utilizar esta minuta.' : ''}\n\nAnálise: ${dossie.analiseId ?? 'legada'} · Dados de ${dataHora(proposta.geradoEm)}.\n\n${pendencias}${corpo}` };
   }
   const itens = dossie.itens ?? [];
-  const veredito = concluirAnalise(itens.map(i => ({ estadoCodigo: i.estado })), dossie.reavaliar, dossie.desatualizado, dossie.publicacao?.conferida === false, dossie.escopo?.naoAnalisados.length);
+  const veredito = concluirAnalise(itens.map(i => ({ estadoCodigo: i.estado })), dossie.reavaliar, dossie.desatualizado, dossie.publicacao?.conferida === false, dossie.escopo?.naoAnalisados.length, dossie.operacao?.requerRevisao);
   const linhas = ['# RELATÓRIO DA ANÁLISE', '', `## ${veredito.titulo}`, '', veredito.detalhe, '',
     `Pregão: ${dossie.tender}`, `Órgão: ${dossie.orgao ?? dossie.pregao}`, `Empresa: ${dossie.empresa ?? 'Não informada'}`,
     `Análise: ${dossie.analiseId ?? 'legada, sem identificador'}`, `Data da análise: ${dataHora(dossie.geradoEm)}`, '',
@@ -57,6 +58,14 @@ export function prepararDocumento(dossie: Dossier, tipo: 'proposta' | 'relatorio
       `Citações: ${item.validacao.citacoes === 'conferidas' ? 'conferidas no texto' : 'não verificadas'}. Cobertura dos campos: ${item.validacao.cobertura === 'conferida' ? 'conferida' : 'não verificada'}. Conclusão técnica: ${item.validacao.semantica === 'julgamento_modelo' ? 'julgamento do modelo, sujeito à revisão' : 'não verificada'}.`, '');
     for (const a of item.atributos) linhas.push(`- ${a.atributo}: ${encaixeLabel[a.veredito] ?? 'Não verificado'}`, ...(a.citacao_item ? [`> ${a.citacao_item}`] : []), '');
   }
+  if (dossie.operacao) {
+    const revisao = dossie.operacao.revisao ?? REVISAO_NAO_REGISTRADA;
+    linhas.push('## Condições para fornecer', '', `${ESTADOS_REVISAO_OPERACIONAL[revisao.estado]}. ${revisao.motivo}`, '', 'Comparações usam o cadastro da análise. Condição registrada não confirma capacidade operacional nem prevê pagamento. Responsável pelas confirmações: analista.', '');
+    for (const l of dossie.operacao.linhas) {
+      linhas.push(`### ${l.titulo}${l.item !== undefined ? ` — item ${l.item}` : ''}`, '', ESTADOS_OPERACIONAIS[l.estado], l.detalhe, '');
+      for (const c of l.citacoes) linhas.push(`> ${c.citacao}`, `Fonte: ${c.fonte.nome} - ${c.fonte.url}`, '');
+    }
+  } else linhas.push('## Condições para fornecer', '', 'Esta análise não registrou conferência operacional. Não presumir compatibilidade.', '');
   linhas.push('## Pendências', '', ...(dossie.pendencias.length ? dossie.pendencias.map(p => '- ' + p) : ['Nenhuma pendência documental registrada. Isso não substitui a conferência das evidências.']), '');
   if (dossie.planoDocumentos) {
     linhas.push('## Documentos e responsáveis', '');
@@ -83,7 +92,8 @@ export async function renderizarPdf(arquivo: Exportacao): Promise<Buffer> {
   for (const token of Lexer.lex(arquivo.markdown)) {
     if (token.type === 'space') continue;
     if (token.type === 'heading') {
-      const altura = token.depth === 1 ? 56 : 40;
+      // Reserva também o começo do conteúdo: título isolado no rodapé prejudica a conferência.
+      const altura = token.depth === 1 ? 90 : token.depth === 2 ? 80 : 65;
       if (doc.y + altura > doc.page.height - 64) doc.addPage();
       doc.moveDown(0.5).font('Titulo').fontSize(token.depth === 1 ? 21 : token.depth === 2 ? 14 : 11).text(texto(token.text)).moveDown(0.5);
       doc.font('Corpo').fontSize(10);

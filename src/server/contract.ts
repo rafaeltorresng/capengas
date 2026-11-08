@@ -37,6 +37,7 @@ export type Dossier = {
   checklist: { exigencia: string; documento: string | null; status: string; detalhe?: string; fonte?: Source }[];
   pendencias: string[]; documentos: Source[];
   planoDocumentos?: import('../lib/plano-documentos.ts').PlanoDocumentos;
+  operacao?: import('../lib/operacao.ts').Operacao;
   proposta?: import('../lib/documento-proposta.ts').DocumentoProposta;
   analiseId?: string; geradoEm?: string; empresa?: string; orgao?: string; sessao?: string | null;
   /** Candidatos do pré-filtro do catálogo × itens analisados nesta execução. */
