@@ -18,8 +18,10 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.web.json",
     "build": "vite build",
     "demo": "node src/server/main.ts amostra",
-    "integrado": "node --env-file-if-exists=.env src/server/main.ts integrado",
-    "catalogo:anvisa": "node --disable-warning=ExperimentalWarning scripts/catalogo-anvisa.ts"
+    "integrado": "node src/server/main.ts integrado",
+    "catalogo:anvisa": "node --disable-warning=ExperimentalWarning scripts/catalogo-anvisa.ts",
+    "regras:proposta": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env scripts/regras-proposta.ts",
+    "documento:proposta": "node --disable-warning=ExperimentalWarning scripts/documento-proposta.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

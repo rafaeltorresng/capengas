@@ -33,9 +33,10 @@ Regras:
 - Para cada item promissor: confira o encaixe técnico atributo a atributo (record_fit), escolha o catalog_code certo (o do item; se faltar ou se o texto do órgão descrever outro produto, use find_catalog_codes e escolha o melhor) e chame decide_item. O preço e a decisão vêm do decide_item, não de você.
 - Leia o edital (read_edital) e registre exigências relevantes com citação: registro_anvisa, afe, amostra, marca_referencia e prazo_esclarecimento.
 - Se o texto do item ou do edital indicar marca de referência, ou o histórico mostrar uma marca dominante, use flag_restrictive e redija um esclarecimento (draft_esclarecimento) respeitando o prazo.
+- Só para pregão em que decide_item deu disputar ou disputar_com_pendencia: abra os documentos com read_proposal_docs, registre com record_proposal_rule as regras de apresentação da proposta (comece pelos trechos pré-selecionados; leia o modelo de proposta com read_proposal_excerpt; no máximo 8 leituras) e monte o documento com draft_proposal_document. Pregão sem item viável não tem proposta.
 - Exceções: se uma ferramenta falhar, tente de novo uma vez e siga em frente registrando a pendência. Não analise itens sem produto compatível no catálogo.
 - Resultados antigos de ferramenta são resumidos no histórico. Se faltar uma citação, chame a ferramenta de novo.
-- Ao terminar, chame request_approval com um resumo curto (itens, decisão, preço, pendências, esclarecimentos) e ENCERRE.`;
+- Ao terminar, chame request_approval com um resumo curto (itens, decisão, preço, pendências, esclarecimentos, pendências do documento da proposta) e ENCERRE.`;
 
 const USER = mode === 'focado'
   ? `Turno de ${new Date().toLocaleDateString('pt-BR')}. Analise estes pregões abertos: 77816510000166/2026/348, 03648344000108/2026/14 e 80257355000108/2026/493. Comece por list_catalog.`
@@ -64,9 +65,11 @@ const summary = {
   tools_erro: [...p1.trace, ...(p2?.trace ?? [])].filter((e: any) => e.type === 'tool' && (e.error || e.result?.aceito === false)).length,
   requirements: st.requirements, fits: Object.fromEntries(Object.entries(st.fits).map(([k, v]: any) => [k, `${v.product_id}: ${v.overall}`])),
   decisions: Object.fromEntries(Object.entries(st.decisions).map(([k, v]: any) => [k, { decision: v.decision, product: v.product_id, code: v.catalog_code, preco: v.preco_sugerido, reasons: v.reasons, pendencias: v.docs_vencidos }])),
-  restrictive: st.restrictive, drafts: st.drafts, submissions: st.submissions, sandbox: { propostas: [...sbx.propostas.keys()], esclarecimentos: sbx.esclarecimentos.length },
+  restrictive: st.restrictive, drafts: st.drafts, submissions: st.submissions,
+  propostas: Object.fromEntries(Object.entries(st.proposals ?? {}).map(([k, v]) => [k, { regras: st.proposalRules?.[k]?.length ?? 0, total: v.total, pendencias: v.pendencias, lacunas: v.lacunas }])), sandbox: { propostas: [...sbx.propostas.keys()], esclarecimentos: sbx.esclarecimentos.length },
 };
 writeFileSync(`out/turno-${tag}.summary.json`, JSON.stringify(summary, null, 1));
+for (const [id, doc] of Object.entries(st.proposals ?? {})) writeFileSync(`out/turno-${tag}.proposta-${id.replaceAll('/', '-')}.md`, doc.markdown);
 console.log('\n# RESUMO', JSON.stringify(summary, null, 1).slice(0, 4000));
 store.close();
 sbx.close();
