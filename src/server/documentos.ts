@@ -43,7 +43,7 @@ export function prepararDocumento(dossie: Dossier, tipo: 'proposta' | 'relatorio
       markdown: `# MINUTA PARA REVISÃO E ASSINATURA\n\n${origem}\n\nDocumento não assinado e não enviado. Confira o modelo do órgão, os dados cadastrais e as pendências antes de utilizá-lo. As fontes e o checklist estão no relatório da análise.\n\n${dossie.publicacao && !dossie.publicacao.conferida ? dossie.publicacao.motivo : ''}\n\nAnálise: ${dossie.analiseId ?? 'legada'} · Dados de ${dataHora(proposta.geradoEm)}.\n\n${pendencias}${corpo}` };
   }
   const itens = dossie.itens ?? [];
-  const veredito = concluirAnalise(itens.map(i => ({ estadoCodigo: i.estado })), dossie.reavaliar, dossie.desatualizado, dossie.publicacao?.conferida === false);
+  const veredito = concluirAnalise(itens.map(i => ({ estadoCodigo: i.estado })), dossie.reavaliar, dossie.desatualizado, dossie.publicacao?.conferida === false, dossie.escopo?.naoAnalisados.length);
   const linhas = ['# RELATÓRIO DA ANÁLISE', '', `## ${veredito.titulo}`, '', veredito.detalhe, '',
     `Pregão: ${dossie.tender}`, `Órgão: ${dossie.orgao ?? dossie.pregao}`, `Empresa: ${dossie.empresa ?? 'Não informada'}`,
     `Análise: ${dossie.analiseId ?? 'legada, sem identificador'}`, `Data da análise: ${dataHora(dossie.geradoEm)}`, '',

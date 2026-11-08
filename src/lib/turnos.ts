@@ -23,7 +23,7 @@ export type TurnoEvento =
   | { tipo: 'atividade'; atividade: string; ferramenta?: string }
   | { tipo: 'resultado'; concluida: boolean }
   | { tipo: 'sinal' }
-  | { tipo: 'fim'; status: 'concluido' | 'incompleto' | 'falhou'; resultados: ResultadoPregao[] };
+  | { tipo: 'fim'; status: 'concluido' | 'incompleto' | 'falhou'; resultados: ResultadoPregao[]; motivo?: string };
 
 export type TurnoEvent = { turno: string } & TurnoEvento;
 
@@ -97,6 +97,7 @@ export function projetarTurnos(events: Event[], agora: Date, resultadoLegado: (e
       if (data.tipo === 'fim') {
         turno.status = data.status;
         turno.resultados = data.resultados;
+        if (data.motivo) turno.motivo = data.motivo;
         if (etapa?.estado === 'em_andamento') etapa.estado = data.status === 'concluido' ? 'concluida' : 'pendente';
         if (data.status === 'concluido') publicar(turno, data.resultados);
       }
