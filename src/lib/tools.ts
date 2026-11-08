@@ -14,7 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { buscarNosDocumentos, carregarDocumentos, lerTrecho, preLeitura, registrarRegra, PARAMETROS_REGRA, type Documento, type RegraProposta } from './regras-proposta.ts';
 import { gerarDocumentoProposta, type DocumentoProposta, type ItemProposta } from './documento-proposta.ts';
 import { planoDoEstado, registrarExigencia, PARAMETROS_EXIGENCIA, type ExigenciaDocumental, type PlanoDocumentos } from './plano-documentos.ts';
-import { CAMPOS_OPERACIONAIS, registrarCondicao, fontesOperacionais, aplicarOperacao, type CondicaoOperacional } from './operacao.ts';
+import { CAMPOS_OPERACIONAIS, registrarCondicao, fontesOperacionais, aplicarOperacao, type CondicaoOperacional, type RevisaoOperacional } from './operacao.ts';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const parseId = (id: string) => { const [cnpj, ano, seq] = id.split('/'); return { cnpj, ano: +ano, seq: +seq }; };
@@ -32,6 +32,7 @@ export type LanceState = {
   documentRequirements?: Record<string, ExigenciaDocumental[]>;
   documentPlans?: Record<string, PlanoDocumentos>;
   operationalConditions?: Record<string, CondicaoOperacional[]>;
+  operationalReviews?: Record<string, RevisaoOperacional>;
   /** Sem store, as ferramentas de envio não chamam o portal. */
   store?: LanceStore;
   analysisStore?: Pick<LanceStore, 'openEscalation'>;

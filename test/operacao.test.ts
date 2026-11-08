@@ -1,12 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { registrarCondicao, avaliarOperacao, aplicarOperacao, buscarCondicoesOperacionais, type CondicaoOperacional } from '../src/lib/operacao.ts';
+import { registrarCondicao, avaliarOperacao as avaliarOperacaoReal, aplicarOperacao, buscarCondicoesOperacionais, operacaoDoEstado, type CondicaoOperacional } from '../src/lib/operacao.ts';
 import { newState } from '../src/lib/tools.ts';
 
 // Cláusulas e perfis construídos para testar regras; não são edital ou empresa reais.
 const entrega = 'A entrega será realizada em 15 (quinze) dias corridos após o recebimento da ordem de fornecimento.';
 const docs = [{ nome: 'TR de teste', url: 'https://example.org/tr', texto: entrega }];
 const empresa = { prazoEntregaDias: 60, prazoEntregaUnidade: 'corridos' as const, prazoEntregaMarco: 'ordem_fornecimento' as const };
+const concluida = { estado: 'concluida' as const, motivo: 'Revisão controlada concluída.' };
+const avaliarOperacao = (c: Parameters<typeof avaliarOperacaoReal>[0], e: Parameters<typeof avaliarOperacaoReal>[1], i: number[], r = concluida as Parameters<typeof avaliarOperacaoReal>[3]) => avaliarOperacaoReal(c, e, i, r);
 function condicao(campo: string, citacao: string, item?: number) {
   const lista: CondicaoOperacional[] = [];
   const result = registrarCondicao([{ ...docs[0], texto: citacao }], lista, { campo, arquivo: docs[0].nome, citacao, item }, [4, 39]);
@@ -58,7 +60,7 @@ test('completar a evidência recalcula só a ressalva operacional e preserva pre
     condicao('amostra', 'A apresentação de amostra não será exigida nesta contratação.'),
     condicao('validade_produto', 'Não será exigida validade mínima dos produtos nesta contratação.'),
     condicao('pagamento', 'O pagamento será realizado após o recebimento e atesto da nota fiscal.')];
-  st.operationalConditions.t = completas;
+  st.operationalConditions.t = completas; st.operationalReviews = { t: concluida };
   aplicarOperacao(st, 't');
   assert.equal(st.decisions['t#4'].estado, 'disputar');
   assert.equal(st.decisions['t#4'].precoProposto, 7.5);
@@ -118,4 +120,37 @@ test('dispensa condicionada por momento ou contraposta a outra obrigação exige
     ['amostra', 'A amostra não será exigida antes da sessão; será solicitada depois.'],
     ['validade_produto', 'Não será exigida validade mínima de 12 meses, mas os produtos deverão ter validade de 6 meses.'],
   ]) assert.equal(avaliarOperacao([condicao(campo, q)], empresa, [4]).linhas.find(l => l.campo === campo)!.estado, 'confirmar');
+});
+
+test('revisão concluída sem cláusula de validade informa cobertura, sem condicionar item compatível', () => {
+  const st = newState({ empresa: { ...empresa, prazoEntregaDias: 10 } }, '');
+  st.tenders.t = {}; st.decisions['t#4'] = { estado: 'disputar', motivos: ['Encaixe atende'], precoProposto: 7.5 };
+  st.operationalConditions = { t: [condicao('entrega', entrega),
+    condicao('fornecimento', 'O fornecimento será em entrega única no almoxarifado municipal.'),
+    condicao('amostra', 'A apresentação de amostra não será exigida nesta contratação.'),
+    condicao('pagamento', 'O pagamento será realizado após o recebimento e atesto da nota fiscal.')] };
+  st.operationalReviews = { t: { estado: 'concluida', motivo: 'Revisão dos trechos consultados concluída.' } };
+  aplicarOperacao(st, 't');
+  assert.equal(st.decisions['t#4'].estado, 'disputar');
+  assert.deepEqual(st.decisions['t#4'].motivos, ['Encaixe atende']);
+  const op = avaliarOperacao(st.operationalConditions.t, st.company.empresa, [4], st.operationalReviews.t);
+  assert.equal(op.requerRevisao, false);
+  assert.equal(op.linhas.find(l => l.campo === 'validade_produto')?.estado, 'nao_identificada');
+  assert.match(op.linhas.find(l => l.campo === 'validade_produto')!.detalhe, /não significa dispensa/);
+});
+
+test('revisão não executada nunca é apresentada como busca sem cláusulas, mesmo em dossiê legado', () => {
+  const op = avaliarOperacao([], empresa, [4], { estado: 'nao_executada', motivo: 'Sem orçamento disponível.' });
+  assert.ok(op.linhas.every(l => l.estado === 'nao_avaliada'));
+  assert.equal(op.requerRevisao, true);
+  assert.ok(op.pendencias.some(p => /Sem orçamento/.test(p)));
+});
+
+
+test('dossiê operacional legado não inventa execução nem ausência de execução', () => {
+  const st = newState({ empresa }, ''); st.tenders.t = {}; st.operationalConditions = {};
+  const op = operacaoDoEstado(st, 't')!;
+  assert.equal(op.revisao?.estado, 'nao_registrada');
+  assert.ok(op.linhas.every(l => l.estado === 'nao_avaliada'));
+  assert.equal(op.requerRevisao, true);
 });

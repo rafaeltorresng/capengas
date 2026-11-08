@@ -24,6 +24,7 @@ test('etapa operacional registra a cláusula já consultada sem oferecer ferrame
   } };
   const result = await runAgentWithOperationalReview({ llm, state, tools, system: 'Caso sintético', user: 'Analisar', maxSteps: 1, onToolStart: name => atividades.push(name) });
   assert.equal(result.stopped, 'final'); assert.equal(n, 3);
+  assert.equal(state.operationalReviews?.t.estado, 'concluida');
   assert.equal(result.usage.cost, undefined, 'custo ausente no provedor não vira zero medido');
   assert.equal(state.operationalConditions?.t[0].citacao, quote);
   assert.equal(state.decisions['t#4'].estado, 'disputar_com_pendencia');
@@ -39,6 +40,43 @@ test('falha na etapa operacional preserva conclusão técnica com pendência; tu
     await runAgentWithOperationalReview({ llm, state, tools, system: '', user: '', maxTokens: budget, onEvent: e => { if (e.error) falhas.push(e); } });
     assert.equal(state.decisions['t#4'].estado, 'disputar_com_pendencia');
     assert.equal(n, budget === 10 ? 1 : 2);
+    assert.equal(state.operationalReviews?.t.estado, budget === 10 ? 'nao_executada' : 'falhou');
     assert.equal(falhas.length, budget === 10 ? 0 : 1);
+  }
+});
+
+test('ausência de candidato não é revisão executada nem cláusula não identificada', async () => {
+  const state = caso(); state.editalSources!.t[0].texto = 'Objeto: aquisição de material hospitalar.';
+  let chamadas = 0;
+  const llm: LLM = { model: 'controlado', chat: async () => {
+    chamadas++; return { message: { content: 'Fim técnico' }, usage: { prompt_tokens: 10, completion_tokens: 1 }, ms: 1 };
+  } };
+  await runAgentWithOperationalReview({ llm, state, tools, system: '', user: '' });
+  assert.equal(chamadas, 1);
+  assert.equal(state.operationalReviews?.t.estado, 'nao_executada');
+  assert.match(state.operationalReviews!.t.motivo, /trechos candidatos/);
+  assert.equal(state.decisions['t#4'].estado, 'disputar_com_pendencia');
+});
+
+test('revisão interrompida pelo limite preserva citações, mas permanece inconclusiva', async () => {
+  const state = caso(); let n = 0;
+  const llm: LLM = { model: 'controlado', chat: async () => ({ message: n++ === 0 ? { content: 'Fim técnico' } : {
+    tool_calls: [{ id: String(n), function: { name: 'record_operational_condition', arguments: JSON.stringify({ tender_id: 't', campo: 'entrega', arquivo: 'TR sintético', citacao: quote }) } }],
+  }, usage: { prompt_tokens: 10, completion_tokens: 1 }, ms: 1 }) };
+  await runAgentWithOperationalReview({ llm, state, tools, system: '', user: '' });
+  assert.equal(n, 3);
+  assert.equal(state.operationalReviews?.t.estado, 'inconclusiva');
+  assert.equal(state.operationalConditions?.t.length, 1);
+});
+
+test('interrupção técnica e ferramenta indisponível registram por que a revisão não começou', async () => {
+  for (const semFerramenta of [false, true]) {
+    const state = caso();
+    const llm: LLM = { model: 'controlado', chat: async () => ({ message: semFerramenta ? { content: 'Fim' } : {
+      tool_calls: [{ id: 'c', function: { name: 'list_catalog', arguments: '{}' } }],
+    }, usage: { prompt_tokens: 10, completion_tokens: 1 }, ms: 1 }) };
+    await runAgentWithOperationalReview({ llm, state, tools: semFerramenta ? tools.filter(t => t.name !== 'record_operational_condition') : tools, system: '', user: '', maxSteps: 1 });
+    assert.equal(state.operationalReviews?.t.estado, 'nao_executada');
+    assert.match(state.operationalReviews!.t.motivo, semFerramenta ? /ferramenta/ : /max_steps/);
   }
 });

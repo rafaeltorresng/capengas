@@ -24,13 +24,27 @@ export type CondicaoOperacional = {
 };
 export type LinhaOperacional = {
   campo: CampoOperacional; titulo: string; item?: number;
-  estado: 'compativel' | 'conflito' | 'confirmar' | 'informada' | 'nao_identificada';
+  estado: 'compativel' | 'conflito' | 'confirmar' | 'informada' | 'nao_identificada' | 'nao_avaliada';
   detalhe: string; responsavel: 'analista'; citacoes: CondicaoOperacional[];
 };
-export type Operacao = { linhas: LinhaOperacional[]; requerRevisao: boolean; pendencias: string[]; perfilEntrega: PerfilEntrega; fontes: Documento[] };
+export type RevisaoOperacional = { estado: 'concluida' | 'nao_executada' | 'inconclusiva' | 'falhou' | 'nao_registrada'; motivo: string };
+export type Operacao = { linhas: LinhaOperacional[]; requerRevisao: boolean; pendencias: string[]; perfilEntrega: PerfilEntrega; fontes: Documento[]; revisao?: RevisaoOperacional };
+export const REVISAO_NAO_REGISTRADA: RevisaoOperacional = { estado: 'nao_registrada', motivo: 'Esta análise não registrou a conclusão da revisão operacional.' };
+export const ESTADOS_REVISAO_OPERACIONAL: Record<RevisaoOperacional['estado'], string> = {
+  concluida: 'Revisão concluída nos trechos consultados', nao_executada: 'Revisão não executada', inconclusiva: 'Revisão inconclusiva', falhou: 'Revisão não concluída',
+  nao_registrada: 'Conclusão da revisão não registrada',
+};
+const exigeConfirmacao = (l: LinhaOperacional) => l.estado === 'conflito' || l.estado === 'confirmar';
+export function pendenciasOperacionaisDoItem(op: Operacao, item: number): string[] {
+  const revisao = op.revisao ?? REVISAO_NAO_REGISTRADA;
+  return [...(revisao.estado !== 'concluida' ? [`${ESTADOS_REVISAO_OPERACIONAL[revisao.estado]}: ${revisao.motivo}`] : []),
+    ...op.linhas.filter(l => (l.item === undefined || l.item === item) && exigeConfirmacao(l))
+      .map(l => `${l.titulo} — ${ESTADOS_OPERACIONAIS[l.estado]}.`)];
+}
 export const ESTADOS_OPERACIONAIS: Record<LinhaOperacional['estado'], string> = {
   compativel: 'Compatível com o cadastro', conflito: 'Conflito com o cadastro', confirmar: 'Precisa confirmar',
   informada: 'Condição registrada', nao_identificada: 'Não identificada na análise',
+  nao_avaliada: 'Sem avaliação concluída',
 };
 
 /** Localiza candidatos, sem converter texto em obrigação. Evita ruído de rodapés e validade da proposta/ata. */
@@ -99,7 +113,7 @@ function entregaDaCitacao(citacao: string) {
   return dias > 0 ? { dias, unidade: duracoes[0][2], marco: marcos[0] } : null;
 }
 
-export function avaliarOperacao(condicoes: CondicaoOperacional[], empresa: PerfilEntrega, itens: number[]): Operacao {
+export function avaliarOperacao(condicoes: CondicaoOperacional[], empresa: PerfilEntrega, itens: number[], revisao: RevisaoOperacional): Operacao {
   const perfilEntrega: PerfilEntrega = {
     prazoEntregaDias: empresa.prazoEntregaDias, prazoEntregaUnidade: empresa.prazoEntregaUnidade, prazoEntregaMarco: empresa.prazoEntregaMarco,
   };
@@ -109,8 +123,10 @@ export function avaliarOperacao(condicoes: CondicaoOperacional[], empresa: Perfi
     const escopos: (number | undefined)[] = condicoes.some(c => c.campo === campo && c.item !== undefined) && itens.length ? [...new Set(itens)] : [undefined];
     for (const item of escopos) {
       const citacoes = condicoes.filter(c => c.campo === campo && (c.item === undefined || c.item === item));
-      let estado: LinhaOperacional['estado'] = 'nao_identificada';
-      let detalhe = 'Nenhum trecho registrado. Isso não significa dispensa da obrigação. Confira os documentos do edital.';
+      let estado: LinhaOperacional['estado'] = revisao.estado === 'concluida' ? 'nao_identificada' : 'nao_avaliada';
+      let detalhe = revisao.estado === 'concluida'
+        ? 'Nenhuma citação registrada nos trechos revisados. Isso não significa dispensa da obrigação nem cobertura de todos os anexos.'
+        : `${ESTADOS_REVISAO_OPERACIONAL[revisao.estado]}: ${revisao.motivo} Não há conclusão sobre a presença desta cláusula.`;
       if (citacoes.length) {
         estado = 'informada'; detalhe = 'Confira a condição e seu evento de referência no trecho. Não há confirmação automática da capacidade da empresa.';
         if (campo === 'entrega') {
@@ -142,9 +158,10 @@ export function avaliarOperacao(condicoes: CondicaoOperacional[], empresa: Perfi
       linhas.push({ campo, titulo: TITULOS_OPERACIONAIS[campo], ...(item !== undefined ? { item } : {}), estado, detalhe, responsavel: 'analista', citacoes });
     }
   }
-  const pendencias = linhas.filter(l => !['compativel', 'informada'].includes(l.estado))
+  const pendencias = linhas.filter(exigeConfirmacao)
     .map(l => `${l.titulo}${l.item !== undefined ? ` (item ${l.item})` : ''}: ${ESTADOS_OPERACIONAIS[l.estado]}. ${l.detalhe}`);
-  return { linhas, pendencias, requerRevisao: pendencias.length > 0, perfilEntrega, fontes: [] };
+  if (revisao.estado !== 'concluida') pendencias.unshift(`${ESTADOS_REVISAO_OPERACIONAL[revisao.estado]}: ${revisao.motivo}`);
+  return { linhas, pendencias, requerRevisao: pendencias.length > 0, perfilEntrega, fontes: [], revisao: { ...revisao } };
 }
 
 export function fontesOperacionais(st: LanceState, tender: string): Documento[] {
@@ -155,7 +172,7 @@ export function fontesOperacionais(st: LanceState, tender: string): Documento[] 
 export function operacaoDoEstado(st: LanceState, tender: string): Operacao | undefined {
   if (!st.operationalConditions) return undefined; // Dossiês antigos não ganham uma conferência que nunca ocorreu.
   const itens = Object.keys(st.decisions).filter(k => k.startsWith(tender + '#')).map(k => Number(k.split('#')[1]));
-  return { ...avaliarOperacao(st.operationalConditions[tender] ?? [], st.company.empresa ?? {}, itens), fontes: fontesOperacionais(st, tender) };
+  return { ...avaliarOperacao(st.operationalConditions[tender] ?? [], st.company.empresa ?? {}, itens, st.operationalReviews?.[tender] ?? REVISAO_NAO_REGISTRADA), fontes: fontesOperacionais(st, tender) };
 }
 
 /** Mantém a conclusão técnica e o preço; nenhuma pendência operacional vira autorização de envio. */
@@ -169,14 +186,14 @@ export function aplicarOperacao(st: LanceState, tender: string) {
     if (!base) { base = { estado: d.estado, motivos: [...d.motivos] }; basesTecnicas.set(d, base); }
     d.estado = base.estado; d.motivos = [...base.motivos];
     const item = Number(key.split('#')[1]);
-    const pendencias = operacao.linhas.filter(l => (l.item === undefined || l.item === item) && !['compativel', 'informada'].includes(l.estado));
+    const pendencias = pendenciasOperacionaisDoItem(operacao, item);
     if (pendencias.length) {
       d.estado = 'disputar_com_pendencia';
-      d.motivos = [...d.motivos.filter((m: string) => !m.startsWith('Operação: ')), ...pendencias.map(l => `Operação: ${l.titulo} — ${ESTADOS_OPERACIONAIS[l.estado]}.`)];
+      d.motivos = [...d.motivos, ...pendencias.map(p => `Operação: ${p}`)];
     }
     if (d.decision) d.decision = d.estado === 'disputar' ? 'ofertar' : 'ofertar_com_pendencia';
     if (d.reasons) d.reasons = d.motivos;
   }
 }
 
-export const INSTRUCAO_OPERACIONAL = 'Após sua conclusão técnica, uma etapa específica revisará entrega, fornecimento, amostra, validade dos produtos e pagamento nos arquivos que você já abriu. Não prolongue a análise com buscas para completar esses campos. Não presuma capacidade operacional nem defina prazos; condição sem evidência continuará pendente.';
+export const INSTRUCAO_OPERACIONAL = 'Após sua conclusão técnica, uma etapa específica revisará entrega, fornecimento, amostra, validade dos produtos e pagamento nos arquivos que você já abriu. Não prolongue a análise com buscas para completar esses campos. Não presuma capacidade operacional nem defina prazos; revisão incompleta exige confirmação; cláusula não identificada após a revisão fica como aviso de cobertura, nunca dispensa.';
