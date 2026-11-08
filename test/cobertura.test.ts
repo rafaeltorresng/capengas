@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { clausulasDoItem, inventarioCobertura } from '../src/lib/cobertura.ts';
 import { tools, newState } from '../src/lib/tools.ts';
 
@@ -124,4 +125,22 @@ test('descrição repetida pelo órgão: cada exigência conta uma vez, e a vers
 test('campos diferentes com o mesmo fim de nome e o mesmo valor continuam separados', () => {
   const c = inventarioCobertura('Tesoura Instrumental tipo ponta: reta, haste ponta: reta', [{ citacao_item: 'tipo ponta: reta' }]);
   assert.deepEqual(c.lacunas, ['haste ponta: reta']);
+});
+
+test('propriedade sobre descrições reais (fixtures do PNCP): toda exigência listada é citável', () => {
+  // Se o inventário pedir algo que nenhuma citação literal cobre, o agente persegue a cobertura até o limite
+  // (foi o que travou a execução real base-348). Citar cada cláusula listada tem de bastar.
+  const descricoes = new Set<string>();
+  const coletar = (v: any): void => {
+    if (!v || typeof v !== 'object') return;
+    if (typeof v.descricao === 'string' && v.descricao.length > 20) descricoes.add(v.descricao);
+    for (const k in v) coletar(v[k]);
+  };
+  for (const f of ['coverage.json', 'coded-items.json']) coletar(JSON.parse(readFileSync(new URL(`../fixtures/${f}`, import.meta.url), 'utf8')));
+  assert.ok(descricoes.size > 300, `poucas descrições reais: ${descricoes.size}`);
+  for (const d of descricoes) {
+    const c = clausulasDoItem(d);
+    assert.ok(c.every(x => x.trim().length > 0), d);
+    if (c.length) assert.equal(inventarioCobertura(d, c.map(citacao_item => ({ citacao_item }))).cobertura, 'conferida', d);
+  }
 });
