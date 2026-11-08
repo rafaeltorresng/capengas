@@ -36,6 +36,7 @@ export type Dossier = {
   tender: string; pregao: string; versao: string;
   checklist: { exigencia: string; documento: string | null; status: string; detalhe?: string; fonte?: Source }[];
   pendencias: string[]; documentos: Source[];
+  planoDocumentos?: import('../lib/plano-documentos.ts').PlanoDocumentos;
   reavaliar?: boolean;
   retificacao?: import('../lib/versao.ts').VersaoRetificacao;
   retificacoes?: import('../lib/versao.ts').VersaoRetificacao[];

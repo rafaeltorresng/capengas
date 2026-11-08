@@ -49,6 +49,14 @@ const DOC_REQS: Record<string, { tipo: string; nome: string }[]> = {
   certidoes: [{ tipo: 'cnd_federal', nome: 'CND Federal' }, { tipo: 'crf_fgts', nome: 'CRF FGTS' }, { tipo: 'cndt', nome: 'CNDT' }],
   balanco: [{ tipo: 'balanco', nome: 'Balanço patrimonial' }],
   atestado: [{ tipo: 'atestado', nome: 'Atestado de capacidade técnica' }],
+  cnd_federal: [{ tipo: 'cnd_federal', nome: 'CND Federal' }],
+  crf_fgts: [{ tipo: 'crf_fgts', nome: 'CRF FGTS' }],
+  cndt: [{ tipo: 'cndt', nome: 'CNDT' }],
+  certidao_estadual: [{ tipo: 'certidao_estadual', nome: 'Certidão estadual' }],
+  certidao_municipal: [{ tipo: 'certidao_municipal', nome: 'Certidão municipal' }],
+  certidao_falencia: [{ tipo: 'certidao_falencia', nome: 'Certidão de falência' }],
+  licenca_sanitaria: [{ tipo: 'licenca_sanitaria', nome: 'Licença sanitária' }],
+  contrato_social: [{ tipo: 'contrato_social', nome: 'Contrato social' }],
 };
 
 /** Cofre × data da sessão. `validade: null` significa documento sem vencimento (ex.: AFE). */

@@ -12,7 +12,7 @@ import type { LanceStore } from '../lib/store.ts';
 import type { CofreDoc, Politica } from '../lib/contracts.ts';
 
 export type DemoCompany = {
-  empresa: { nome: string; porte: string; uf: string; margemMinima: number; prazoEntregaDias: number };
+  empresa: { nome: string; porte: string; atuacao?: string; uf: string; margemMinima: number; prazoEntregaDias: number };
   catalogo: { id: string; nome: string; marca: string; registroAnvisa: string; custo: number; ficha: string; termos: string[] }[];
   cofre: CofreDoc[]; politica: Politica;
 };
@@ -73,7 +73,7 @@ export function createOnboarding(o: {
   const disponivel = !!o.store && o.disponivel;
   const motivo = disponivel ? null : 'Análise ao vivo indisponível. É necessário o modo integrado com a chave do modelo configurada no servidor.';
   const data: OnboardingData = {
-    empresa: { nome: o.company.empresa.nome, porte: o.company.empresa.porte, uf: o.company.empresa.uf,
+    empresa: { nome: o.company.empresa.nome, porte: o.company.empresa.porte, atuacao: o.company.empresa.atuacao, uf: o.company.empresa.uf,
       margemMinima: o.company.empresa.margemMinima, prazoEntregaDias: o.company.empresa.prazoEntregaDias },
     arquivo: 'catalogo-distribuidora.xlsx', geradoEm: o.demo.geradoEm,
     produtos: o.company.catalogo.map(({ id, nome, marca, registroAnvisa }) => ({ id, nome, marca, registroAnvisa })),

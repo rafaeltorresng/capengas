@@ -2,6 +2,7 @@
 // não consulta fontes e não inventa verificação documental quando ela não ocorreu.
 import type { LanceState } from './tools.ts';
 import type { DocCheck, DocStatus as RuleDocStatus } from './contracts.ts';
+import { planoDoEstado } from './plano-documentos.ts';
 
 export type DossierSource = { nome: string; url: string; citacao?: string };
 export type DocStatus = RuleDocStatus | 'nao_verificado';
@@ -78,6 +79,7 @@ export function buildDossie(st: LanceState, tenderId: string, options: { documen
     geradoEm: st.now.toISOString(), orgao: tender.orgao ?? '', sessao: tender.abertura ?? null,
     empresa: st.company.empresa?.nome ?? '', checklist, pendencias: [...pendencias], documentos: documents,
     exigencias: requirements.map(r => ({ ...r })), itens,
+    planoDocumentos: planoDoEstado(st, tenderId) ?? undefined,
     // Uma apresentação de dossiê nunca substitui evaluate/recheck no caminho de envio.
     envioAutomaticoLiberado: false,
   };

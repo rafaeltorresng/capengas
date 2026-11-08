@@ -43,6 +43,8 @@ const ATIVIDADES: Record<string, string> = {
   read_proposal_excerpt: 'Lendo o modelo de proposta',
   record_proposal_rule: 'Registrando as regras da proposta',
   draft_proposal_document: 'Montando o documento da proposta',
+  record_document_requirement: 'Registrando documento exigido',
+  draft_document_plan: 'Montando o plano de documentos',
 };
 
 export function atividadeDaFerramenta(nome: string) {

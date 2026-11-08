@@ -21,7 +21,8 @@
     "integrado": "node src/server/main.ts integrado",
     "catalogo:anvisa": "node --disable-warning=ExperimentalWarning scripts/catalogo-anvisa.ts",
     "regras:proposta": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env scripts/regras-proposta.ts",
-    "documento:proposta": "node --disable-warning=ExperimentalWarning scripts/documento-proposta.ts"
+    "documento:proposta": "node --disable-warning=ExperimentalWarning scripts/documento-proposta.ts",
+    "plano:documentos": "node --disable-warning=ExperimentalWarning scripts/plano-documentos.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
