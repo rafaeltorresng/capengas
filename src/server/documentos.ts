@@ -4,7 +4,7 @@ import { Lexer } from 'marked';
 import type { Dossier } from './contract.ts';
 import { concluirAnalise } from '../lib/experiencia-analise.ts';
 import { numerosConferem } from '../lib/regras-proposta.ts';
-import { ESTADOS_OPERACIONAIS } from '../lib/operacao.ts';
+import { ESTADOS_OPERACIONAIS, ESTADOS_REVISAO_OPERACIONAL, REVISAO_NAO_REGISTRADA } from '../lib/operacao.ts';
 
 export class DocumentoError extends Error {
   readonly status: number;
@@ -59,7 +59,8 @@ export function prepararDocumento(dossie: Dossier, tipo: 'proposta' | 'relatorio
     for (const a of item.atributos) linhas.push(`- ${a.atributo}: ${encaixeLabel[a.veredito] ?? 'Não verificado'}`, ...(a.citacao_item ? [`> ${a.citacao_item}`] : []), '');
   }
   if (dossie.operacao) {
-    linhas.push('## Condições para fornecer', '', 'Comparações usam o cadastro da análise. Condição registrada não confirma capacidade operacional nem prevê pagamento. Responsável pelas confirmações: analista.', '');
+    const revisao = dossie.operacao.revisao ?? REVISAO_NAO_REGISTRADA;
+    linhas.push('## Condições para fornecer', '', `${ESTADOS_REVISAO_OPERACIONAL[revisao.estado]}. ${revisao.motivo}`, '', 'Comparações usam o cadastro da análise. Condição registrada não confirma capacidade operacional nem prevê pagamento. Responsável pelas confirmações: analista.', '');
     for (const l of dossie.operacao.linhas) {
       linhas.push(`### ${l.titulo}${l.item !== undefined ? ` — item ${l.item}` : ''}`, '', ESTADOS_OPERACIONAIS[l.estado], l.detalhe, '');
       for (const c of l.citacoes) linhas.push(`> ${c.citacao}`, `Fonte: ${c.fonte.nome} - ${c.fonte.url}`, '');

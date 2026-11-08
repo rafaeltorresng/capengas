@@ -81,7 +81,13 @@ test('agente que omite a extração não deixa recomendação irrestrita no fim 
     const st = newState(company, '', now()); preparar(st);
     await runAnalysisTurn({ state: st, store, origem: 'direto', run: async () => ({ stopped: 'final' }) });
     assert.equal(store.getDecisions(tid)[0].estado, 'disputar_com_pendencia');
-    assert.ok(createReadModel(store, { now, actions: () => [] }).dossie(tid)!.operacao?.requerRevisao);
+    const dossie = createReadModel(store, { now, actions: () => [] }).dossie(tid)!;
+    assert.ok(dossie.operacao?.requerRevisao);
+    assert.equal(dossie.operacao?.revisao?.estado, 'nao_executada');
+    const relatorio = prepararDocumento(dossie, 'relatorio').markdown;
+    assert.match(relatorio, /Revisão não executada/);
+    assert.match(relatorio, /não há conclusão sobre a presença/i);
+    assert.doesNotMatch(relatorio, /Nenhum trecho registrado|Nenhuma citação registrada/);
   } finally { store.close(); }
 });
 test('onboarding disponibiliza ferramentas operacionais antes da viabilidade e registra citação real do contexto', async t => {
@@ -102,10 +108,13 @@ test('onboarding disponibiliza ferramentas operacionais antes da viabilidade e r
   ]; let n = 0;
   const llm: LLM = { model: 'controlado', chat: async (_, schemas) => {
     assert.ok(schemas.some(s => s.function.name === 'record_operational_condition'));
-    assert.ok(schemas.some(s => s.function.name === 'read_operational_excerpt'));
+    if (n < 4) assert.ok(schemas.some(s => s.function.name === 'read_operational_excerpt'));
+    else assert.deepEqual(schemas.map(s => s.function.name), ['record_operational_condition']);
     const chamada = chamadas[n++];
     return { message: chamada ? { tool_calls: [{ id: String(n), function: { name: chamada[0] as string, arguments: JSON.stringify(chamada[1]) } }] } : { content: 'Fim' }, usage: { prompt_tokens: 1, completion_tokens: 1 }, ms: 1 };
   } };
   await runOnboardingAnalysis({ company, demo, store, tenderId: tender, turno: 'operacao-onboarding', now, llm: () => llm, ferramentas: [fakeDecide, ...tools.filter(t => t.name !== 'decide_item')], snapshot: async () => {} });
-  assert.equal(createReadModel(store, { now, actions: () => [] }).dossie(tender)!.operacao?.linhas[0].citacoes[0].citacao, quote);
+  const dossie = createReadModel(store, { now, actions: () => [] }).dossie(tender)!;
+  assert.equal(dossie.operacao?.linhas[0].citacoes[0].citacao, quote);
+  assert.equal(dossie.operacao?.revisao?.estado, 'concluida');
 });

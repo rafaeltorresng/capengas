@@ -244,3 +244,19 @@ test('número de item no erro não vira "fonte indisponível"; HTTP e tempo esgo
   assert.match(motivoIncompleto({ stopped: 'final', trace: [erro('HTTP 503: Service Unavailable')] }, 0), /^fonte indisponível/);
   assert.match(motivoIncompleto({ stopped: 'final', trace: [erro('timeout após 4 tentativas: https://pncp.gov.br/x')] }, 0), /^fonte indisponível/);
 });
+
+test('o auditor exige que ressalva operacional persistida apareça no dossiê e no relatório', async t => {
+  const { company, store } = preparar(t);
+  const model = await rodar(store, company, [leituras, [fitCompleto()], [['decide_item', { tender_id: T, item: 4, product_id: 'P1' }]],
+    [['read_proposal_docs', { tender_id: T }]], [['draft_proposal_document', { tender_id: T }]]]);
+  assert.ok(store.getDecisions(T)[0].motivos.some(m => m.startsWith('Operação: ')));
+  assert.deepEqual(consistencia(store, T), []);
+  const dossie = model.dossie(T)!;
+  store.upsertDossie(T, { ...dossie, operacao: undefined, pendencias: dossie.pendencias.filter(p => !p.startsWith('Operação: ')),
+    itens: dossie.itens!.map(i => ({ ...i, motivos: i.motivos.filter((m: string) => !m.startsWith('Operação: ')) })) });
+  const erros = consistencia(store, T);
+  assert.ok(erros.some(e => /ressalva operacional sem pendência operacional no dossiê/.test(e)), erros.join(' | '));
+  assert.ok(erros.some(e => /dossiê omite motivo da ressalva operacional/.test(e)), erros.join(' | '));
+  assert.ok(erros.some(e => /ressalva operacional ausente da lista/.test(e)), erros.join(' | '));
+  assert.ok(erros.some(e => /relatório omite a ressalva operacional/.test(e)), erros.join(' | '));
+});

@@ -7,6 +7,7 @@ import { verifyQuote } from './rules.ts';
 import { prepararDocumento, DocumentoError } from '../server/documentos.ts';
 import type { Dossier } from '../server/contract.ts';
 import type { LanceStore } from './store.ts';
+import { pendenciasOperacionaisDoItem } from './operacao.ts';
 
 export type Passo = { i: number; ferramenta: string; entrada?: string; saida?: string; ms?: number; custoUsd?: number };
 export type ClasseRepeticao =
@@ -109,6 +110,14 @@ export function consistencia(store: LanceStore, tenderId: string): string[] {
     const di = dossie.itens?.find((x: any) => x.item === d.item);
     if (!di) erros.push(`item ${d.item}: ausente do dossiê`);
     else if (di.estado !== d.estado) erros.push(`item ${d.item}: dossiê mostra ${di.estado}, store tem ${d.estado}`);
+    const operacionais = d.motivos.filter(m => m.startsWith('Operação: '));
+    if (operacionais.length) {
+      if (!dossie.operacao?.requerRevisao || !pendenciasOperacionaisDoItem(dossie.operacao, d.item).length)
+        erros.push(`item ${d.item}: ressalva operacional sem pendência operacional no dossiê`);
+      if (!di || operacionais.some(m => !di.motivos?.includes(m))) erros.push(`item ${d.item}: dossiê omite motivo da ressalva operacional`);
+      if (!dossie.pendencias.some(p => p.startsWith('Operação: ')))
+        erros.push(`item ${d.item}: ressalva operacional ausente da lista de pendências`);
+    }
     const fit = fits.find(f => f.item === d.item && f.produto === d.produto);
     const cobertura = (fit?.atributos as any)?.validacao?.cobertura;
     if (VIAVEL.has(d.estado) && cobertura !== 'conferida') erros.push(`item ${d.item}: ${d.estado} sem cobertura conferida`);
@@ -139,14 +148,19 @@ export function consistencia(store: LanceStore, tenderId: string): string[] {
       if (!proposta.itens.some((pi: any) => pi.numero === d.item)) erros.push(`item ${d.item} viável fora da proposta`);
     }
   }
-  const veredito = concluirAnalise(fila as any, dossie.reavaliar === true, dossie.desatualizado === true, dossie.publicacao?.conferida === false, dossie.escopo?.naoAnalisados.length);
+  const veredito = concluirAnalise(fila as any, dossie.reavaliar === true, dossie.desatualizado === true, dossie.publicacao?.conferida === false, dossie.escopo?.naoAnalisados.length, dossie.operacao?.requerRevisao);
   if (dossie.escopo?.naoAnalisados.length && !/não (foi|foram) analisad/.test(veredito.detalhe)) erros.push('veredito omite candidatos não analisados');
   const viaveis = decisoes.filter(d => VIAVEL.has(d.estado)).length;
   if (veredito.liberados + veredito.condicionados !== viaveis) erros.push(`veredito conta ${veredito.liberados + veredito.condicionados} viáveis, store tem ${viaveis}`);
   if (dossie.publicacao?.conferida === false && veredito.estado !== 'revisao_necessaria') erros.push('publicação não conferida, mas o veredito não pede revisão');
   try {
     const rel = prepararDocumento(dossie as Dossier, 'relatorio').markdown;
-    for (const d of decisoes) if (!rel.includes(`${d.item}`)) erros.push(`relatório não menciona o item ${d.item}`);
+    for (const d of decisoes) {
+      if (!rel.includes(`${d.item}`)) erros.push(`relatório não menciona o item ${d.item}`);
+      if (d.motivos.some(m => m.startsWith('Operação: ')) && (!rel.includes('## Condições para fornecer')
+        || d.motivos.filter(m => m.startsWith('Operação: ')).some(m => !rel.includes(m))))
+        erros.push(`item ${d.item}: relatório omite a ressalva operacional`);
+    }
     if (dossie.publicacao?.conferida === false && !/n[ãa]o (est[áa] )?confirmad|n[ãa]o conferid/i.test(rel)) erros.push('relatório omite que a publicação não foi conferida');
   } catch (e) { erros.push(`relatório não gerado: ${e instanceof Error ? e.message : e}`); }
   if (proposta?.itens?.length) {
