@@ -111,6 +111,7 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
       <div className="min-w-0">
         <h2 className="text-2xl font-semibold tracking-tight wrap-anywhere">{recurso.error ? 'Versão da análise não confirmada' : veredito.titulo}</h2>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{veredito.detalhe}</p>
+        {atual && dossier?.continuacaoSimulada && <Badge variant="outline" className="mt-2">Retomada simulada</Badge>}
         <p className="mt-2 text-xs text-muted-foreground">Nenhuma proposta enviada.</p>
       </div>
       {atual && recurso.data?.origem === 'integrado' && <PdfButton tender={resultado.tender} analise={turno.id} tipo="relatorio" rotulo="Baixar análise em PDF" />}
@@ -212,7 +213,7 @@ export function Acompanhamento({ data, expandir = false }: { data: Turnos; lastR
         actions={<Button variant="ghost" nativeButton={false} render={<a href="#/turnos" />}><ArrowLeftIcon data-icon="inline-start" /> Todos os editais</Button>} />
       {turno.status === 'concluido' && turno.resultados?.length
         ? turno.resultados.map(resultado => <AnalysisResult key={resultado.tender} resultado={resultado} turno={turno} />)
-        : <><AgentProgress turno={turno} />{turno.status === 'concluido' && <Alert><AlertDescription>Esta execução antiga não registrou o resultado por item. Consulte o histórico e as evidências disponíveis. <AppLink href="#/historico">Abrir histórico</AppLink></AlertDescription></Alert>}</>}
+        : <><AgentProgress turno={turno} />{turno.status === 'incompleto' && <AppLink href="#/escaladas">Voltar às pendências</AppLink>}{turno.status === 'concluido' && <Alert><AlertDescription>Esta execução antiga não registrou o resultado por item. Consulte o histórico e as evidências disponíveis. <AppLink href="#/historico">Abrir histórico</AppLink></AlertDescription></Alert>}</>}
     </Page>;
   }
   const query = normalize(busca);

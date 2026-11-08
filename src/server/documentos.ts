@@ -22,6 +22,7 @@ const dataHora = (valor?: string) => valor && Number.isFinite(Date.parse(valor))
 /** Documento é uma leitura do dossiê persistido, nunca uma nova decisão ou autorização de envio. */
 export function prepararDocumento(dossie: Dossier, tipo: 'proposta' | 'relatorio'): Exportacao {
   const nomeArquivo = `lance-${tipo}-${dossie.tender.replace(/[^\w-]/g, '-')}.pdf`;
+  const simulacao = dossie.continuacaoSimulada ? 'Demonstração: a retomada e a confirmação do encaixe foram simuladas. Minuta sem autorização de envio.' : '';
   if (tipo === 'proposta') {
     const proposta = dossie.proposta;
     if (dossie.reavaliar) throw new DocumentoError(409, 'O edital mudou. Reavalie antes de preparar a proposta.');
@@ -41,11 +42,11 @@ export function prepararDocumento(dossie: Dossier, tipo: 'proposta' | 'relatorio
     const corpo = proposta.markdown.split('## Conferência antes do envio')[0];
     const pendencias = proposta.pendencias.length ? `## Complete antes de utilizar\n\n${proposta.pendencias.map(p => '- ' + p).join('\n')}\n\n` : '';
     return { titulo: 'Proposta de preços - minuta', nomeArquivo, paisagem: true,
-      markdown: `# MINUTA PARA REVISÃO E ASSINATURA\n\n${origem}\n\nDocumento não assinado e não enviado. Confira o modelo do órgão, os dados cadastrais e as pendências antes de utilizá-lo. As fontes e o checklist estão no relatório da análise.\n\n${dossie.publicacao && !dossie.publicacao.conferida ? dossie.publicacao.motivo : ''}\n\n${dossie.operacao?.requerRevisao ? 'Condições operacionais com pendências. Confira entrega, fornecimento, amostra, validade dos produtos e pagamento no relatório antes de utilizar esta minuta.' : ''}\n\nAnálise: ${dossie.analiseId ?? 'legada'} · Dados de ${dataHora(proposta.geradoEm)}.\n\n${pendencias}${corpo}` };
+      markdown: `# MINUTA PARA REVISÃO E ASSINATURA\n\n${origem}\n\n${simulacao ? simulacao + '\n\n' : ''}Documento não assinado e não enviado. Confira o modelo do órgão, os dados cadastrais e as pendências antes de utilizá-lo. As fontes e o checklist estão no relatório da análise.\n\n${dossie.publicacao && !dossie.publicacao.conferida ? dossie.publicacao.motivo : ''}\n\n${dossie.operacao?.requerRevisao ? 'Condições operacionais com pendências. Confira entrega, fornecimento, amostra, validade dos produtos e pagamento no relatório antes de utilizar esta minuta.' : ''}\n\nAnálise: ${dossie.analiseId ?? 'legada'} · Dados de ${dataHora(proposta.geradoEm)}.\n\n${pendencias}${corpo}` };
   }
   const itens = dossie.itens ?? [];
   const veredito = concluirAnalise(itens.map(i => ({ estadoCodigo: i.estado })), dossie.reavaliar, dossie.desatualizado, dossie.publicacao?.conferida === false, dossie.escopo?.naoAnalisados.length, dossie.operacao?.requerRevisao);
-  const linhas = ['# RELATÓRIO DA ANÁLISE', '', `## ${veredito.titulo}`, '', veredito.detalhe, '',
+  const linhas = ['# RELATÓRIO DA ANÁLISE', '', ...(simulacao ? [simulacao, ''] : []), `## ${veredito.titulo}`, '', veredito.detalhe, '',
     `Pregão: ${dossie.tender}`, `Órgão: ${dossie.orgao ?? dossie.pregao}`, `Empresa: ${dossie.empresa ?? 'Não informada'}`,
     `Análise: ${dossie.analiseId ?? 'legada, sem identificador'}`, `Data da análise: ${dataHora(dossie.geradoEm)}`, '',
     'A conclusão se limita aos itens analisados. Não é resultado publicado, homologação nem autorização de envio.', '',

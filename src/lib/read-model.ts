@@ -20,7 +20,7 @@ export type Proof = {
   fonte: string; avaliacoes: { nome: string; valor: string }[]; cenarios: { nome: string; resultado: string }[];
   concordancia: number | null; custoUsd: number | null; duracaoMs: number | null;
 };
-type Dossie = ReturnType<typeof buildDossie> & { retificacao?: VersaoRetificacao; retificacoes?: VersaoRetificacao[]; reavaliar?: boolean; desatualizado?: boolean;
+type Dossie = ReturnType<typeof buildDossie> & { retificacao?: VersaoRetificacao; retificacoes?: VersaoRetificacao[]; reavaliar?: boolean; desatualizado?: boolean; continuacaoSimulada?: boolean;
   publicacao?: { conferida: boolean; motivo: string } };
 const labels: Record<string, string> = { disputar: 'Disputar', disputar_com_pendencia: 'Com pendência', esclarecer: 'Em esclarecimento', escalar: 'Escalar', nao_disputar: 'Não disputar' };
 const fitLabels: Record<string, string> = { atende: 'Atende', nao_atende: 'Não atende', nao_informado: 'Não informado' };

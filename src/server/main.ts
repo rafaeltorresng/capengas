@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { criarBiblioteca } from '../lib/catalogos-demo.ts';
 import { feedDoServidor } from './feed.ts';
 import { createOnboarding } from './onboarding.ts';
+import { criarDecisaoDemo } from './retomada-demo.ts';
 
 async function loadSample(): Promise<SampleState | undefined> {
   if (process.argv[3] !== '--dev2') return undefined;
@@ -34,11 +35,12 @@ if (mode === 'amostra' || mode === 'integrado') {
     const demo = JSON.parse(await readFile(new URL('../../fixtures/demo.json', import.meta.url), 'utf8'));
     const semaforos = Object.fromEntries((demo?.pregoes ?? []).filter((p: any) => p.semaforoFiscal?.status).map((p: any) => [p.id, p.semaforoFiscal]));
     const sancoes = store ? sancoesDoArquivo(process.env.LANCE_CEIS_CSV ?? join(DATA, 'ceis.csv'), company.empresa?.cnpj) : null;
-    const state = store
-      ? createIntegratedStore(store, createReadModel(store, {
-        actions: () => store.getActions(), cofre: company.cofre, semaforos, sancoes,
-        proof: () => buildProof(prova!, store.events()),
-      }))
+    const model = store && createReadModel(store, {
+      actions: () => store.getActions(), cofre: company.cofre, semaforos, sancoes,
+      proof: () => buildProof(prova!, store.events()),
+    });
+    const state = store && model
+      ? createIntegratedStore(store, model, process.env.LANCE_DEMO_RETOMADA === '1' ? criarDecisaoDemo(store, model, company) : undefined)
       : createSampleStore(await loadSample());
     const manifesto = JSON.parse(await readFile(new URL('../../fixtures/catalogos.json', import.meta.url), 'utf8'));
     const biblioteca = criarBiblioteca(company.catalogo, manifesto);

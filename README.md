@@ -31,6 +31,8 @@ Para explorar a interface com dados de amostra, rode `npm ci`, `npm run build` e
 
 A análise ao vivo usa editais públicos reais e um perfil de demonstração com catálogo, fichas, custos, cofre e política sintéticos. O fluxo iniciado pela interface termina em análise e preparação de documentos. O agendador é um fluxo separado, com fase de ações em sandbox.
 
+Para demonstrar a retomada pela tela **Pendências**, inicie o modo integrado com `LANCE_DEMO_RETOMADA=1` e um banco de demonstração. Ao registrar uma decisão, a interface volta ao acompanhamento. Quando as decisões do edital terminam, o agente simulado confirma os itens aprovados ou ajustados que têm produto, quantidade e preço, e o Lance monta a minuta para download em **Documentos**. Recusas excluem o item. A minuta identifica a simulação e fica bloqueada para envio.
+
 ## Como o agente trabalha
 
 1. **Reúne as fontes.** O agente consulta os itens do pregão e as fichas dos produtos selecionados. O servidor baixa os anexos do edital e extrai o texto dos PDFs com `pdftotext`, para que o agente possa buscar e citar trechos.

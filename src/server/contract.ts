@@ -39,6 +39,7 @@ export type Dossier = {
   pendencias: string[]; documentos: Source[];
   planoDocumentos?: import('../lib/plano-documentos.ts').PlanoDocumentos;
   operacao?: import('../lib/operacao.ts').Operacao;
+  continuacaoSimulada?: boolean;
   proposta?: import('../lib/documento-proposta.ts').DocumentoProposta;
   analiseId?: string; geradoEm?: string; empresa?: string; orgao?: string; sessao?: string | null;
   /** Candidatos do pré-filtro do catálogo × itens analisados nesta execução. */

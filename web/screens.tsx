@@ -513,12 +513,13 @@ export function EscalationCard({ row, onResolved, embedded = false }: { row: Esc
     setBusy(true);
     setError('');
     try {
-      await request<SavedDecision>('escaladas/' + encodeURIComponent(row.id), {
+      const { dados } = await request<SavedDecision>('escaladas/' + encodeURIComponent(row.id), {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ decisao, ...(decisao === 'ajustar' ? { ajuste: adjustment } : {}) }),
       });
       setSaved(true);
       onResolved('Decisão registrada.');
+      if (dados.turno) window.location.hash = '#/turnos/' + encodeURIComponent(dados.turno);
     } catch (failure) {
       if (failure instanceof ApiError && [404, 409].includes(failure.status)) {
         setSaved(true);

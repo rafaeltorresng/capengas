@@ -20,6 +20,7 @@ export function agruparResultados(rows: QueueItem[], dossie: (tender: string) =>
 
 export type TurnoEvento =
   | { tipo: 'inicio'; pregoes: string[]; nomesEditais?: Record<string, string>; catalogos?: import('./catalogos-demo.ts').SelecaoCatalogos }
+  | { tipo: 'retomada' }
   | { tipo: 'atividade'; atividade: string; ferramenta?: string }
   | { tipo: 'resultado'; concluida: boolean }
   | { tipo: 'sinal' }
@@ -88,7 +89,12 @@ export function projetarTurnos(events: Event[], agora: Date, resultadoLegado: (e
         ...(data.catalogos ? { catalogos: { hash: data.catalogos.hash, arquivos: data.catalogos.arquivos, produtos: data.catalogos.produtos.map(p => p.id) } } : {}) });
     } else if (data) {
       const turno = turnos.get(data.turno);
-      if (!turno || turno.status !== 'ativo') continue;
+      if (!turno) continue;
+      if (data.tipo === 'retomada') {
+        turno.status = 'ativo';
+        delete turno.motivo;
+      }
+      if (turno.status !== 'ativo') continue;
       turno.atualizadoEm = event.horario;
       const etapa = turno.etapas.at(-1);
       if (data.tipo === 'atividade' && (etapa?.atividade !== data.atividade || etapa.estado !== 'em_andamento')) {
