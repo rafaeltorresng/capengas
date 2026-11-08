@@ -55,7 +55,7 @@ test('versão do catálogo muda quando ficha ou custo muda, sem modificar o retr
 
 test('biblioteca ampliada conserva os seis produtos e confere todos os registros na base oficial local', async (t) => {
   const { readFileSync, existsSync } = await import('node:fs');
-  const empresa = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+  const empresa = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
   const manifesto = JSON.parse(readFileSync(new URL('../fixtures/catalogos.json', import.meta.url), 'utf8'));
   const b = criarBiblioteca(empresa.catalogo, manifesto);
   for (const p of empresa.catalogo)

@@ -9,7 +9,7 @@ test('análise persiste decisão, dossiê, evento e uma escalada sem duplicá-la
   const now = new Date('2026-11-07T12:00:00-03:00');
   const store = openStore(':memory:', { now: () => now });
   try {
-    const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+    const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
     const state = newState(company, 'http://127.0.0.1:9', now);
     const id = '11111111000111/2026/1';
     state.tenders[id] = { abertura: '2026-11-23T09:00', orgao: 'Teste' };

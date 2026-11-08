@@ -6,7 +6,7 @@ import { mapSearchItem } from '../src/lib/data.ts';
 import { matchProduct, matchCatalog, rankCandidates } from '../src/lib/demo.ts';
 
 const search = JSON.parse(readFileSync(new URL('../fixtures/search_mh.json', import.meta.url), 'utf8'));
-const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 
 describe('mapSearchItem', () => {
   test('traz plataforma e situação de cada pregão da busca', () => {

@@ -94,7 +94,7 @@ const tid = '11111111000111/2026/1';
 const EDITAL = 'ANEXO II MODELO DE PROPOSTA. A validade desta proposta e de 120 (cento e vinte) dias corridos, contados da data da abertura. ' +
   'O prazo para envio da proposta e de, no maximo, 02 (duas) horas a contar da convocaçao pelo sistema.';
 function lance(estado: string | null) {
-  const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+  const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
   const state = newState(company, 'http://127.0.0.1:9', hoje);
   state.tenders[tid] = { orgao: 'Prefeitura X', municipio: 'Recife', uf: 'PE', abertura: '2026-11-23T09:00' };
   state.items[tid] = [{ numero: 1, descricao: 'Cabo de bisturi nº 4', quantidade: 10, unidade: 'Unidade', valorEstimado: 12, sigiloso: false }];

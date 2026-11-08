@@ -14,7 +14,7 @@ import type { Dossier } from '../src/server/contract.ts';
 import { eventoTurno } from '../src/lib/turnos.ts';
 
 const tid = '77816510000166/2026/348';
-const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const now = () => new Date('2026-11-08T12:00:00Z');
 function caso() {
   // Caso unitário sintético: não é decisão produzida por uma análise real.

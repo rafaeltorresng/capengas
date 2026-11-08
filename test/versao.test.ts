@@ -6,7 +6,7 @@ import { diffErrata, type EntradaDiff } from '../src/lib/errata.ts';
 
 const T = '77816510000166/2026/348';
 const descricao = 'Cabo de bisturi tamanho: cerca de 13 cm, material: aço inoxidável.';
-const politica = { ...JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8')).politica,
+const politica = { ...JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8')).politica,
   margemMinima: 0.15, margemAlvo: 0.2, valorMaxAutomatico: 50_000 };
 function entrada(): EntradaDiff {
   return { tenderId: T, hoje: '2026-11-07', politica, custos: { P1: 100 },

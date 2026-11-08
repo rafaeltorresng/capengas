@@ -8,7 +8,7 @@ import { selecionarPregoes, createAnalysisTurn, resolverPregoesSolicitados, type
 import type { LanceState } from '../src/lib/tools.ts';
 import type { Recheque } from '../src/lib/contracts.ts';
 
-const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const A = '77816510000166/2026/348', B = '00394452000103/2026/22617', C = '00394429000100/2026/2941';
 const SUSPENSO = '60448040000122/2026/701', ZIP = '95422986000102/2026/309';
 const pregao = (id: string, abertura: string) => ({ id, orgao: `ÓRGÃO ${id.slice(0, 4)}`, uf: 'PR', abertura, plataforma: 'Compras.gov.br', url: `https://pncp.gov.br/app/editais/${id}` });

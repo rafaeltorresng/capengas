@@ -7,7 +7,7 @@ import { openStore, type LanceStore } from '../src/lib/store.ts';
 import { executarAcao, type ActDeps, type PedidoAcao } from '../src/lib/act.ts';
 import type { Politica, Recheque } from '../src/lib/contracts.ts';
 
-const politica: Politica = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8')).politica;
+const politica: Politica = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8')).politica;
 const TENDER = '77816510000166/2026/348';
 const ok: Recheque = { status: 'ok', situacao: 'Divulgada no PNCP', arquivosHash: 'abc', em: '2026-11-07T18:00:00.000Z' };
 const catalogo = [{ id: 'TES-01', marca: 'Norte', registroAnvisa: '80123456789' }];

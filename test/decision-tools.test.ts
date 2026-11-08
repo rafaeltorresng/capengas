@@ -8,7 +8,7 @@ const tid = '11111111000111/2026/1';
 function setup() {
   mock.method(anvisa, 'byRegistro', () => ({ VALIDADE_REGISTRO_CADASTRO: 'VIGENTE' }));
   mock.method(compras, 'priceHistory', () => { throw new Error('histórico não deve decidir'); });
-  const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+  const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
   const state = newState(company, 'http://127.0.0.1:9', new Date('2026-11-07T12:00:00-03:00'));
   state.tenders[tid] = { abertura: '2026-11-23T09:00' };
   state.items[tid] = [{ numero: 1, descricao: 'Produto', quantidade: 2, valorEstimado: 10, sigiloso: false }];

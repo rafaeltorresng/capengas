@@ -10,7 +10,7 @@ import { createReadModel } from '../src/lib/read-model.ts';
 import { createScheduler } from '../src/lib/scheduler.ts';
 import type { Politica } from '../src/lib/contracts.ts';
 
-const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const id = '11111111000111/2026/1';
 const politica: Politica = { ...company.politica, turnos: ['07:00', '11:00', '15:00'], monitorMinutos: 30 };
 

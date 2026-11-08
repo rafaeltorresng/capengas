@@ -16,7 +16,7 @@ test('os 10 cenários de exceção passam sem modelo e sem rede', async () => {
 test('decide_item pede esclarecimento quando o atributo falta e o prazo legal está aberto', async () => {
   mock.method(anvisa, 'byRegistro', () => ({ VALIDADE_REGISTRO_CADASTRO: 'VIGENTE' }));
   mock.method(compras, 'priceHistory', () => { throw new Error('histórico não deve decidir'); });
-  const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+  const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
   const tid = '11111111000111/2026/1';
   const state = newState(company, 'http://127.0.0.1:9', new Date('2026-11-07T12:00:00-03:00'));
   state.tenders[tid] = { abertura: '2026-11-23T09:00' };
@@ -30,7 +30,7 @@ test('decide_item pede esclarecimento quando o atributo falta e o prazo legal es
 test('decide_item não disputa variante fora da ficha enquanto o prazo está aberto', async () => {
   mock.method(anvisa, 'byRegistro', () => ({ VALIDADE_REGISTRO_CADASTRO: 'VIGENTE' }));
   mock.method(compras, 'priceHistory', () => { throw new Error('histórico não deve decidir'); });
-  const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+  const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
   const tid = '11111111000111/2026/1';
   const state = newState(company, 'http://127.0.0.1:9', new Date('2026-11-07T12:00:00-03:00'));
   state.tenders[tid] = { abertura: '2026-11-23T09:00' };

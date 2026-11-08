@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { evaluate, validatePolitica } from '../src/lib/policy.ts';
 import type { AcaoContexto, ItemDecision, Politica, Recheque } from '../src/lib/contracts.ts';
 
-const politica: Politica = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8')).politica;
+const politica: Politica = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8')).politica;
 const ok: Recheque = { status: 'ok', situacao: 'Divulgada no PNCP', arquivosHash: 'h1', em: '2026-11-07T10:00:00-03:00' };
 const disputar: ItemDecision = { estado: 'disputar', motivos: ['ok'] };
 const ctx = (c: Partial<AcaoContexto> = {}): AcaoContexto => ({ tenderId: 'T', valor: 1200, decisoes: [disputar], recheque: ok, ...c });

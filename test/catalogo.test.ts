@@ -62,9 +62,9 @@ describe('conferirCatalogo e buscarRegistros', () => {
 });
 
 describe('catálogo da demo contra a base oficial baixada', { skip: !existsSync(new URL('../data/anvisa.csv', import.meta.url)) && 'base ANVISA ausente (npm run setup)' }, () => {
-  test('todos os produtos de fixtures/company.json conferem marca, registro e vigência', async () => {
+  test('todos os produtos de fixtures/company-testes.json conferem marca, registro e vigência', async () => {
     const { anvisa } = await import('../src/lib/data.ts');
-    const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+    const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
     const r = conferirCatalogo(company.catalogo, n => anvisa.byRegistro(n), hoje);
     assert.deepEqual(r.filter(x => x.status !== 'confere').map(x => `${x.produto}: ${x.motivo}`), []);
   });
