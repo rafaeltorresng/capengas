@@ -476,11 +476,12 @@ function DocumentPlan({ plan }: { plan: Plan }) {
                 <ItemTitle>
                   {linha.documento}
                   <Badge variant={planProblem.has(linha.status) ? 'destructive' : linha.status === 'nao_se_aplica' ? 'outline' : 'secondary'}>{linha.rotulo}</Badge>
-                  <Badge variant="outline">{responsavelLabel[linha.responsavel]}</Badge>
+                  {linha.status !== 'lance_gera' && linha.status !== 'nao_se_aplica' && <Badge variant="outline">{responsavelLabel[linha.responsavel]}</Badge>}
                   {linha.condicional && <Badge variant="outline">Condicional</Badge>}
                 </ItemTitle>
                 <ItemDescription>{linha.acao}</ItemDescription>
-                {(linha.prazo || linha.ate) && <ItemDescription>Prazo: {linha.prazo ?? ''}{linha.prazo && linha.ate ? '; ' : ''}{linha.ate ? 'até a sessão de ' + linha.ate : ''}</ItemDescription>}
+                {linha.prazo && <ItemDescription>Prazo: {linha.prazo}</ItemDescription>}
+                {linha.ate && planProblem.has(linha.status) && <ItemDescription>Resolver até a sessão, em {dayOf(linha.ate)}.</ItemDescription>}
                 {linha.fonte && <Evidence source={{ ...linha.fonte, citacao: linha.citacao }} quote />}
               </ItemContent>
             </Item>

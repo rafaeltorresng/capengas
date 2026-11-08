@@ -24,7 +24,7 @@ export const TIPOS_DOCUMENTO = {
   declaracao_habilitacao: T('Declaração de que atende aos requisitos de habilitação', 'gerado', 'proposta_inicial', /requisitos de habilitac/),
   declaracao_pleno_acordo: T('Declaração de pleno acordo com o edital', 'gerado', 'proposta_ajustada', /pleno acordo|plena aceitacao|aceitacao (plena|integral)|concord/),
   declaracao_outra: T('Outra declaração', 'gerado', 'nao_informada', /declar/),
-  cnd_federal: T('CND Federal', 'cofre', 'habilitacao', /receita federal|divida ativa da uniao|tributos federais|regularidade fiscal|cnd/),
+  cnd_federal: T('CND Federal', 'cofre', 'habilitacao', /receita federal|divida ativa da uniao|tributos federais|regularidade fiscal|\bcnd\b/),
   crf_fgts: T('CRF FGTS', 'cofre', 'habilitacao', /fgts|fundo de garantia/),
   cndt: T('CNDT', 'cofre', 'habilitacao', /debitos trabalhistas|cndt|justica do trabalho/),
   certidao_estadual: T('Certidão de regularidade estadual', 'cofre', 'habilitacao', /estadua/),
@@ -82,8 +82,8 @@ const faseDe = (tipo: TipoDocumento, texto: string, sistema: boolean): Fase => {
 const ORDEM_DECLARACOES: TipoDocumento[] = ['declaracao_me_epp', 'declaracao_menor', 'declaracao_pcd', 'declaracao_custos_trabalhistas',
   'declaracao_integridade', 'declaracao_habilitacao', 'declaracao_pleno_acordo'];
 const ORDEM_ANEXOS: TipoDocumento[] = ['carta_solidariedade', 'amostra', 'comprovante_distribuidor', 'catalogo_ficha_tecnica', 'certificado_produto'];
-const ORDEM_EDITAL: TipoDocumento[] = ['afe', 'licenca_sanitaria', 'contrato_social', 'balanco', 'certidao_falencia', 'crf_fgts', 'cndt',
-  'certidao_estadual', 'certidao_municipal', 'cnd_federal', ...ORDEM_ANEXOS, 'registro_anvisa'];
+/** Para exigência "outro", só tipos com termo inequívoco; "estadual", "registro" ou "manual" sozinhos não bastam. */
+const ORDEM_OUTRO: TipoDocumento[] = ['afe', 'licenca_sanitaria', 'contrato_social', 'balanco', 'certidao_falencia', 'crf_fgts', 'cndt', 'carta_solidariedade'];
 
 function exigencia(tipo: TipoDocumento, texto: string, base: Pick<ExigenciaDocumental, 'citacao' | 'fonte' | 'origem' | 'resumo'>): ExigenciaDocumental {
   const sistema = tipo.startsWith('declaracao') && noSistema(texto);
@@ -97,6 +97,8 @@ export function deRegrasProposta(regras: RegraProposta[]): ExigenciaDocumental[]
     const base = { citacao: r.citacao, fonte: r.fonte, origem: 'regra_proposta' as const, resumo: r.valor };
     const citado = norm(r.citacao); const ambos = norm(`${r.valor} ${r.citacao}`);
     if (r.campo === 'modelo_proposta') out.push(exigencia('proposta_precos', r.citacao, base));
+    // "A apresentação da proposta implicará a aceitação..." é efeito do envio, não documento a produzir.
+    else if (r.campo === 'declaracoes' && /implicar[aá]|\bimplica\b/.test(citado)) continue;
     else if (r.campo === 'declaracoes') out.push(exigencia(primeiro(citado, ORDEM_DECLARACOES) ?? primeiro(ambos, ORDEM_DECLARACOES) ?? 'declaracao_outra', r.citacao, base));
     else if (r.campo === 'documentos_anexos') out.push(exigencia(primeiro(citado, ORDEM_ANEXOS) ?? primeiro(ambos, ORDEM_ANEXOS) ?? 'documento_outro', r.citacao, base));
     else if (r.campo === 'registro_anvisa') {
@@ -116,7 +118,7 @@ export function deRequisitos(requirements: { requirement?: string; tipo?: string
   const out: ExigenciaDocumental[] = [];
   for (const r of requirements) {
     const req = r.requirement ?? r.tipo ?? ''; const citacao = r.quote ?? r.citacao ?? '';
-    const tipos = DE_REQUISITO[req] ?? (req === 'outro' ? [primeiro(norm(citacao), ORDEM_EDITAL)].filter(Boolean) as TipoDocumento[] : []);
+    const tipos = DE_REQUISITO[req] ?? (req === 'outro' ? [primeiro(norm(citacao), ORDEM_OUTRO)].filter(Boolean) as TipoDocumento[] : []);
     for (const tipo of tipos) out.push(exigencia(tipo, citacao, { citacao, fonte: r.fonte, origem: 'exigencia_edital' }));
   }
   return out;
@@ -188,7 +190,7 @@ const ORDEM_FASE: Record<Fase, number> = { proposta_inicial: 0, proposta_ajustad
 const fmt = (xs: string[]) => [...new Set(xs)].join(', ');
 
 export function montarPlano(o: {
-  tenderId: string; exigencias: ExigenciaDocumental[]; cofre: CofreDoc[]; sessao: string | null;
+  tenderId: string; exigencias: ExigenciaDocumental[]; cofre: CofreDoc[]; sessao: string | null; hoje: string;
   empresa: { atuacao?: string } | undefined; produtos: ProdutoViavel[]; propostaGerada?: boolean; prazoPropostaAjustada?: string;
 }): PlanoDocumentos {
   const exigencias = consolidar([...o.exigencias, { tipo: 'proposta_precos', fase: 'proposta_ajustada', condicoes: ['sempre'], origem: 'implicito' }]);
@@ -207,7 +209,7 @@ export function montarPlano(o: {
       if (e.noSistema) { status = 'marcar_no_sistema'; acao = 'Marcar a declaração no portal ao cadastrar a proposta.'; }
       else { status = 'lance_gera'; responsavel = 'lance'; acao = 'O Lance redige a declaração; o representante assina.'; }
     } else if (def.classe === 'cofre') {
-      const [r] = checkDocs(o.cofre, [{ tipo: e.tipo, citacao: e.citacao ?? '' }], o.sessao ?? '9999-12-31');
+      const [r] = checkDocs(o.cofre, [{ tipo: e.tipo, citacao: e.citacao ?? '' }], o.sessao ?? o.hoje);
       ate = o.sessao;
       if (!r || r.status === 'ausente') { status = 'ausente'; acao = 'Obter o documento e guardar no cofre antes da sessão.'; }
       else if (r.status === 'irregular') { status = 'irregular'; acao = `Regularizar: ${r.documento}.`; }
@@ -267,7 +269,7 @@ export function planoDoEstado(st: LanceState, tenderId: string): PlanoDocumentos
   const prazoAjustada = regras.filter(r => r.campo === 'prazo_envio').map(r => prazoDe(r.citacao)).find(Boolean);
   const tender = st.tenders[tenderId] ?? {};
   return montarPlano({
-    tenderId, sessao: typeof tender.abertura === 'string' ? tender.abertura.slice(0, 10) : null,
+    tenderId, sessao: typeof tender.abertura === 'string' ? tender.abertura.slice(0, 10) : null, hoje: st.now.toISOString().slice(0, 10),
     exigencias: [...(st.documentRequirements?.[tenderId] ?? []), ...deRegrasProposta(regras), ...deRequisitos(requirements)],
     cofre: st.company.cofre ?? [], empresa: st.company.empresa, produtos, propostaGerada: !!st.proposals?.[tenderId], prazoPropostaAjustada: prazoAjustada,
   });

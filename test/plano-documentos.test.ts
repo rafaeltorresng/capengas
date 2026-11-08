@@ -58,6 +58,8 @@ test('Francisco Beltrão 348: folders se solicitados e comprovante de distribuid
   assert.deepEqual(tipos(ex), ['catalogo_ficha_tecnica', 'registro_anvisa', 'comprovante_distribuidor']);
   assert.deepEqual(ex[0].condicoes, ['se_solicitado']);
   assert.deepEqual(ex[2].condicoes, ['se_distribuidor', 'se_exigido']);
+  const efeito = regra('declaracoes', 'aceitação plena', 'A apresentação da proposta implicará na plena aceitação das condições estabelecidas neste edital e seus anexos.');
+  assert.deepEqual(deRegrasProposta([efeito]), []);
 });
 
 test('condições e prazos saem do texto; sem condição escrita é sempre', () => {
@@ -80,7 +82,7 @@ const produtos: ProdutoViavel[] = [{ item: 1, produto: P1, regularizacao: 'vigen
 test('plano cruza com o cofre, o catálogo e a ANVISA, e diz quem providencia cada documento', () => {
   const exigencias = [...deRegrasProposta([...AERONAUTICA_2941, ...EXERCITO_22617]),
     ...deRequisitos([{ requirement: 'certidoes', quote: 'regularidade fiscal' }, { requirement: 'afe', quote: 'AFE' }, { requirement: 'outro', quote: 'licença sanitária' }])];
-  const plano = montarPlano({ tenderId: 't', exigencias, cofre: company().cofre, sessao: '2026-11-20', empresa: { atuacao: 'distribuidora' }, produtos, prazoPropostaAjustada: '2 horas' });
+  const plano = montarPlano({ tenderId: 't', exigencias, cofre: company().cofre, sessao: '2026-11-20', hoje: '2026-11-07', empresa: { atuacao: 'distribuidora' }, produtos, prazoPropostaAjustada: '2 horas' });
   const l = Object.fromEntries(plano.linhas.map(x => [x.tipo, x]));
   assert.equal(l.cnd_federal.status, 'vence_antes'); assert.equal(l.cnd_federal.ate, '2026-11-20');
   assert.equal(l.crf_fgts.status, 'pronto'); assert.equal(l.afe.status, 'pronto');
@@ -102,17 +104,36 @@ test('plano cruza com o cofre, o catálogo e a ANVISA, e diz quem providencia ca
 test('fabricante dispensa carta; sem atuação declarada, pergunta; registro vencido é irregular; arquivo do produto deixa pronto', () => {
   const ex = deRegrasProposta([...AERONAUTICA_2941.slice(2, 3), ...BELTRAO_348]);
   const comArquivo = [{ item: 1, produto: { ...P1, arquivos: { catalogo_ficha_tecnica: 'p1.pdf' } }, regularizacao: 'vencido' }];
-  const fabrica = montarPlano({ tenderId: 't', exigencias: ex, cofre: [], sessao: null, empresa: { atuacao: 'fabricante' }, produtos: comArquivo });
+  const fabrica = montarPlano({ tenderId: 't', exigencias: ex, cofre: [], sessao: null, hoje: '2026-11-07', empresa: { atuacao: 'fabricante' }, produtos: comArquivo });
   const f = Object.fromEntries(fabrica.linhas.map(x => [x.tipo, x]));
   assert.equal(f.carta_solidariedade.status, 'nao_se_aplica'); assert.equal(f.comprovante_distribuidor.status, 'nao_se_aplica');
   assert.equal(f.registro_anvisa.status, 'irregular'); assert.equal(f.catalogo_ficha_tecnica.status, 'pronto');
-  const semAtuacao = montarPlano({ tenderId: 't', exigencias: ex, cofre: [], sessao: null, empresa: {}, produtos: comArquivo });
+  const semAtuacao = montarPlano({ tenderId: 't', exigencias: ex, cofre: [], sessao: null, hoje: '2026-11-07', empresa: {}, produtos: comArquivo });
   assert.equal(semAtuacao.linhas.find(x => x.tipo === 'comprovante_distribuidor')!.status, 'conferir');
+});
+
+test('sem data da sessão, o cofre é conferido contra hoje e o prazo fica em aberto', () => {
+  const exigencias = deRequisitos([{ requirement: 'certidoes', quote: 'regularidade fiscal' }]);
+  const plano = montarPlano({ tenderId: 't', exigencias, sessao: null, hoje: '2026-11-07', empresa: {}, produtos,
+    cofre: [{ doc: 'CND', tipo: 'cnd_federal', validade: '2026-11-15' }, { doc: 'CRF', tipo: 'crf_fgts', validade: '2026-11-01' }] });
+  const l = Object.fromEntries(plano.linhas.map(x => [x.tipo, x]));
+  assert.equal(l.cnd_federal.status, 'pronto'); assert.equal(l.cnd_federal.ate, null);
+  assert.equal(l.crf_fgts.status, 'vence_antes');
+});
+
+test('exigência "outro" só vira documento com termo inequívoco', () => {
+  const ex = deRequisitos([
+    { requirement: 'outro', quote: 'conforme a legislação estadual vigente' },
+    { requirement: 'outro', quote: 'entrega em até 30 dias após o registro do pedido' },
+    { requirement: 'outro', quote: 'acompanha manual de instruções em português' },
+    { requirement: 'outro', quote: 'Certidão negativa de falência expedida pelo distribuidor da sede' },
+  ]);
+  assert.deepEqual(tipos(ex), ['certidao_falencia']);
 });
 
 test('a exigência registrada pelo agente prevalece sobre a classificação automática do mesmo tipo', () => {
   const agente: ExigenciaDocumental = { tipo: 'amostra', fase: 'habilitacao', condicoes: ['sempre'], citacao: 'amostra obrigatória', origem: 'agente' };
-  const plano = montarPlano({ tenderId: 't', exigencias: [...deRegrasProposta(EXERCITO_22617), agente], cofre: [], sessao: null, empresa: {}, produtos });
+  const plano = montarPlano({ tenderId: 't', exigencias: [...deRegrasProposta(EXERCITO_22617), agente], cofre: [], sessao: null, hoje: '2026-11-07', empresa: {}, produtos });
   const amostras = plano.linhas.filter(x => x.tipo === 'amostra');
   assert.equal(amostras.length, 1); assert.equal(amostras[0].origem, 'agente');
   assert.equal(amostras[0].condicional, false); assert.equal(amostras[0].prazo, '3 dias úteis');

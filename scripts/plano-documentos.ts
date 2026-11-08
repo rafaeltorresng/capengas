@@ -23,7 +23,7 @@ for (const p of pregoes) {
     const produto = company.catalogo.find((c: { id: string }) => c.id === m.produto) ?? null;
     return { item: m.item, produto, regularizacao: produto ? checkAnvisa(anvisa.byRegistro(produto.registroAnvisa), { today: hoje, deliveryBy: entrega }).regularizacao : undefined };
   });
-  const plano = montarPlano({ tenderId: p.id, exigencias: deRegrasProposta(r.regras), cofre: company.cofre, sessao: p.abertura?.slice(0, 10) ?? null,
+  const plano = montarPlano({ tenderId: p.id, exigencias: deRegrasProposta(r.regras), cofre: company.cofre, sessao: p.abertura?.slice(0, 10) ?? null, hoje: hoje.toISOString().slice(0, 10),
     empresa: company.empresa, produtos, prazoPropostaAjustada: r.regras.filter(x => x.campo === 'prazo_envio').map(x => prazoDe(x.citacao)).find(Boolean) });
   const destino = `out/plano-documentos/${p.id.replaceAll('/', '-')}.json`;
   writeFileSync(destino, JSON.stringify(plano, null, 1));
