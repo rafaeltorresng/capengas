@@ -52,8 +52,8 @@ export function AppLink({ href, children, external = false }: { href: string; ch
 
 export function Evidence({ source, quote = false }: { source: Source; quote?: boolean }) {
   const safe = /^https?:\/\//i.test(source.url) || /^\/(?![/\\])/.test(source.url);
-  return <div className="flex flex-col gap-2">
-    {quote && source.citacao && <blockquote className="border-l border-border pl-3 text-sm text-muted-foreground">{source.citacao}</blockquote>}
+  return <div className="evidence flex min-w-0 flex-col items-start gap-2">
+    {quote && source.citacao && <blockquote className="border-l border-border pl-3 text-sm text-muted-foreground wrap-anywhere">{source.citacao}</blockquote>}
     {safe && <AppLink href={source.url} external>Ver fonte: {source.nome}</AppLink>}
   </div>;
 }

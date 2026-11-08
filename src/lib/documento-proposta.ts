@@ -4,7 +4,7 @@ import { lacunasDe, type Campo, type RegraProposta } from './regras-proposta.ts'
 
 export type EmpresaProposta = {
   nome: string; cnpj?: string; endereco?: string; municipio?: string; telefone?: string; email?: string; porte?: string; inscricaoEstadual?: string;
-  representante?: { nome?: string; cargo?: string; cpf?: string; rg?: string };
+  representante?: { nome?: string; cargo?: string; cpf?: string; rg?: string; endereco?: string; telefone?: string; email?: string };
   banco?: { banco?: string; agencia?: string; conta?: string };
 };
 export type ItemProposta = {
@@ -79,6 +79,40 @@ export function casasDecimaisDe(regras: RegraProposta[]) {
   return 2;
 }
 
+const UNIDADES = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez', 'onze', 'doze', 'treze', 'quatorze',
+  'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+const DEZENAS = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+const CENTENAS = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+function ate999(n: number) {
+  if (n === 100) return 'cem';
+  const partes = [CENTENAS[Math.floor(n / 100)]].filter(Boolean);
+  const r = n % 100;
+  if (r) partes.push(r < 20 ? UNIDADES[r] : DEZENAS[Math.floor(r / 10)] + (r % 10 ? ' e ' + UNIDADES[r % 10] : ''));
+  return partes.join(' e ');
+}
+function inteiroPorExtenso(n: number) {
+  const grupos = [
+    { v: Math.floor(n / 1e6), nome: (v: number) => v === 1 ? 'um milhão' : `${ate999(v)} milhões`, milhao: true },
+    { v: Math.floor(n / 1000) % 1000, nome: (v: number) => v === 1 ? 'mil' : `${ate999(v)} mil`, milhao: false },
+    { v: n % 1000, nome: ate999, milhao: false },
+  ].filter(g => g.v > 0);
+  return grupos.map((g, i) => {
+    if (!i) return g.nome(g.v);
+    // "e" antes do último grupo quando ele é redondo ou menor que cem: "mil e quinhentos", "mil duzentos e cinquenta".
+    const sep = i === grupos.length - 1 && (g.v < 100 || g.v % 100 === 0) ? ' e ' : grupos[i - 1].milhao ? ', ' : ' ';
+    return sep + g.nome(g.v);
+  }).join('');
+}
+/** Valor em reais por extenso, como pedem os modelos de proposta. */
+export function porExtenso(valor: number) {
+  const centavosTotais = Math.round(valor * 100);
+  const reais = Math.floor(centavosTotais / 100); const centavos = centavosTotais % 100;
+  const partes: string[] = [];
+  if (reais) partes.push(reais === 1 ? 'um real' : `${inteiroPorExtenso(reais)}${reais % 1e6 === 0 ? ' de' : ''} reais`);
+  if (centavos) partes.push(centavos === 1 ? 'um centavo' : `${ate999(centavos)} centavos`);
+  return partes.join(' e ') || 'zero real';
+}
+
 const arred = (n: number, casas: number) => Math.round(n * 10 ** casas) / 10 ** casas;
 const dinheiro = (n: number, casas: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
 
@@ -151,7 +185,7 @@ export function gerarDocumentoProposta(o: {
     add(`| ${colunas.map(t => celula(valor(t))).join(' | ')} |`);
   }
   if (!itens.length) pendente('nenhum item viável para cotar');
-  add('', `**Valor global da proposta: R$ ${dinheiro(arred(total, casas), casas)}**`, '');
+  add('', `**Valor global da proposta: R$ ${dinheiro(arred(total, casas), casas)} (${porExtenso(arred(total, 2))})**`, '');
 
   add('## 3. Condições', '');
   const validade = doCampo(regras, 'validade_proposta');
@@ -176,12 +210,23 @@ export function gerarDocumentoProposta(o: {
     add(`- **Conta corrente:** ${empresa.banco?.conta || pendente('dado bancário: conta')}`, '');
   }
 
+  const doContrato = (r: RegraProposta) => /contrato|\bata\b/.test(norm(`${r.valor} ${r.citacao}`));
+  if (doCampo(regras, 'assinatura').some(doContrato)) {
+    const secao = linhas.filter(l => /^## \d\./.test(l)).length + 1;
+    const rep = empresa.representante;
+    add(`## ${secao}. Responsável pela assinatura do contrato ou da ata`, '');
+    for (const [rotulo, valor] of [['Nome', rep?.nome], ['CPF', rep?.cpf], ['Endereço', rep?.endereco], ['Telefone', rep?.telefone], ['E-mail', rep?.email]] as const) {
+      add(`- **${rotulo}:** ${valor || pendente(`responsável pelo contrato: ${rotulo}`)}`);
+    }
+    add('');
+  }
+
   const data = o.hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Recife', day: '2-digit', month: 'long', year: 'numeric' });
   add('---', '', `${empresa.municipio || pendente('local da assinatura')}, ${data}.`, '', '', '______________________________________');
   add(empresa.representante?.nome || pendente('dado da empresa: Representante legal'));
   add([empresa.representante?.cargo, empresa.representante?.cpf ? `CPF ${empresa.representante.cpf}` : null].filter(Boolean).join(' — ') || PREENCHER);
   add(empresa.nome);
-  for (const r of doCampo(regras, 'assinatura')) add('', `_Assinatura: ${r.valor}._`);
+  for (const r of doCampo(regras, 'assinatura').filter(r => !doContrato(r))) add('', `_Assinatura: ${r.valor}._`);
   add('');
 
   const lacunas = lacunasDe(regras);

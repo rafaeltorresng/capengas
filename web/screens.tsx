@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { CheckIcon, CircleIcon, Clock3Icon, FileTextIcon, InboxIcon, PencilIcon, SearchIcon, XIcon } from 'lucide-react';
+import { CheckIcon, CircleIcon, Clock3Icon, InboxIcon, SearchIcon } from 'lucide-react';
 import type { CofreAlert, Decision, Dossier, Escalation, HistoricoPregao, Item as AnalyzedItem, LinhaPauta, Pauta, Proof, QueueItem, SavedDecision, Today, TurnoStatus, Turnos } from '../src/server/contract.ts';
 import { ApiError, request } from '@/lib/api';
 import {
@@ -13,8 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet, FieldTitle } from '@/components/ui/field';
+import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemSeparator, ItemTitle } from '@/components/ui/item';
@@ -382,15 +381,16 @@ const planProblem = new Set(['vence_antes', 'ausente', 'irregular', 'pedir_terce
 
 export function DocumentPlan({ plan }: { plan: Plan }) {
   const fases = [...new Set(plan.linhas.map(l => l.fase))];
+  const faseInicial = plan.linhas.find(l => planProblem.has(l.status))?.fase ?? fases[0];
   return <Card>
     <CardHeader>
       <CardTitle><h2>Documentos para disputar</h2></CardTitle>
       <CardDescription>
-        {plan.resumo.total} exigências registradas, {plan.resumo.problemas} pendências. Confira o responsável e as condições em cada documento.
+        {plan.resumo.total} {plan.resumo.total === 1 ? 'exigência registrada' : 'exigências registradas'} · {plan.resumo.problemas} {plan.resumo.problemas === 1 ? 'pendência' : 'pendências'}
       </CardDescription>
     </CardHeader>
     <CardContent className="flex flex-col gap-6">
-      <Accordion>{fases.map(fase => <AccordionItem key={fase} value={fase}>
+      <Accordion defaultValue={faseInicial ? [faseInicial] : []}>{fases.map(fase => <AccordionItem key={fase} value={fase}>
         <AccordionTrigger>{faseLabel[fase]} <Badge variant="secondary">{plan.linhas.filter(l => l.fase === fase).length}</Badge></AccordionTrigger>
         <AccordionContent>
         <ItemGroup>
@@ -495,12 +495,12 @@ export function DossierScreen({ data }: { data: Dossier }) {
 }
 
 const decisionOptions = [
-  { value: 'aprovar', label: 'Aprovar', detail: 'Registrar sua concordância', Icon: CheckIcon },
-  { value: 'recusar', label: 'Recusar', detail: 'Registrar sua recusa', Icon: XIcon },
-  { value: 'ajustar', label: 'Solicitar ajuste', detail: 'Descrever o que precisa mudar', Icon: PencilIcon },
+  { value: 'aprovar', label: 'Aprovar' },
+  { value: 'recusar', label: 'Recusar' },
+  { value: 'ajustar', label: 'Solicitar ajuste' },
 ] as const;
 
-export function EscalationCard({ row, onResolved }: { row: Escalation; onResolved: (message: string) => void }) {
+export function EscalationCard({ row, onResolved, embedded = false }: { row: Escalation; onResolved: (message: string) => void; embedded?: boolean }) {
   const [choice, setChoice] = useState<Decision['decisao'] | ''>('');
   const [adjustment, setAdjustment] = useState('');
   const [busy, setBusy] = useState(false);
@@ -524,47 +524,29 @@ export function EscalationCard({ row, onResolved }: { row: Escalation; onResolve
       else setError(failure instanceof ApiError ? failure.message : 'Não foi possível registrar a decisão.');
     } finally { setBusy(false); }
   }
-  return <Card size="sm">
-    <CardHeader>
-      <CardDescription>{row.pregao}{row.item && ' / Item ' + row.item}</CardDescription>
-      <CardTitle><h2>{row.motivo}</h2></CardTitle>
-      <div className="col-start-2 row-span-2 row-start-1 justify-self-end">
-        <Badge variant="outline"><Clock3Icon />{deadlineLabel(row.prazo, row.prazoTipo ?? 'decisao_humana')}</Badge>
-      </div>
-    </CardHeader>
-    <CardContent className="flex flex-col gap-4">
-      <div className="rounded-lg bg-muted px-3 py-2">
+  const deadline = deadlineLabel(row.prazo, row.prazoTipo ?? 'decisao_humana');
+  const details = <div className="flex flex-col gap-4">
+      {embedded && <p className="text-sm text-muted-foreground">{deadline}</p>}
+      <div className="border-l pl-3">
         <p className="text-sm font-medium">Recomendação do Lance</p>
-        <p className="text-sm text-muted-foreground">{row.recomendacao}</p>
+        <p className="text-sm text-muted-foreground wrap-anywhere">{row.recomendacao}</p>
       </div>
-      {(row.dossie || row.item) && <Collapsible>
-        <CollapsibleTrigger render={<Button variant="ghost" size="sm" />}>
-          <FileTextIcon data-icon="inline-start" /> Consultar evidências
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {row.dossie && <AppLink href={'#/' + dossierPath(row.tender)}>Abrir dossiê</AppLink>}
-            {row.item && (row.itemDisponivel === false
-              ? <span className="text-sm">Item {row.item}</span>
-              : <AppLink href={'#/' + itemPath(row.tender, row.item)}>Abrir item {row.item}</AppLink>)}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>}
+      {(row.dossie || row.item) && <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {row.dossie && <AppLink href={'#/' + dossierPath(row.tender)}>Abrir dossiê</AppLink>}
+        {row.item && (row.itemDisponivel === false
+          ? <span className="text-sm">Item {row.item}</span>
+          : <AppLink href={'#/' + itemPath(row.tender, row.item)}>Abrir item {row.item}</AppLink>)}
+      </div>}
       <form onSubmit={event => {
         event.preventDefault();
         if (choice && !busy && !saved) void save(choice);
       }}>
         <FieldSet disabled={busy || saved}>
-          <FieldLegend>Qual é a decisão da sua equipe?</FieldLegend>
-          <RadioGroup value={choice} onValueChange={value => setChoice(value as Decision['decisao'])} className="sm:grid-cols-3">
-            {decisionOptions.map(({ value, label, detail, Icon }) => <FieldLabel key={value} htmlFor={row.id + '-' + value}>
-              <Field orientation="horizontal">
-                <RadioGroupItem value={value} id={row.id + '-' + value} />
-                <div>
-                  <FieldTitle><Icon /> {label}</FieldTitle>
-                  <FieldDescription>{detail}</FieldDescription>
-                </div>
-              </Field>
+          <FieldLegend>Decisão da equipe</FieldLegend>
+          <RadioGroup value={choice} onValueChange={value => setChoice(value as Decision['decisao'])} className="flex flex-wrap gap-x-5 gap-y-3">
+            {decisionOptions.map(({ value, label }) => <FieldLabel key={value} htmlFor={row.id + '-' + value} className="flex items-center gap-2">
+              <RadioGroupItem value={value} id={row.id + '-' + value} />
+              {label}
             </FieldLabel>)}
           </RadioGroup>
           {choice === 'ajustar' && <Field>
@@ -573,12 +555,22 @@ export function EscalationCard({ row, onResolved }: { row: Escalation; onResolve
           </Field>}
         </FieldSet>
         <Button type="submit" className="mt-4" disabled={busy || saved || !choice || (choice === 'ajustar' && !adjustment.trim())}>
-          {busy && <Spinner data-icon="inline-start" />}
+          {busy && <Spinner data-icon="inline-start" aria-hidden="true" />}
           {busy ? 'Registrando…' : 'Registrar decisão'}
         </Button>
         {error && <FieldError>{error}</FieldError>}
       </form>
-    </CardContent>
+    </div>;
+  if (embedded) return details;
+  return <Card size="sm">
+    <CardHeader>
+      <CardDescription>{row.pregao}{row.item && ' / Item ' + row.item}</CardDescription>
+      <CardTitle><h2>{row.motivo}</h2></CardTitle>
+      <div className="col-start-2 row-span-2 row-start-1 justify-self-end">
+        <Badge variant="outline"><Clock3Icon />{deadline}</Badge>
+      </div>
+    </CardHeader>
+    <CardContent>{details}</CardContent>
   </Card>;
 }
 

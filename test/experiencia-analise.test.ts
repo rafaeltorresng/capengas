@@ -16,6 +16,7 @@ test('repetições e retorno a uma fase mantêm quatro grupos e só uma atividad
   assert.equal(resumo.fases.filter(f => f.estado === 'em_andamento').length, 1);
   assert.equal(resumo.fases.find(f => f.estado === 'em_andamento')?.id, 'fontes');
   assert.equal(resumo.fases[0].consultas, 3);
+  assert.equal(resumo.retomando, true);
 });
 test('sem atualização, falha e fim nunca mantêm spinner ou inventam conclusão de documentos', () => {
   for (const status of ['sem_atualizacao', 'falhou', 'incompleto', 'concluido'] as const) {
