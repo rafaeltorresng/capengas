@@ -40,6 +40,18 @@ export type Proof = {
   concordancia: number | null; custoUsd: number | null; duracaoMs: number | null;
 };
 export type Origin = 'amostra' | 'integrado';
+export type TurnoStatus = 'ativo' | 'sem_atualizacao' | 'concluido' | 'incompleto' | 'falhou';
+export type Turno = {
+  nomesEditais?: Record<string, string>;
+  id: string; inicio: string; atualizadoEm: string; status: TurnoStatus;
+  pregoes: string[]; etapas: { horario: string; atividade: string; estado?: 'em_andamento' | 'concluida' | 'pendente' }[]; legado?: boolean;
+};
+export type Turnos = { turnos: Turno[]; aprovacoes: number };
+export type HistoricoItem = Pick<QueueItem, 'item' | 'descricao' | 'estado' | 'motivo'>;
+export type ResultadoPregao = Pick<QueueItem, 'tender' | 'pregao' | 'orgao'> & {
+  itens: HistoricoItem[]; dossie: boolean;
+};
+export type HistoricoPregao = ResultadoPregao & { turno: string; concluidoEm: string; pncp: string | null };
 export type ApiResponse<T> = { origem: Origin; dados: T };
 // The integrated implementation must persist the resolution and audit event atomically.
 export interface DemoStore {
@@ -50,5 +62,7 @@ export interface DemoStore {
   dossie(tender: string): Dossier | undefined;
   escaladas(): Escalation[];
   prova(): Proof;
+  turnos(): Turnos;
+  historico(): HistoricoPregao[];
   decidir(id: string, decision: Decision): DecisionResult;
 }

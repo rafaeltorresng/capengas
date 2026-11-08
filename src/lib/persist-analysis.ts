@@ -2,10 +2,12 @@ import type { Store } from './contracts.ts';
 import type { LanceState } from './tools.ts';
 import { buildDossie } from './dossie.ts';
 import { checkDocs } from './rules.ts';
+import type { QueueItem } from '../server/contract.ts';
 
 // Persiste somente o resultado da análise; não autoriza ou executa ações no portal.
 export function persistAnalysis(state: LanceState, store: Store) {
   let decisions = 0;
+  const items: Pick<QueueItem, 'tender' | 'item'>[] = [];
   for (const [id, tender] of Object.entries(state.tenders)) {
     if (!state.items[id]) continue;
     const previous = store.getTender(id);
@@ -29,6 +31,7 @@ export function persistAnalysis(state: LanceState, store: Store) {
       store.upsertDecision({ tenderId: id, item, produto: d.produto, estado: d.estado, motivos: d.motivos, precoProposto: d.precoProposto });
       store.logEvent({ tipo: 'decisao', resumo: d.motivos.join('; '), tender: id, item: String(item), dossie: true });
       decisions++;
+      items.push({ tender: id, item: String(item) });
       if (['escalar', 'disputar_com_pendencia'].includes(d.estado) && tender.abertura) {
         const exists = store.openEscalations().some(e => e.tender === id && e.item === String(item));
         if (!exists) store.openEscalation({ tender: id, item: String(item), motivo: d.motivos.join('; '), recomendacao: 'Revisar as evidências e recalcular a decisão antes de agir.',
@@ -36,5 +39,5 @@ export function persistAnalysis(state: LanceState, store: Store) {
       }
     }
   }
-  return { decisoes: decisions };
+  return { decisoes: decisions, items };
 }

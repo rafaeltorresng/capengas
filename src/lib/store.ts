@@ -16,6 +16,7 @@ export type StoreOptions = {
 };
 
 export type LanceStore = Store & {
+  transaction<T>(fn: () => T): T;
   close(): void;
   /** Auxiliares de teste e diagnóstico. */
   _count(table: string): number;
@@ -65,13 +66,14 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
   const iso = () => now().toISOString();
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+  db.exec('PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   db.exec(SCHEMA);
   // Migração: bancos criados antes da coluna reavaliar.
   if (!(db.prepare('PRAGMA table_info(tenders)').all() as any[]).some(c => c.name === 'reavaliar'))
     db.exec('ALTER TABLE tenders ADD COLUMN reavaliar INTEGER NOT NULL DEFAULT 0');
 
   const tx = <T>(fn: () => T): T => {
+    if (db.isTransaction) return fn();
     db.exec('BEGIN IMMEDIATE');
     try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { db.exec('ROLLBACK'); throw e; }
   };
@@ -113,6 +115,7 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
   };
 
   return {
+    transaction: tx,
     upsertTender(t: TenderRow) {
       // reavaliar omitido mantém o valor gravado.
       const rv = t.reavaliar == null ? null : Number(t.reavaliar);
@@ -211,8 +214,14 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
 
     logEvent(e) { return insertEvent(e); },
     events(f = {}) {
-      const args: any[] = []; let where = '';
-      if (f.desde) { where = 'WHERE horario >= ?'; args.push(f.desde); }
+      const args: string[] = [];
+      const filters: string[] = [];
+      if (f.desde) { filters.push('horario >= ?'); args.push(f.desde); }
+      if (f.tipos?.length) {
+        filters.push(`tipo IN (${f.tipos.map(() => '?').join(',')})`);
+        args.push(...f.tipos);
+      }
+      const where = filters.length ? 'WHERE ' + filters.join(' AND ') : '';
       const rows = f.limite
         ? db.prepare(`SELECT * FROM (SELECT * FROM events ${where} ORDER BY seq DESC LIMIT ?) ORDER BY seq`).all(...args, f.limite)
         : db.prepare(`SELECT * FROM events ${where} ORDER BY seq`).all(...args);
