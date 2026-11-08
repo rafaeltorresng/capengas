@@ -161,7 +161,7 @@ export function OnboardingFrame({ children, mainRef }: { children: ReactNode; ma
         <img src="/mark.png" alt="" className="size-8" />
         <span className="font-heading text-lg font-semibold tracking-tight">Lance</span>
       </a>
-      <Badge variant="outline" render={<a href="#/turnos" />}>Abrir painel</Badge>
+      <a href="#/turnos" className="rounded-sm text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-4">Abrir painel</a>
     </header>
     <main ref={mainRef} tabIndex={-1} className="mx-auto w-full max-w-2xl px-4 pt-8 pb-16 outline-none">
       {children}

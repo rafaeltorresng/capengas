@@ -30,8 +30,8 @@ export type TurnoEvent = { turno: string } & TurnoEvento;
 const ATIVIDADES: Record<string, string> = {
   list_catalog: 'Consultando o catálogo da empresa',
   get_product_sheet: 'Consultando as fichas dos produtos',
-  get_tender_items: 'Consultando os itens do pregão',
-  get_tender_item: 'Consultando os itens do pregão',
+  get_tender_items: 'Listando os itens do pregão',
+  get_tender_item: 'Lendo detalhes de um item',
   read_edital: 'Lendo o edital',
   record_requirement: 'Registrando as exigências do edital',
   record_fit: 'Conferindo os requisitos dos itens',

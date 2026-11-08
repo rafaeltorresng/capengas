@@ -149,6 +149,7 @@ test('turno incompleto fica persistido e fora do histórico', async () => {
   const model = createReadModel(store, { actions: () => store.getActions() });
   assert.equal(model.historico().length, 0);
   assert.equal(model.turnos().turnos[0]?.status, 'incompleto');
+  assert.match(model.turnos().turnos[0]?.motivo ?? '', /limite de passos do agente/);
   store.close();
 });
 
