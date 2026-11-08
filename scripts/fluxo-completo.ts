@@ -50,7 +50,8 @@ const SYSTEM = `Você é o Lance, analista de licitações da ${company.empresa.
 - Use ferramentas para tudo; nunca invente dados, preços, registros ou citações. Citações são cópias literais.
 - Liste o catálogo, leia os itens do pregão (siga proxima_pagina; se descricao_truncada, use get_tender_item até proximo_offset null).
 - Para cada item promissor: registre o encaixe atributo a atributo com record_fit (cada exigência do item com citação própria; nao_informado para lacunas) e calcule decide_item. Preço e decisão vêm do decide_item.
-- Leia o edital (read_edital) e registre exigências com citação: registro_anvisa, afe, amostra, marca_referencia, prazo_esclarecimento.
+- Assim que um record_fit for aceito, chame decide_item para o item antes de ler mais o edital.
+- Leia o edital (read_edital, no máximo 6 leituras) e registre exigências com citação: registro_anvisa, afe, amostra, marca_referencia, prazo_esclarecimento.
 - Só depois de decide_item resultar em disputar ou disputar_com_pendencia: abra os documentos com read_proposal_docs, registre com record_proposal_rule as regras de apresentação da proposta (leia o modelo com read_proposal_excerpt; no máximo 8 leituras), monte draft_proposal_document, registre com record_document_requirement cada documento exigido (fase, condição e prazo citados) e monte draft_document_plan.
 - Se houver decisões do humano, siga-as: item recusado fica de fora; pedido de ajuste exige reanalisar o item com o texto do humano.
 - Não envie nada. Ao terminar, resuma o que ficou pronto e as pendências, e ENCERRE.
@@ -79,7 +80,7 @@ for (let rodada = 0; rodada < 3; rodada++) {
   etapa(1, `${rodada ? `Rodada ${rodada + 1}: agente retoma com a decisão do humano` : 'Agente lê o edital'} ${tenderId}, extrai exigências, decide os itens e monta proposta e plano (modelo ${model})`);
   if (humano) console.log(`  instrução do humano enviada ao agente:${humano.replace(/\n/g, '\n    ')}`);
   const r = await runAgentWithOperationalReview({ llm: featherless(model), operationalLLM: featherless(model, { maxTokens: 8192 }),
-    tools: tools.filter(t => !SEM_ENVIO.has(t.name)), system: SYSTEM, user: USER, maxSteps: 40, maxTokens: 600_000, state: st, onEvent });
+    tools: tools.filter(t => !SEM_ENVIO.has(t.name)), system: SYSTEM, user: USER, maxSteps: 90, maxTokens: 1_200_000, state: st, onEvent });
   writeFileSync(`${dir}/rastro-${rodada + 1}.json`, JSON.stringify(r.trace, null, 1));
   console.log(`  ${r.stopped} em ${(r.ms / 1000).toFixed(0)}s; custo US$ ${(r.usage.cost ?? 0).toFixed(3)}`);
   for (const [k, d] of Object.entries(st.decisions) as [string, any][]) if (k.startsWith(tenderId + '#')) console.log(`  item ${k.split('#')[1]}: ${d.estado} — ${d.motivos?.join('; ').slice(0, 160)}`);
