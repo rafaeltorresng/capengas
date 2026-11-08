@@ -3,13 +3,14 @@ import './_out.ts';
 // 1. o agente lê o edital, extrai exigências, confere os itens com o catálogo e decide (decide_item);
 // 2. para item viável, lê os documentos da proposta, registra regras e exigências e monta proposta e plano de documentos;
 // 3. o script grava a análise e a foto do pregão (o recheque bloqueia envio sem foto);
-// 4. gera os PDFs (proposta e declarações que o Lance preenche);
-// 5. com a aprovação humana, envia ao portal sandbox pelo mesmo caminho do agendador (recheque, política, intenção),
+// 4. o humano decide as pendências e aprova os itens que irão na proposta;
+// 5. gera os PDFs dos itens aprovados e envia ao portal sandbox pelo mesmo caminho do agendador (recheque, política, intenção),
 //    com os PDFs anexos, e consulta o protocolo.
 // Uso: node scripts/fluxo-completo.ts [tender_id] [--itens 26] [--decisao aprovar|recusar|"ajustar: texto"]... [--modelo X] [--recheque-demo]
+// --aprovar confirma as pendências e a geração/envio sem perguntas; sem a flag, o envio exige confirmação no terminal.
 // Sem --decisao, pergunta no terminal. Ajuste faz o agente rodar de novo com o texto do humano (até 3 rodadas).
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createInterface } from 'node:readline/promises';
 import { featherless } from '../src/lib/llm.ts';
 import { runAgentWithOperationalReview } from '../src/lib/agente-operacional.ts';
@@ -22,10 +23,11 @@ import { snapshotTender, recheckTender } from '../src/lib/recheck.ts';
 import { executarAcao } from '../src/lib/act.ts';
 import { resolverPregoesSolicitados } from '../src/lib/agendamento.ts';
 import { instrucaoHumana, itensRecusados, pendenciasAprovadas } from '../src/lib/decisao-humana.ts';
+import { gerarDocumentoProposta } from '../src/lib/documento-proposta.ts';
+import { planoDoEstado } from '../src/lib/plano-documentos.ts';
 import { anvisa } from '../src/lib/data.ts';
 import { createReadModel } from '../src/lib/read-model.ts';
 import { prepararDocumento, prepararDocumentoGerado, renderizarPdf } from '../src/server/documentos.ts';
-import type { Dossier } from '../src/server/contract.ts';
 
 const args = process.argv.slice(2);
 const opt = (nome: string) => { const i = args.indexOf(nome); return i < 0 ? undefined : args[i + 1]; };
@@ -57,10 +59,12 @@ const SYSTEM = `Você é o Lance, analista de licitações da ${company.empresa.
 - Se houver decisões do humano, siga-as: item recusado fica de fora; pedido de ajuste exige reanalisar o item com o texto do humano.
 - Não envie nada. Ao terminar, resuma o que ficou pronto e as pendências, e ENCERRE.
 ${INSTRUCAO_OPERACIONAL}`;
-// Decisões passadas por argumento (uma por rodada): --decisao aprovar | recusar | "ajustar: texto". --aprovar = --decisao aprovar.
-const decisoesArg = args.flatMap((a, i) => a === '--decisao' ? [args[i + 1]] : a === '--aprovar' ? ['aprovar'] : []);
+// Decisões por argumento (uma por rodada). Uma decisão explícita prevalece sobre --aprovar.
+const aprovarEnvio = args.includes('--aprovar');
+const decisoesArg = args.flatMap((a, i) => a === '--decisao' ? [args[i + 1]] : []);
 const lerDecisao = async (rodada: number, pergunta: string) => {
   if (decisoesArg[rodada]) { console.log(`  ${pergunta} ${decisoesArg[rodada]}  (argumento --decisao)`); return decisoesArg[rodada]; }
+  if (aprovarEnvio) { console.log(`  ${pergunta} aprovar (argumento --aprovar)`); return 'aprovar'; }
   if (!process.stdin.isTTY) return '';
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   const r = await rl.question(`  ${pergunta} `); rl.close(); return r;
@@ -87,38 +91,23 @@ for (let rodada = 0; rodada < 3; rodada++) {
   for (const [k, d] of Object.entries(st.decisions) as [string, any][]) if (k.startsWith(tenderId + '#')) console.log(`  item ${k.split('#')[1]}: ${d.estado} — ${d.motivos?.join('; ').slice(0, 160)}`);
 
   etapa(2, 'Grava a análise, abre as pendências para o humano e tira a foto do pregão');
-  const analiseId = `fluxo-${Date.now()}`;
+  const analiseId = randomUUID();
   persistAnalysis(st, store, { analiseId });
   try { await snapshotTender(tenderId, store); }
   catch (e: any) { console.log(`  foto do pregão não gravada (${String(e?.message ?? e).slice(0, 90)}); o recheque bloqueia o envio`); }
   console.log(`  banco: ${dbPath} · análise ${analiseId}`);
 
-  etapa(3, 'Gera os documentos de saída (PDF)');
-  const dossie = createReadModel(store, { actions: () => store.getActions(), cofre: company.cofre }).dossie(tenderId) as Dossier | undefined;
-  const anexos: { nome: string; pdf: Uint8Array }[] = [];
-  if (!dossie?.proposta) console.log('  sem proposta: nenhum item viável recebeu documento da proposta');
-  else {
-    const arquivos = [prepararDocumento(dossie, 'proposta'), ...(dossie.planoDocumentos?.linhas ?? []).flatMap((l, i) => l.declaracao ? [prepararDocumentoGerado(dossie, i)] : [])];
-    for (const a of arquivos) {
-      const pdf = new Uint8Array(await renderizarPdf(a));
-      writeFileSync(`${dir}/${a.nomeArquivo}`, pdf);
-      anexos.push({ nome: a.nomeArquivo, pdf });
-      console.log(`  ${dir}/${a.nomeArquivo} (${pdf.length} bytes, sha256 ${createHash('sha256').update(pdf).digest('hex').slice(0, 12)}…)`);
-    }
-    const plano = dossie.planoDocumentos;
-    if (plano) {
-      writeFileSync(`${dir}/plano-documentos.json`, JSON.stringify(plano, null, 1));
-      for (const l of plano.linhas) console.log(`  plano: ${l.documento} — ${l.status}: ${l.acao.slice(0, 110)}`);
-    }
+  const dossie = createReadModel(store, { actions: () => store.getActions(), cofre: company.cofre }).dossie(tenderId);
+  if (dossie?.analiseId === analiseId) {
+    const relatorio = `${dir}/relatorio.pdf`;
+    writeFileSync(relatorio, await renderizarPdf(prepararDocumento(dossie, 'relatorio')));
+    console.log(`  relatório para revisão: ${relatorio}`);
   }
-  if (dossie) writeFileSync(`${dir}/relatorio.pdf`, await renderizarPdf(prepararDocumento(dossie, 'relatorio')));
 
-  etapa(4, 'Decisão humana nas pendências e envio ao portal sandbox');
-  const recusados = itensRecusados(store, tenderId);
-  const viaveis = store.getDecisions(tenderId).filter(d => (d.estado === 'disputar' || d.estado === 'disputar_com_pendencia') && !recusados.includes(d.item));
+  etapa(3, 'Decisão humana nas pendências da análise atual');
+  const abertas = store.openEscalations().filter(e => e.tender === tenderId && e.analiseId === analiseId);
   resumoRodadas.push({ rodada: rodada + 1, analiseId, stopped: r.stopped, s: Math.round(r.ms / 1000), custo: r.usage.cost, humano,
-    decisoes: Object.fromEntries(Object.entries(st.decisions).map(([k, d]: any) => [k, d.estado])), anexos: anexos.map(a => a.nome) });
-  const abertas = store.openEscalations().filter(e => e.tender === tenderId);
+    decisoes: Object.fromEntries(Object.entries(st.decisions).map(([k, d]: any) => [k, d.estado])) });
   let ajuste = false;
   for (const e of abertas) {
     console.log(`  PENDENTE ${e.id} · item ${e.item ?? '-'}: ${e.motivo}`);
@@ -126,21 +115,66 @@ for (let rodada = 0; rodada < 3; rodada++) {
     const m = /^(aprovar|recusar|ajustar)\s*:?\s*(.*)$/i.exec(resposta);
     if (!m || (m[1].toLowerCase() === 'ajustar' && !m[2])) { console.log('  sem decisão válida: a pendência continua aberta'); continue; }
     const decisao = m[1].toLowerCase() as 'aprovar' | 'recusar' | 'ajustar';
-    store.resolveEscalation(e.id, { decisao, ...(decisao === 'ajustar' ? { ajuste: m[2] } : {}) });
+    const registro = store.resolveEscalation(e.id, { decisao, ...(decisao === 'ajustar' ? { ajuste: m[2] } : {}) });
+    if (registro.status !== 'salva') {
+      console.log(`  decisão não registrada: ${registro.status}`);
+      continue;
+    }
     console.log(`  humano: ${decisao}${decisao === 'ajustar' ? ` "${m[2]}"` : ''} (gravado no store, como pela tela)`);
     ajuste ||= decisao === 'ajustar';
   }
   if (ajuste) { console.log('  ajuste pedido: o agente retoma a análise com o texto do humano'); continue; }
 
-  const itens = viaveis.filter(d => !itensRecusados(store, tenderId).includes(d.item));
-  const aprovadas = itens.flatMap(d => d.estado === 'disputar_com_pendencia' ? pendenciasAprovadas(store, tenderId, d.item, d.motivos) : []);
-  const liberados = itens.filter(d => d.estado === 'disputar' || pendenciasAprovadas(store, tenderId, d.item, d.motivos).length === d.motivos.length);
-  if (!liberados.length || !anexos.length) { resultado = itens.length ? 'pendências sem aprovação do humano: nada enviado' : 'sem item viável ou item recusado pelo humano: nada a enviar'; break; }
-  console.log(`  itens liberados: ${liberados.map(d => `${d.item} (${d.estado}, R$ ${d.precoProposto})`).join(', ')}; anexos: ${anexos.map(a => a.nome).join(', ')}`);
-  for (const p of aprovadas) console.log(`  pendência aprovada pelo humano: ${p}`);
+  if (!dossie?.proposta || dossie.analiseId !== analiseId) {
+    resultado = 'análise atual sem proposta: nada enviado';
+    break;
+  }
+  const recusados = itensRecusados(store, tenderId);
+  const liberados = dossie.itens.filter(d => !recusados.includes(d.item) && (d.estado === 'disputar' ||
+    (d.estado === 'disputar_com_pendencia' && pendenciasAprovadas(store, tenderId, analiseId, d.item, d.motivos))));
+  if (!liberados.length) {
+    resultado = 'nenhum item liberado: nada enviado';
+    break;
+  }
+  console.log(`  itens da proposta: ${liberados.map(d => `${d.item} (${d.estado}, R$ ${d.precoUnitario})`).join(', ')}`);
+  let confirmado = aprovarEnvio;
+  if (!confirmado && process.stdin.isTTY) {
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    confirmado = /^(s|sim)$/i.test((await rl.question('  Aprovar estes itens, gerar os anexos e enviar ao portal sandbox? (s/N) ')).trim());
+    rl.close();
+  }
+  if (!confirmado) {
+    resultado = 'geração dos anexos e envio não aprovados';
+    break;
+  }
+
+  etapa(4, 'Gera os anexos da proposta aprovada');
+  const numeros = new Set(liberados.map(d => d.item));
+  const itensProposta = dossie.proposta.itens.filter(i => numeros.has(i.numero));
+  const proposta = gerarDocumentoProposta({
+    pregao: { id: tenderId, orgao: tender.orgao ?? '', abertura: tender.abertura },
+    empresa: dossie.proposta.empresa, itens: itensProposta, regras: dossie.proposta.regras,
+    hoje: new Date(dossie.proposta.geradoEm), origemDados: dossie.proposta.origemDados,
+  });
+  const chaves = new Set(liberados.map(d => `${tenderId}#${d.item}`));
+  const decisoes = Object.fromEntries(Object.entries(st.decisions).filter(([key]) => chaves.has(key)));
+  const plano = planoDoEstado({ ...st, decisions: decisoes }, tenderId);
+  const dossieEnvio = { ...dossie, itens: liberados, proposta, planoDocumentos: plano ?? undefined };
+  const arquivos = [prepararDocumento(dossieEnvio, 'proposta'),
+    ...(plano?.linhas ?? []).flatMap((l, i) => l.declaracao ? [prepararDocumentoGerado(dossieEnvio, i)] : [])];
+  const anexos: { nome: string; pdf: Uint8Array }[] = [];
+  for (const a of arquivos) {
+    const pdf = new Uint8Array(await renderizarPdf(a));
+    writeFileSync(`${dir}/${a.nomeArquivo}`, pdf);
+    anexos.push({ nome: a.nomeArquivo, pdf });
+    console.log(`  ${dir}/${a.nomeArquivo} (${pdf.length} bytes, sha256 ${createHash('sha256').update(pdf).digest('hex').slice(0, 12)}…)`);
+  }
+  if (plano) writeFileSync(`${dir}/plano-documentos.json`, JSON.stringify(plano, null, 1));
+
+  etapa(5, 'Envia a proposta aprovada ao portal sandbox');
   // Só para gravar a demo no portal sandbox: o recheque real (situação e arquivos no PNCP) é trocado por "ok".
   if (recheckDemo) console.log('  ATENÇÃO: --recheque-demo — recheque do PNCP SIMULADO como ok; vale só para o portal sandbox');
-  resultado = await executarAcao({ tipo: 'enviar_proposta', tenderId, itens: liberados.map(d => d.item), anexos, pendenciasAprovadas: aprovadas }, {
+  resultado = await executarAcao({ tipo: 'enviar_proposta', tenderId, itens: [...numeros], anexos, analiseId }, {
     store, politica: company.politica, sandboxUrl: sbx.url, empresa: company.empresa.nome, catalogo: company.catalogo,
     recheck: recheckDemo
       ? async id => ({ status: 'ok', situacao: 'simulada (--recheque-demo)', arquivosHash: store.getTender(id)?.arquivosHash ?? '', em: new Date().toISOString() })

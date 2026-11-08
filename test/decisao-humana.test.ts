@@ -5,9 +5,9 @@ import { openStore } from '../src/lib/store.ts';
 import { instrucaoHumana, pendenciasAprovadas, jaDecidida, itensRecusados } from '../src/lib/decisao-humana.ts';
 
 const T = '05012896000142/2026/1298';
-function comDecisao(item: string, motivo: string, decisao: 'aprovar' | 'recusar' | 'ajustar', ajuste?: string) {
+function comDecisao(item: string, motivo: string, decisao: 'aprovar' | 'recusar' | 'ajustar', ajuste?: string, analiseId?: string) {
   const store = openStore(':memory:');
-  const e = store.openEscalation({ tender: T, item, motivo, recomendacao: 'r', prazo: '2099-01-01T00:00:00-03:00' });
+  const e = store.openEscalation({ tender: T, item, motivo, analiseId, recomendacao: 'r', prazo: '2099-01-01T00:00:00-03:00' });
   store.resolveEscalation(e.id, { decisao, ...(ajuste ? { ajuste } : {}) });
   return store;
 }
@@ -31,14 +31,17 @@ test('recusa: item sai da análise e do envio, e a mesma pendência não reabre'
   store.close();
 });
 
-test('aprovação: as pendências da escalada viram pendências aprovadas para o envio', () => {
-  const store = comDecisao('26', 'confirmar que o registro ANVISA cobre o modelo ofertado; Operação: conferir condições para fornecer antes de participar.', 'aprovar');
-  const motivos = ['confirmar que o registro ANVISA cobre o modelo ofertado', 'Operação: Prazo de entrega — Precisa confirmar.'];
-  assert.deepEqual(pendenciasAprovadas(store, T, 26, motivos), motivos);
-  assert.deepEqual(pendenciasAprovadas(store, T, 26, [...motivos, 'CND Federal: vence antes sessao']), motivos);
-  assert.deepEqual(pendenciasAprovadas(store, T, 27, motivos), []);
-  // Ajuste não aprova nada: o agente reanalisa antes.
-  const ajuste = comDecisao('26', 'confirmar que o registro ANVISA cobre o modelo ofertado', 'ajustar', 'rever');
-  assert.deepEqual(pendenciasAprovadas(ajuste, T, 26, motivos), []);
-  store.close(); ajuste.close();
+test('aprovação vale para o mesmo item, análise e conjunto exato de motivos', () => {
+  const motivos = ['confirmar cobertura ANVISA', 'Operação: confirmar prazo de entrega'];
+  const store = comDecisao('26', motivos.join('; '), 'aprovar', undefined, 'atual');
+  assert.equal(pendenciasAprovadas(store, T, 'atual', 26, motivos), true);
+  assert.equal(pendenciasAprovadas(store, T, 'nova', 26, motivos), false);
+  assert.equal(pendenciasAprovadas(store, T, 'atual', 27, motivos), false);
+  assert.equal(pendenciasAprovadas(store, T, 'atual', 26, [motivos[0], 'Operação: amostra em 24 horas']), false);
+  assert.equal(instrucaoHumana(store, T), '');
+  store.close();
+  const legado = comDecisao('26', motivos.join('; '), 'aprovar');
+  assert.equal(pendenciasAprovadas(legado, T, 'atual', 26, motivos), false);
+  assert.equal(pendenciasAprovadas(legado, T, undefined, 26, motivos), false);
+  legado.close();
 });

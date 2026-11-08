@@ -87,6 +87,8 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
     db.exec('ALTER TABLE errata_diffs ADD COLUMN versao_json TEXT');
   if (!(db.prepare('PRAGMA table_info(escalations)').all() as any[]).some(c => c.name === 'versao_retificacao'))
     db.exec('ALTER TABLE escalations ADD COLUMN versao_retificacao INTEGER');
+  if (!(db.prepare('PRAGMA table_info(escalations)').all() as any[]).some(c => c.name === 'analise_id'))
+    db.exec('ALTER TABLE escalations ADD COLUMN analise_id TEXT');
   if (!(db.prepare('PRAGMA table_info(tenders)').all() as any[]).some(c => c.name === 'abertura_analise'))
     db.exec('ALTER TABLE tenders ADD COLUMN abertura_analise TEXT');
 
@@ -109,6 +111,7 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
   });
   const toEscalation = (r: any): Escalation => ({
     id: r.id, tender: r.tender, ...(r.item != null ? { item: r.item } : {}),
+    ...(r.analise_id != null ? { analiseId: r.analise_id } : {}),
     motivo: r.motivo, recomendacao: r.recomendacao, prazo: r.prazo, status: r.status,
   });
   const toEvent = (r: any): Event => ({
@@ -186,6 +189,9 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
         db.prepare(`INSERT INTO dossies (tender_id, json, versao, atualizado_em) VALUES (?,?,1,?)
           ON CONFLICT(tender_id) DO UPDATE SET json=excluded.json, versao=dossies.versao + 1, atualizado_em=excluded.atualizado_em`)
           .run(tenderId, JSON.stringify(value), iso());
+        const analiseId = (value as { analiseId?: string } | undefined)?.analiseId ?? null;
+        db.prepare("UPDATE escalations SET status = 'expirada' WHERE tender = ? AND status = 'aberta' AND analise_id IS NOT NULL AND analise_id IS NOT ?")
+          .run(tenderId, analiseId);
       });
     },
 
@@ -221,14 +227,14 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
       return tx(() => {
         if (options?.reuseOpen) {
           const existing = db.prepare(
-            "SELECT * FROM escalations WHERE tender = ? AND item IS ? AND motivo = ? AND status = 'aberta' ORDER BY seq",
-          ).all(e.tender, e.item ?? null, e.motivo)
+            "SELECT * FROM escalations WHERE tender = ? AND item IS ? AND motivo = ? AND analise_id IS ? AND status = 'aberta' ORDER BY seq",
+          ).all(e.tender, e.item ?? null, e.motivo, e.analiseId ?? null)
             .map(toEscalation).find(row => Date.parse(row.prazo) >= now().getTime());
           if (existing) return existing;
         }
         const versao = getRetificacoes(e.tender).at(-1)?.versao ?? 0;
-        const { lastInsertRowid } = db.prepare(`INSERT INTO escalations (id, tender, item, motivo, recomendacao, prazo, status, versao_retificacao) VALUES (?,?,?,?,?,?,'aberta',?)`)
-          .run(`tmp_${Math.random().toString(36).slice(2)}`, e.tender, e.item ?? null, e.motivo, e.recomendacao, e.prazo, versao);
+        const { lastInsertRowid } = db.prepare(`INSERT INTO escalations (id, tender, item, motivo, recomendacao, prazo, status, versao_retificacao, analise_id) VALUES (?,?,?,?,?,?,'aberta',?,?)`)
+          .run(`tmp_${Math.random().toString(36).slice(2)}`, e.tender, e.item ?? null, e.motivo, e.recomendacao, e.prazo, versao, e.analiseId ?? null);
         const id = `esc_${lastInsertRowid}`;
         db.prepare('UPDATE escalations SET id = ? WHERE seq = ?').run(id, lastInsertRowid);
         insertEvent({ tipo: 'escalada_aberta', resumo: e.motivo, tender: e.tender, ...(e.item ? { item: e.item } : {}) });

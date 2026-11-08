@@ -70,9 +70,18 @@ describe('envio permitido', () => {
   test('item com pendência só sai com as pendências gravadas aprovadas pelo humano', async () => {
     const { store, posts, deps } = harness({ seed: { estado: 'disputar_com_pendencia' } });
     assert.equal((await executarAcao(proposta(), deps)).resultado, 'escalada');
-    assert.equal((await executarAcao({ ...proposta(), pendenciasAprovadas: ['outra coisa'] } as PedidoAcao, deps)).resultado, 'escalada');
+    store.upsertDossie(TENDER, { analiseId: 'atual' });
+    const aprovar = (analiseId: string, motivo: string) => {
+      const e = store.openEscalation({ tender: TENDER, item: '40', analiseId, motivo, recomendacao: 'Revisar', prazo: '2099-01-01' });
+      store.resolveEscalation(e.id, { decisao: 'aprovar' });
+    };
+    const pedido = { ...proposta(), analiseId: 'atual' } as PedidoAcao;
+    aprovar('antiga', 'atributos conferidos');
+    aprovar('atual', 'outra coisa');
+    assert.equal((await executarAcao(pedido, deps)).resultado, 'escalada');
     assert.equal(posts.length, 0);
-    const r = await executarAcao({ ...proposta(), pendenciasAprovadas: ['atributos conferidos'] } as PedidoAcao, deps);
+    aprovar('atual', 'atributos conferidos');
+    const r = await executarAcao(pedido, deps);
     assert.equal(r.resultado, 'confirmada');
     assert.equal(posts.length, 1);
     assert.ok(store.events().some(e => e.tipo === 'escalada_decidida' && /atributos conferidos/.test(e.resumo)));

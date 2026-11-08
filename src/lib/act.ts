@@ -8,11 +8,12 @@ import { consultarProtocolo, type Consulta } from './portal.ts';
 import { conferirRegistro } from './catalogo.ts';
 import type { AcaoContexto, ItemDecision, Politica, Recheque } from './contracts.ts';
 import type { LanceStore } from './store.ts';
+import { pendenciasAprovadas } from './decisao-humana.ts';
 
 export type PedidoProposta = {
   tipo: 'enviar_proposta'; tenderId: string; itens: number[]; anexos?: { nome: string; pdf: Uint8Array }[];
-  /** Texto exato das pendências gravadas que o humano aprovou; pendência nova ou alterada continua escalando. */
-  pendenciasAprovadas?: string[];
+  /** Identidade da análise cujas decisões e aprovações autorizam este envio. */
+  analiseId?: string;
 };
 export type PedidoEsclarecimento = {
   tipo: 'enviar_esclarecimento'; tenderId: string; item: number; texto: string;
@@ -156,10 +157,19 @@ export async function executarAcao(pedido: PedidoAcao, deps: ActDeps): Promise<R
   if (deps.store.getTender(pedido.tenderId)?.reavaliar) {
     return { resultado: 'bloqueada', motivo: 'pregão marcado para reavaliar durante o recheque; nenhuma intenção criada' };
   }
+  const analiseId = pedido.tipo === 'enviar_proposta' ? pedido.analiseId : undefined;
+  const atual = deps.store.getDossie(pedido.tenderId) as { analiseId?: string } | undefined;
+  if (analiseId && atual?.analiseId !== analiseId) {
+    return { resultado: 'bloqueada', motivo: 'a análise mudou antes do envio' };
+  }
+  const pendentes = montado.decisoes.flatMap((d, i) =>
+    d.estado === 'disputar_com_pendencia' ? [{ item: montado.linhas[i].numero, motivos: d.motivos }] : []);
+  const aprovadas = pendentes.length > 0 && pendentes.every(d =>
+    pendenciasAprovadas(deps.store, pedido.tenderId, analiseId, d.item, d.motivos));
   const contexto: AcaoContexto = {
     tenderId: pedido.tenderId, valor: montado.valor, decisoes: montado.decisoes, recheque,
     ...(pedido.tipo === 'enviar_esclarecimento' ? { esclarecimento: { motivo: pedido.motivo, prazoAberto: montado.prazoAberto === true } } : {}),
-    ...(pedido.tipo === 'enviar_proposta' && pedido.pendenciasAprovadas?.length ? { pendenciasAprovadas: pedido.pendenciasAprovadas } : {}),
+    ...(aprovadas ? { pendenciasAprovadas: pendentes.flatMap(d => d.motivos) } : {}),
   };
   const avaliacao = evaluate(pedido.tipo, contexto, deps.politica);
   if (!avaliacao.permitido) {
