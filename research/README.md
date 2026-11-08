@@ -16,6 +16,10 @@ método, denominadores, script que gera e ressalvas. Não há dados pessoais nem
 | `evals-kimi-k2.6.json` | Evals do modelo com gabarito (`fixtures/gold.json`) | Encaixe **18/18** (6 pares × 3); exigências 21/27; código 13/18; reescrita sem ganho | `scripts/evals.ts` |
 | `turno-real-2026-11-07.json` | Turno ponta a ponta com o modelo em 3 pregões reais | **US$ 0,22**; 12,5 min + 1,7 min; 85 chamadas ok, 5 com erro | `scripts/turno.ts` |
 
+## Execução do onboarding
+
+[onboarding-2026-11-07.json](onboarding-2026-11-07.json) registra um turno iniciado pelo navegador no novo fluxo, em banco temporário: 1 pregão, 3 decisões escaladas por cobertura técnica não verificada, 8 chamadas ao modelo, 276.510 ms e US$ 0,053452588 informados no rastro. Nenhum envio. A meta de 3 minutos não foi cumprida. Empresa e fichas são sintéticas; concordância humana não foi medida. Esta execução é separada dos turnos anteriores e não mede economia ou desempenho em escala.
+
 ## Como ler estes números (ressalvas que valem para todos)
 
 - **Amostras não são aleatórias:** seguem a ordem da busca e das primeiras páginas das APIs.

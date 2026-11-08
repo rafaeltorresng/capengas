@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build web",
     "demo": "node src/server/main.ts amostra",
-    "integrado": "node src/server/main.ts integrado",
+    "integrado": "node --env-file-if-exists=.env src/server/main.ts integrado",
     "catalogo:anvisa": "node --disable-warning=ExperimentalWarning scripts/catalogo-anvisa.ts"
   },
   "dependencies": {

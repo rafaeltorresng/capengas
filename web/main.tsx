@@ -9,6 +9,8 @@ import { Badge } from './components/ui/badge.tsx';
 import { Input } from './components/ui/input.tsx';
 import { Alert, AlertDescription } from './components/ui/alert.tsx';
 import { TurnDateFilter } from './components/turn-date-filter.tsx';
+import { Onboarding } from './components/onboarding.tsx';
+import type { AnalysisStarted, OnboardingData } from '../src/server/onboarding.ts';
 import './style.css';
 
 const fortaleza = 'America/Fortaleza';
@@ -48,7 +50,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<ApiRespo
   const response = await fetch('/api/' + path, options);
   const body = await response.json();
   if (!response.ok) {
-    const rotaNova = response.status === 404 && (path === 'turnos' || path === 'historico');
+    const rotaNova = response.status === 404 && (path === 'turnos' || path === 'historico' || path === 'onboarding' || path.startsWith('onboarding/'));
     throw new ApiError(response.status, rotaNova
       ? 'Esta tela precisa da API atualizada. Reinicie o servidor local do Lance e tente novamente.'
       : body.erro || 'Não foi possível consultar o Lance.');
@@ -151,7 +153,7 @@ const statusTurno: Record<TurnoStatus, string> = {
   concluido: 'Concluído', incompleto: 'Incompleto', falhou: 'Falhou',
 };
 
-function Acompanhamento({ data, lastRead }: { data: Turnos; lastRead?: number }) {
+function Acompanhamento({ data, lastRead, expandir = false }: { data: Turnos; lastRead?: number; expandir?: boolean }) {
   const [date, setDate] = useState('');
   const visible = data.turnos.filter(turno => !date || localDay.format(new Date(turno.inicio)) === date);
   const feed = new Map<string, (typeof visible)[number]>();
@@ -164,18 +166,19 @@ function Acompanhamento({ data, lastRead }: { data: Turnos; lastRead?: number })
   return <>
     <Heading title="Acompanhamento" detail="Acompanhe os editais e abra cada processo para consultar as etapas da análise." />
     <div className="list-tools">
+      <Internal path="onboarding/editais">Escolher outro edital</Internal>
       <TurnDateFilter dates={data.turnos.map(turno => localDay.format(new Date(turno.inicio)))} value={date} onChange={setDate} />
       {date && <Button variant="outline" onClick={() => setDate('')}>Mostrar todos os turnos</Button>}
       {lastRead && <small>Última consulta às {time.format(lastRead)}</small>}
     </div>
     {!editais.length && <p className="panel">{date ? 'Nenhum edital teve análise iniciada nesta data.' : 'Os editais aparecem aqui assim que uma análise começa.'}</p>}
-    <div className="edital-feed">
+    <div className={expandir ? "edital-feed edital-focus" : "edital-feed"}>
     {editais.map(([edital, turno]) => {
       const etapa = turno.etapas.at(-1);
       const nome = turno.nomesEditais?.[edital] || 'Edital ' + edital.split('/').at(-1);
       const codigoPncp = /^\d{14}\/\d{4}\/\d+$/.test(edital);
       const emAndamento = turno.status === 'ativo';
-      return <details className="edital-card" key={edital}>
+      return <details className="edital-card" key={edital} open={expandir || undefined}>
         <summary>
           <span className="edital-identidade">
             <strong>{nome}</strong>
@@ -568,7 +571,7 @@ function EscalationScreen({ rows, refresh }: { rows: Escalation[]; refresh: () =
   </>;
 }
 
-const currentPath = () => window.location.hash.replace(/^#\/?/, '') || 'turnos';
+const currentPath = () => window.location.hash.replace(/^#\/?/, '') || 'onboarding';
 
 function App() {
   const [path, setPath] = useState(currentPath);
@@ -606,13 +609,23 @@ function App() {
     }
   }, [path]);
 
+  if (path === 'onboarding' || path === 'onboarding/editais') return <div className="onboarding-layout">
+    <header className="onboarding-mast"><a className="wordmark" href="#/onboarding">Lance</a><a href="#/turnos">Abrir painel</a></header>
+    <main className="onboarding-shell" ref={main} tabIndex={-1}>
+      <View<OnboardingData> path="onboarding" poll={false}>{data => <Onboarding key={path} data={data} escolherEdital={path.endsWith('/editais')}
+        iniciar={async tenderId => (await request<AnalysisStarted>('onboarding/analisar', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenderId }),
+        })).dados} />}</View>
+    </main>
+  </div>;
+
   let view;
   if (path === 'turnos' || path.startsWith('turnos/')) {
     const id = path.split('/')[1];
     view = <View<Turnos> path="turnos">{(data, _, lastRead) => id
       ? <><Internal path="turnos">Ver todos os turnos</Internal>
         {data.turnos.some(turno => encodeURIComponent(turno.id) === id)
-          ? <Acompanhamento data={{ ...data, turnos: data.turnos.filter(turno => encodeURIComponent(turno.id) === id) }} lastRead={lastRead} />
+          ? <Acompanhamento data={{ ...data, turnos: data.turnos.filter(turno => encodeURIComponent(turno.id) === id) }} lastRead={lastRead} expandir />
           : <Heading title="Turno indisponível" />}</>
       : <Acompanhamento data={data} lastRead={lastRead} />}</View>;
   }

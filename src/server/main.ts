@@ -10,6 +10,7 @@ import { relatorioProva } from '../lib/cenarios.ts';
 import { sancoesDoArquivo } from '../lib/carteira.ts';
 import { DATA } from '../lib/data.ts';
 import { join } from 'node:path';
+import { createOnboarding } from './onboarding.ts';
 
 async function loadSample(): Promise<SampleState | undefined> {
   if (process.argv[3] !== '--dev2') return undefined;
@@ -25,10 +26,10 @@ if (mode === 'amostra' || mode === 'integrado') {
     if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Informe uma porta válida em LANCE_PORT.');
     await access(new URL('../../web/dist/index.html', import.meta.url));
     const store = mode === 'integrado' ? openStore() : undefined;
-    const company = store ? JSON.parse(await readFile(new URL('../../fixtures/company.json', import.meta.url), 'utf8')) : null;
+    const company = JSON.parse(await readFile(new URL('../../fixtures/company.json', import.meta.url), 'utf8'));
     const prova = store ? await relatorioProva() : null;
     // Pauta: semáforo fiscal dos pregões da demo e CEIS do cliente (arquivo do Portal da Transparência, se houver).
-    const demo = store ? JSON.parse(await readFile(new URL('../../fixtures/demo.json', import.meta.url), 'utf8')) : null;
+    const demo = JSON.parse(await readFile(new URL('../../fixtures/demo.json', import.meta.url), 'utf8'));
     const semaforos = Object.fromEntries((demo?.pregoes ?? []).filter((p: any) => p.semaforoFiscal?.status).map((p: any) => [p.id, p.semaforoFiscal]));
     const sancoes = store ? sancoesDoArquivo(process.env.LANCE_CEIS_CSV ?? join(DATA, 'ceis.csv'), company.empresa?.cnpj) : null;
     const state = store
@@ -37,7 +38,9 @@ if (mode === 'amostra' || mode === 'integrado') {
         proof: () => buildProof(prova!, store.events()),
       }))
       : createSampleStore(await loadSample());
-    const server = createServer(state, webRoot);
+    const onboarding = createOnboarding({ company, demo, store,
+      disponivel: !!(process.env.AI_API_KEY || process.env.FEATHERLESS_API_KEY || process.env.Api_key) });
+    const server = createServer(state, webRoot, onboarding);
     server.on('error', (error: NodeJS.ErrnoException) => {
       console.error(`Não foi possível iniciar o Lance em 127.0.0.1:${port} (${error.code}).`);
       store?.close();
