@@ -87,11 +87,20 @@ export function createServer(store: DemoStore, webRoot?: string, onboarding?: On
 
       if (onboarding && route === 'onboarding') {
         if (req.method === 'GET' && !params.length) { json(res, 200, { origem: store.origem, dados: onboarding.dados() }); return; }
+        if (req.method === 'GET' && params.length === 1 && params[0] === 'editais') {
+          json(res, 200, { origem: store.origem, dados: onboarding.oportunidades(searchParams.getAll('catalogo')) }); return;
+        }
+        if (req.method === 'POST' && params.length === 1 && params[0] === 'atualizar') {
+          json(res, 202, { origem: store.origem, dados: onboarding.atualizar() }); return;
+        }
         if (req.method === 'POST' && params.length === 1 && params[0] === 'analisar') {
           const body = await readBody(req);
-          if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).length !== 1
-            || typeof (body as { tenderId?: unknown }).tenderId !== 'string') throw new RequestError(400, 'Informe somente o edital escolhido.');
-          const started = onboarding.iniciar((body as { tenderId: string }).tenderId);
+          if (!body || typeof body !== 'object' || Array.isArray(body)) throw new RequestError(400, 'Informe o edital e os catálogos escolhidos.');
+          const b = body as Record<string, unknown>;
+          if (Object.keys(b).some(k => !['tenderId', 'catalogos'].includes(k)) || typeof b.tenderId !== 'string'
+            || (b.catalogos !== undefined && (!Array.isArray(b.catalogos) || !b.catalogos.every(x => typeof x === 'string'))))
+            throw new RequestError(400, 'Informe somente o edital e os identificadores dos catálogos.');
+          const started = onboarding.iniciar(b.tenderId, b.catalogos as string[] | undefined);
           json(res, 202, { origem: store.origem, dados: started }); return;
         }
       }

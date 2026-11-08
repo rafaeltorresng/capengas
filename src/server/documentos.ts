@@ -50,6 +50,7 @@ export function prepararDocumento(dossie: Dossier, tipo: 'proposta' | 'relatorio
     `Análise: ${dossie.analiseId ?? 'legada, sem identificador'}`, `Data da análise: ${dataHora(dossie.geradoEm)}`, '',
     'A conclusão se limita aos itens analisados. Não é resultado publicado, homologação nem autorização de envio.', '',
     ...(dossie.reavaliar ? ['**Reavaliação pendente: o edital mudou. Dados anteriores preservados para auditoria.**', ''] : [])];
+  if (dossie.catalogos) linhas.push('## Catálogos desta análise', '', 'Oferta comercial sintética. A seleção abaixo foi preservada nesta execução e não acompanha alterações posteriores.', '', ...dossie.catalogos.arquivos.map(a => `- ${a.nome} · versão ${a.versao.slice(0, 12)}`), `Produtos no catálogo selecionado: ${dossie.catalogos.produtos.length}.`, '');
   if (dossie.desatualizado) linhas.push('**Dados ou decisões alterados após esta análise. Documento anterior bloqueado.**', '');
   for (const item of itens) {
     linhas.push(`## Item ${item.item}`, '', item.descricao, '', `Decisão calculada: ${decisaoLabel[item.estado] ?? 'Não verificada'}`, `Motivos: ${item.motivos.join('; ')}`,

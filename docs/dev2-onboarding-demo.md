@@ -1,5 +1,7 @@
 # Entrada da demonstração — Dev 2, #25
 
+> Este documento registra o corte original. A expansão atual dos arquivos e do feed está em [dev2-catalogos-feed.md](dev2-catalogos-feed.md).
+
 A página inicial percorre Empresa → Produtos → Edital. É uma confirmação dos dados preparados, não cadastro de conta ou importação real.
 
 - Empresa: nome, porte, UF, margem mínima e prazo de entrega de `fixtures/company.json`. Não acrescenta CNPJ. Empresa, catálogo e condições comerciais são identificados como simulados.

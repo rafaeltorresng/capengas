@@ -19,7 +19,7 @@ export function agruparResultados(rows: QueueItem[], dossie: (tender: string) =>
 }
 
 export type TurnoEvento =
-  | { tipo: 'inicio'; pregoes: string[]; nomesEditais?: Record<string, string> }
+  | { tipo: 'inicio'; pregoes: string[]; nomesEditais?: Record<string, string>; catalogos?: import('./catalogos-demo.ts').SelecaoCatalogos }
   | { tipo: 'atividade'; atividade: string; ferramenta?: string }
   | { tipo: 'resultado'; concluida: boolean }
   | { tipo: 'sinal' }
@@ -84,7 +84,8 @@ export function projetarTurnos(events: Event[], agora: Date, resultadoLegado: (e
     const data = payload(event);
     if (data?.tipo === 'inicio') {
       turnos.set(data.turno, { id: data.turno, inicio: event.horario, atualizadoEm: event.horario,
-        status: 'ativo', pregoes: data.pregoes, etapas: [], nomesEditais: data.nomesEditais });
+        status: 'ativo', pregoes: data.pregoes, etapas: [], nomesEditais: data.nomesEditais,
+        ...(data.catalogos ? { catalogos: { hash: data.catalogos.hash, arquivos: data.catalogos.arquivos, produtos: data.catalogos.produtos.map(p => p.id) } } : {}) });
     } else if (data) {
       const turno = turnos.get(data.turno);
       if (!turno || turno.status !== 'ativo') continue;

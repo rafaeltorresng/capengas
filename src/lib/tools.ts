@@ -21,6 +21,7 @@ const parseId = (id: string) => { const [cnpj, ano, seq] = id.split('/'); return
 const S = (ctx: Ctx) => ctx.state as LanceState;
 
 export type LanceState = {
+  catalogSelection?: import('./catalogos-demo.ts').SelecaoCatalogos;
   company: any; now: Date; sandboxUrl: string;
   tenders: Record<string, any>; items: Record<string, any[]>; editais: Record<string, string>;
   requirements: any[]; fits: Record<string, any>; restrictive: Record<string, any>; decisions: Record<string, any>;

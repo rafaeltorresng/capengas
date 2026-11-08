@@ -1,0 +1,160 @@
+{
+  "_nota": "Arquivos de planilha são representações visuais, sem upload ou parsing. Oferta comercial, modelos, fichas e custos são sintéticos. Registros e marcas foram conferidos na base oficial local da ANVISA de 07/11/2026. A correspondência do registro não comprova cobertura dos modelos declarados.",
+  "arquivos": [
+    {
+      "id": "instrumental",
+      "nome": "instrumental-cirurgico.xlsx",
+      "titulo": "Instrumental cirúrgico",
+      "produtos": [
+        "P1",
+        "P2",
+        "P7"
+      ]
+    },
+    {
+      "id": "consumo",
+      "nome": "consumo-hospitalar.xlsx",
+      "titulo": "Antissepsia e consumo hospitalar",
+      "produtos": [
+        "P5",
+        "P8",
+        "P9",
+        "P10",
+        "P11"
+      ]
+    },
+    {
+      "id": "respiratorio",
+      "nome": "respiratorio-neonatal.xlsx",
+      "titulo": "Respiratório e neonatal",
+      "produtos": [
+        "P6",
+        "P12"
+      ]
+    },
+    {
+      "id": "mobilidade",
+      "nome": "mobilidade-reabilitacao.xlsx",
+      "titulo": "Mobilidade e reabilitação",
+      "produtos": [
+        "P4",
+        "P13",
+        "P14"
+      ]
+    }
+  ],
+  "produtos": [
+    {
+      "id": "P8",
+      "nome": "Seringa descartável 5 ml com agulha",
+      "marca": "Injex",
+      "registroAnvisa": "10160610002",
+      "custo": 0.8,
+      "ficha": "Seringa hipodérmica descartável de 5 ml, com agulha. Estéril, uso único, corpo graduado.",
+      "termos": [
+        "seringa",
+        "5 ml|5ml"
+      ],
+      "origem": "sinteticos",
+      "fonteRegistro": "https://dados.anvisa.gov.br/dados/TA_PRODUTO_SAUDE_SITE.csv",
+      "registroConferidoEm": "2026-11-08T12:49:31.620Z",
+      "nomeComercialNaBase": "Seringa Hipodérmica com Agulha - Injex"
+    },
+    {
+      "id": "P9",
+      "nome": "Seringa descartável 10 ml com agulha",
+      "marca": "Injex",
+      "registroAnvisa": "10160610002",
+      "custo": 1.1,
+      "ficha": "Seringa hipodérmica descartável de 10 ml, com agulha. Estéril, uso único, corpo graduado.",
+      "termos": [
+        "seringa",
+        "10 ml|10ml"
+      ],
+      "origem": "sinteticos",
+      "fonteRegistro": "https://dados.anvisa.gov.br/dados/TA_PRODUTO_SAUDE_SITE.csv",
+      "registroConferidoEm": "2026-11-08T12:49:31.621Z",
+      "nomeComercialNaBase": "Seringa Hipodérmica com Agulha - Injex"
+    },
+    {
+      "id": "P10",
+      "nome": "Luva de procedimento em látex M",
+      "marca": "Nugard",
+      "registroAnvisa": "80748910022",
+      "custo": 22,
+      "ficha": "Luva para procedimento não cirúrgico em látex natural, tamanho M, ambidestra, não estéril. Caixa com 100 unidades.",
+      "termos": [
+        "luva",
+        "procedimento",
+        "latex"
+      ],
+      "origem": "sinteticos",
+      "fonteRegistro": "https://dados.anvisa.gov.br/dados/TA_PRODUTO_SAUDE_SITE.csv",
+      "registroConferidoEm": "2026-11-08T12:49:31.622Z",
+      "nomeComercialNaBase": "Luva de látex para procedimento não cirúrgico - Marca NUGARD"
+    },
+    {
+      "id": "P11",
+      "nome": "Luva de procedimento em látex G",
+      "marca": "Nugard",
+      "registroAnvisa": "80748910022",
+      "custo": 24,
+      "ficha": "Luva para procedimento não cirúrgico em látex natural, tamanho G, ambidestra, não estéril. Caixa com 100 unidades.",
+      "termos": [
+        "luva",
+        "procedimento",
+        "latex"
+      ],
+      "origem": "sinteticos",
+      "fonteRegistro": "https://dados.anvisa.gov.br/dados/TA_PRODUTO_SAUDE_SITE.csv",
+      "registroConferidoEm": "2026-11-08T12:49:31.622Z",
+      "nomeComercialNaBase": "Luva de látex para procedimento não cirúrgico - Marca NUGARD"
+    },
+    {
+      "id": "P12",
+      "nome": "Máscara para terapia respiratória adulto",
+      "marca": "Portex",
+      "registroAnvisa": "10150470189",
+      "custo": 14,
+      "ficha": "Máscara facial adulto para terapia respiratória, com tubo e conector. Material flexível. Não declarada compatibilidade com equipamentos específicos.",
+      "termos": [
+        "mascara",
+        "oxigen|respiratoria|nebulizacao"
+      ],
+      "origem": "sinteticos",
+      "fonteRegistro": "https://dados.anvisa.gov.br/dados/TA_PRODUTO_SAUDE_SITE.csv",
+      "registroConferidoEm": "2026-11-08T12:49:31.623Z",
+      "nomeComercialNaBase": "MASCARA PARA TERAPIA RESPIRATORIA PORTEX / SMITHS MEDICAL"
+    },
+    {
+      "id": "P13",
+      "nome": "Andador de alumínio articulado",
+      "marca": "Mobil Saúde",
+      "registroAnvisa": "80889460011",
+      "custo": 145,
+      "ficha": "Andador adulto de alumínio, articulado, dobrável e com regulagem de altura. Ponteiras de borracha, sem rodas. Capacidade declarada: 100 kg.",
+      "termos": [
+        "andador"
+      ],
+      "origem": "sinteticos",
+      "fonteRegistro": "https://dados.anvisa.gov.br/dados/TA_PRODUTO_SAUDE_SITE.csv",
+      "registroConferidoEm": "2026-11-08T12:49:31.623Z",
+      "nomeComercialNaBase": "ANDADOR DE ALUMÍNIO MOBIL SAÚDE"
+    },
+    {
+      "id": "P14",
+      "nome": "Muleta axilar adulto",
+      "marca": "Dilepe",
+      "registroAnvisa": "80018119014",
+      "custo": 90,
+      "ficha": "Par de muletas axilares para adulto, regulagem de altura, apoio axilar e ponteiras em borracha. Capacidade declarada: 100 kg.",
+      "termos": [
+        "muleta"
+      ],
+      "origem": "sinteticos",
+      "fonteRegistro": "https://dados.anvisa.gov.br/dados/TA_PRODUTO_SAUDE_SITE.csv",
+      "registroConferidoEm": "2026-11-08T12:49:31.624Z",
+      "nomeComercialNaBase": "MULETA AXILAR DILEPE"
+    }
+  ]
+}

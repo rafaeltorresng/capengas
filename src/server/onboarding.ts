@@ -1,5 +1,7 @@
-// Entrada da demonstração: somente fixtures preparadas. A análise usa o mesmo agente e store do produto.
+// Entrada da demonstração: biblioteca sintética e oportunidades públicas verificadas. A análise usa o agente e store do produto.
 import { randomUUID } from 'node:crypto';
+import { criarBiblioteca, selecionarCatalogos, type BibliotecaCatalogos, type SelecaoCatalogos } from '../lib/catalogos-demo.ts';
+import { filtrarOportunidades, type FeedOportunidades } from '../lib/oportunidades.ts';
 import { type LLM, type Tool } from '../lib/agent.ts';
 import { runAgentWithOperationalReview as runAgent } from '../lib/agente-operacional.ts';
 import { tools, newState } from '../lib/tools.ts';
@@ -26,6 +28,7 @@ export type OnboardingData = {
   empresa: DemoCompany['empresa']; arquivo: string;
   produtos: Pick<DemoCompany['catalogo'][number], 'id' | 'nome' | 'marca' | 'registroAnvisa'>[];
   geradoEm: string; pregoes: PreparedDemo['pregoes'];
+  catalogos: { id: string; nome: string; titulo: string; versao: string; produtos: OnboardingData['produtos'] }[];
   analise: { disponivel: boolean; motivo: string | null };
 };
 export type AnalysisStarted = { tenderId: string; turno: string };
@@ -39,10 +42,12 @@ const permitidas = new Set(['list_catalog', 'get_product_sheet', 'get_tender_ite
 
 export async function runOnboardingAnalysis(o: AnalysisStarted & {
   company: DemoCompany; demo: PreparedDemo; store: LanceStore;
-  llm?: () => LLM; ferramentas?: Tool[]; snapshot?: (id: string, store: LanceStore) => Promise<unknown>; now?: () => Date;
+  selecao?: SelecaoCatalogos; llm?: () => LLM; ferramentas?: Tool[]; snapshot?: (id: string, store: LanceStore) => Promise<unknown>; now?: () => Date;
 }) {
   if (!o.demo.pregoes.some(p => p.id === o.tenderId)) throw new OnboardingError(400, 'Escolha um edital da lista preparada.');
-  const state = newState(o.company, 'http://127.0.0.1:9', (o.now ?? (() => new Date()))());
+  const company = o.selecao ? { ...structuredClone(o.company), catalogo: structuredClone(o.selecao.produtos) } : o.company;
+  const state = newState(company, 'http://127.0.0.1:9', (o.now ?? (() => new Date()))());
+  if (o.selecao) state.catalogSelection = structuredClone(o.selecao);
   // Sem a lista, o modelo procura às cegas: na execução real depois-2941 foram 26 chamadas em 235 itens sem nenhum encaixe.
   const matches = o.demo.pregoes.find(p => p.id === o.tenderId)?.matches ?? [];
   const candidatos = matches.length
@@ -75,36 +80,59 @@ export async function runOnboardingAnalysis(o: AnalysisStarted & {
 
 export function createOnboarding(o: {
   company: DemoCompany; demo: PreparedDemo; store?: LanceStore; disponivel: boolean;
-  executar?: (job: AnalysisStarted) => Promise<unknown>;
+  biblioteca?: BibliotecaCatalogos; feed?: FeedOportunidades; now?: () => Date;
+  executar?: (job: AnalysisStarted, contexto: { company: DemoCompany; demo: PreparedDemo; selecao?: SelecaoCatalogos }) => Promise<unknown>;
 }) {
-  let active: AnalysisStarted | undefined;
+  let active: (AnalysisStarted & { catalogoHash?: string }) | undefined;
+  const biblioteca = o.biblioteca ?? criarBiblioteca(o.company.catalogo);
+  const selecionar = (ids?: string[]) => {
+    try { return selecionarCatalogos(biblioteca, ids ?? biblioteca.arquivos.map(a => a.id)); }
+    catch { throw new OnboardingError(400, 'Escolha pelo menos um catálogo válido.'); }
+  };
+  const publico = ({ id, nome, marca, registroAnvisa }: DemoCompany['catalogo'][number]) => ({ id, nome, marca, registroAnvisa });
   const disponivel = !!o.store && o.disponivel;
   const motivo = disponivel ? null : 'Análise ao vivo indisponível. É necessário o modo integrado com a chave do modelo configurada no servidor.';
   const data: OnboardingData = {
     empresa: { nome: o.company.empresa.nome, porte: o.company.empresa.porte, atuacao: o.company.empresa.atuacao, uf: o.company.empresa.uf,
       margemMinima: o.company.empresa.margemMinima, prazoEntregaDias: o.company.empresa.prazoEntregaDias },
     arquivo: 'catalogo-distribuidora.xlsx', geradoEm: o.demo.geradoEm,
-    produtos: o.company.catalogo.map(({ id, nome, marca, registroAnvisa }) => ({ id, nome, marca, registroAnvisa })),
+    produtos: biblioteca.produtos.map(publico),
+    catalogos: biblioteca.arquivos.map(a => ({ id: a.id, nome: a.nome, titulo: a.titulo, versao: a.versao, produtos: biblioteca.produtos.filter(p => a.produtos.includes(p.id)).map(publico) })),
     pregoes: o.demo.pregoes.map(p => ({ id: p.id, orgao: p.orgao, uf: p.uf, municipio: p.municipio, abertura: p.abertura,
       situacao: p.situacao, url: p.url, matches: p.matches.map(({ item, produto, descricao }) => ({ item, produto, descricao })) })),
     analise: { disponivel, motivo },
   };
   return {
     dados: () => structuredClone(data),
-    iniciar(tenderId: string): AnalysisStarted {
-      if (!data.pregoes.some(p => p.id === tenderId)) throw new OnboardingError(400, 'Escolha um edital da lista preparada.');
+    oportunidades(ids: string[]) {
+      const selecao = selecionar(ids);
+      if (!o.feed) throw new OnboardingError(503, 'O feed não está configurado neste servidor.');
+      return filtrarOportunidades(o.feed.retrato(), selecao.produtos, (o.now ?? (() => new Date()))());
+    },
+    atualizar() { if (!o.feed) throw new OnboardingError(503, 'O feed não está configurado neste servidor.'); void o.feed.atualizar(); return { atualizando: o.feed.retrato().status === 'atualizando' }; },
+    iniciar(tenderId: string, ids?: string[]): AnalysisStarted {
+      if (o.biblioteca && !ids) throw new OnboardingError(400, 'Escolha pelo menos um catálogo válido.');
+      const selecao = o.biblioteca ? selecionar(ids) : undefined;
+      let demo = o.demo;
+      if (o.feed) {
+        const p = filtrarOportunidades(o.feed.retrato(), selecionar(ids).produtos, (o.now ?? (() => new Date()))()).pregoes.find(p => p.id === tenderId);
+        if (!p) throw new OnboardingError(400, 'Escolha um edital relacionado aos catálogos selecionados.');
+        if (!p.disponivel) throw new OnboardingError(409, p.motivo!);
+        demo = { ...o.demo, geradoEm: p.consultadoEm, pregoes: [p] };
+      } else if (!data.pregoes.some(p => p.id === tenderId)) throw new OnboardingError(400, 'Escolha um edital da lista preparada.');
       if (!disponivel) throw new OnboardingError(503, motivo!);
       if (active) {
-        if (active.tenderId === tenderId) return { ...active };
+        if (active.tenderId === tenderId && active.catalogoHash === selecao?.hash) return { tenderId: active.tenderId, turno: active.turno };
         throw new OnboardingError(409, 'Uma análise está em andamento. Acompanhe a execução antes de iniciar outro edital.');
       }
       const running = createReadModel(o.store!, { actions: () => o.store!.getActions() }).turnos().turnos
         .some(t => t.status === 'ativo' || t.status === 'sem_atualizacao');
       if (running) throw new OnboardingError(409, 'Há um turno em andamento ou sem confirmação de término. Confira o Acompanhamento antes de iniciar outro edital.');
       const job = { tenderId, turno: randomUUID() };
-      active = job;
+      active = { ...job, catalogoHash: selecao?.hash };
+      const contexto = { company: structuredClone(o.company), demo: structuredClone(demo), selecao: selecao ? structuredClone(selecao) : undefined };
       // A tarefa continua no servidor; o navegador passa a ler o progresso já persistido pelo turno.
-      void Promise.resolve().then(() => o.executar ? o.executar(job) : runOnboardingAnalysis({ ...job, company: o.company, demo: o.demo, store: o.store! }))
+      void Promise.resolve().then(() => o.executar ? o.executar(job, contexto) : runOnboardingAnalysis({ ...job, ...contexto, store: o.store! }))
         .catch(() => { o.store!.logEvent({ tipo: 'erro_fonte', tender: tenderId, resumo: 'A análise ao vivo falhou; confira o acompanhamento. Nenhum envio foi executado.' }); })
         .finally(() => { active = undefined; });
       return { ...job };

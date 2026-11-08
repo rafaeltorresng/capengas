@@ -34,8 +34,8 @@ function App() {
 
   if (path === 'onboarding' || path === 'onboarding/editais') return <OnboardingFrame mainRef={main}>
     <View<OnboardingData> path="onboarding" poll={false}>{data => <Onboarding key={path} data={data} escolherEdital={path.endsWith('/editais')}
-      iniciar={async tenderId => (await request<AnalysisStarted>('onboarding/analisar', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenderId }),
+      iniciar={async (tenderId, catalogos) => (await request<AnalysisStarted>('onboarding/analisar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenderId, catalogos }),
       })).dados} />}</View>
   </OnboardingFrame>;
 

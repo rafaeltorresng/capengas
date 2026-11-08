@@ -3,6 +3,8 @@
 | Arquivo | Origem | O que é real | O que é sintético |
 |---|---|---|---|
 | `company.json` | Montado pela equipe | **Números de registro ANVISA** dos produtos (base aberta TA_PRODUTO_SAUDE_SITE) | Empresa, catálogo (nomes, marcas, fichas técnicas, custos), cofre de documentos, política e termos de busca |
+| `catalogos.json` | Biblioteca ampliada da demonstração | Marca e registro dos produtos adicionais conferidos na base oficial ANVISA local de 07/11/2026 | Arquivos visuais, oferta comercial, modelos declarados, fichas, custos e termos; cobertura de modelo não é certificada pelo registro |
+| `oportunidades.json` | Consultas públicas às APIs do PNCP | Pregões, itens, metadados e datas; a consulta efetiva acompanha cada registro. Retrato parcial, com falhas preservadas | O pré-filtro relaciona itens reais aos produtos da empresa fictícia; não é decisão de encaixe |
 | `demo.json` | `scripts/preparar-demo.ts` | Pregões, órgãos, datas, itens, estimativas e situações (PNCP, retrato de `geradoEm`) | O casamento item × produto (pré-filtro por termos do catálogo sintético) |
 | `estado-exemplo.json` | `scripts/estado-exemplo.ts` (Dev 2) | Identificação do pregão e texto dos itens usados | Decisões, catálogo e exigência documental ilustrativa (marcados no próprio arquivo) |
 | `gold.json` | Rotulado manualmente | Textos de editais e itens reais | Fichas técnicas (escritas para produzir cada veredito) e os rótulos, que são julgamento da equipe |

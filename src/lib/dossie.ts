@@ -91,6 +91,7 @@ export function buildDossie(st: LanceState, tenderId: string, options: { documen
     exigencias: requirements.map(r => ({ ...r })), itens, ...(escopo ? { escopo } : {}),
     planoDocumentos: planoDoEstado(st, tenderId) ?? undefined,
     operacao,
+    catalogos: st.catalogSelection ? structuredClone(st.catalogSelection) : undefined,
     // Uma apresentação de dossiê nunca substitui evaluate/recheck no caminho de envio.
     envioAutomaticoLiberado: false,
   };

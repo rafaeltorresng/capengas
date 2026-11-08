@@ -33,6 +33,7 @@ export type Item = QueueItem & {
   rastro: Trace[]; dossie?: boolean;
 };
 export type Dossier = {
+  catalogos?: import('../lib/catalogos-demo.ts').SelecaoCatalogos;
   tender: string; pregao: string; versao: string;
   checklist: { exigencia: string; documento: string | null; status: string; detalhe?: string; fonte?: Source }[];
   pendencias: string[]; documentos: Source[];
@@ -71,6 +72,7 @@ export type Proof = {
 export type Origin = 'amostra' | 'integrado';
 export type TurnoStatus = 'ativo' | 'sem_atualizacao' | 'concluido' | 'incompleto' | 'falhou';
 export type Turno = {
+  catalogos?: Pick<import('../lib/catalogos-demo.ts').SelecaoCatalogos, 'hash' | 'arquivos'> & { produtos: string[] };
   nomesEditais?: Record<string, string>;
   id: string; inicio: string; atualizadoEm: string; status: TurnoStatus;
   pregoes: string[]; etapas: { horario: string; atividade: string; ferramenta?: string; estado?: 'em_andamento' | 'concluida' | 'pendente' }[]; legado?: boolean;
