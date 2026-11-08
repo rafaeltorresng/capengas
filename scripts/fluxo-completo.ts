@@ -6,7 +6,7 @@ import './_out.ts';
 // 4. gera os PDFs (proposta e declarações que o Lance preenche);
 // 5. com a aprovação humana, envia ao portal sandbox pelo mesmo caminho do agendador (recheque, política, intenção),
 //    com os PDFs anexos, e consulta o protocolo.
-// Uso: node scripts/fluxo-completo.ts [tender_id] [--itens 26] [--aprovar] [--modelo X]
+// Uso: node scripts/fluxo-completo.ts [tender_id] [--itens 26] [--aprovar] [--modelo X] [--recheque-demo]
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createInterface } from 'node:readline/promises';
@@ -19,6 +19,7 @@ import { openStore } from '../src/lib/store.ts';
 import { persistAnalysis } from '../src/lib/persist-analysis.ts';
 import { snapshotTender, recheckTender } from '../src/lib/recheck.ts';
 import { executarAcao } from '../src/lib/act.ts';
+import { resolverPregoesSolicitados } from '../src/lib/agendamento.ts';
 import { anvisa } from '../src/lib/data.ts';
 import { createReadModel } from '../src/lib/read-model.ts';
 import { prepararDocumento, prepararDocumentoGerado, renderizarPdf } from '../src/server/documentos.ts';
@@ -33,8 +34,8 @@ const tag = `${tenderId.replaceAll('/', '-')}-${Date.now()}`;
 const dir = `out/fluxo-completo/${tag}`;
 mkdirSync(dir, { recursive: true });
 const company = JSON.parse(readFileSync('fixtures/company.json', 'utf8'));
-const tender = JSON.parse(readFileSync('fixtures/coverage.json', 'utf8')).find((c: any) => `${c.cnpj}/${c.ano}/${c.seq}` === tenderId);
-if (!tender) throw new Error(`pregão ${tenderId} não está em fixtures/coverage.json`);
+const tender = resolverPregoesSolicitados([tenderId], JSON.parse(readFileSync('fixtures/coverage.json', 'utf8')),
+  JSON.parse(readFileSync('fixtures/demo.json', 'utf8')))[tenderId];
 
 const etapa = (n: number, s: string) => console.log(`\n=== ${n}. ${s}`);
 const sbx = await startSandbox(0);
@@ -69,7 +70,8 @@ for (const [k, d] of Object.entries(st.decisions) as [string, any][]) if (k.star
 etapa(2, 'Grava a análise e a foto do pregão');
 const analiseId = `fluxo-${Date.now()}`;
 persistAnalysis(st, store, { analiseId });
-await snapshotTender(tenderId, store);
+try { await snapshotTender(tenderId, store); }
+catch (e: any) { console.log(`  foto do pregão não gravada (${String(e?.message ?? e).slice(0, 90)}); o recheque bloqueia o envio`); }
 console.log(`  banco: ${dbPath} · análise ${analiseId}`);
 
 etapa(3, 'Gera os documentos de saída (PDF)');
@@ -109,15 +111,21 @@ if (viaveis.length && anexos.length) {
   if (!aprovado) resultado = 'envio não aprovado';
   else {
     if (pendencias.length) console.log('  aprovado pelo humano' + (args.includes('--aprovar') ? ' (flag --aprovar)' : ''));
+    // Só para gravar a demo no portal sandbox: o recheque real (situação e arquivos no PNCP) é trocado por "ok".
+    const recheckDemo = args.includes('--recheque-demo');
+    if (recheckDemo) console.log('  ATENÇÃO: --recheque-demo — recheque do PNCP SIMULADO como ok; vale só para o portal sandbox');
     resultado = await executarAcao({ tipo: 'enviar_proposta', tenderId, itens: viaveis.map(d => d.item), anexos, pendenciasAprovadas: pendencias }, {
       store, politica: company.politica, sandboxUrl: sbx.url, empresa: company.empresa.nome, catalogo: company.catalogo,
-      recheck: id => recheckTender(id, store), anvisa: n => anvisa.byRegistro(n) });
+      recheck: recheckDemo
+        ? async id => ({ status: 'ok', situacao: 'simulada (--recheque-demo)', arquivosHash: store.getTender(id)?.arquivosHash ?? '', em: new Date().toISOString() })
+        : id => recheckTender(id, store),
+      anvisa: n => anvisa.byRegistro(n) });
     const res = resultado as any;
     if (res.resultado === 'confirmada') {
       const recebida = sbx.propostas.get(res.protocolo);
       console.log(`  protocolo ${res.protocolo} confirmado no portal; recebida em ${recebida?.recebidaEm}`);
       for (const a of recebida?.anexos ?? []) console.log(`  anexo recebido: ${a.nome} (${a.bytes} bytes, sha256 ${a.sha256.slice(0, 12)}…)`);
-      writeFileSync(`${dir}/protocolo.json`, JSON.stringify({ ...recebida, anexos: recebida?.anexos }, null, 1));
+      writeFileSync(`${dir}/protocolo.json`, JSON.stringify({ ...recebida, recheque: recheckDemo ? 'simulado (--recheque-demo)' : 'PNCP' }, null, 1));
     }
   }
 }
