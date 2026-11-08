@@ -45,7 +45,8 @@ st.operationalConditions = {};
 st.store = store;
 st.tenders[tenderId] = tender;
 
-const SEM_ENVIO = new Set(['submit_proposal', 'send_esclarecimento', 'verify_submission', 'request_approval']);
+// Envio fica com o script, depois da aprovação. A leitura operacional é a etapa própria depois da análise técnica.
+const SEM_ENVIO = new Set(['submit_proposal', 'send_esclarecimento', 'verify_submission', 'request_approval', 'read_operational_excerpt']);
 const SYSTEM = `Você é o Lance, analista de licitações da ${company.empresa.nome}, que vende produtos para saúde a órgãos públicos.
 - Use ferramentas para tudo; nunca invente dados, preços, registros ou citações. Citações são cópias literais.
 - Liste o catálogo, leia os itens do pregão (siga proxima_pagina; se descricao_truncada, use get_tender_item até proximo_offset null).
@@ -59,11 +60,10 @@ const USER = `Analise o pregão ${tenderId}.${candidatos.length ? ` Candidatos d
 etapa(1, `Agente lê o edital ${tenderId}, extrai exigências, decide os itens e monta proposta e plano (modelo ${model})`);
 const onEvent = (e: any) => { if (e.type === 'tool') console.log(`  [${(e.t / 1000).toFixed(0)}s] ${e.error || e.result?.aceito === false ? '✗' : '✓'} ${e.name} ${JSON.stringify(e.args).slice(0, 100)}`); };
 const r = await runAgentWithOperationalReview({ llm: featherless(model), operationalLLM: featherless(model, { maxTokens: 8192 }),
-  tools: tools.filter(t => !SEM_ENVIO.has(t.name)), system: SYSTEM, user: USER, maxSteps: 30, maxTokens: 500_000, state: st, onEvent });
+  tools: tools.filter(t => !SEM_ENVIO.has(t.name)), system: SYSTEM, user: USER, maxSteps: 40, maxTokens: 600_000, state: st, onEvent });
 writeFileSync(`${dir}/rastro.json`, JSON.stringify(r.trace, null, 1));
 console.log(`  ${r.stopped} em ${(r.ms / 1000).toFixed(0)}s; custo US$ ${(r.usage.cost ?? 0).toFixed(3)}`);
 
-const viaveis = Object.entries(st.decisions).filter(([k, d]: any) => k.startsWith(tenderId + '#') && d.estado === 'disputar').map(([k]) => Number(k.split('#')[1]));
 for (const [k, d] of Object.entries(st.decisions) as [string, any][]) if (k.startsWith(tenderId + '#')) console.log(`  item ${k.split('#')[1]}: ${d.estado} — ${d.motivos?.join('; ').slice(0, 160)}`);
 
 etapa(2, 'Grava a análise e a foto do pregão');
@@ -93,17 +93,23 @@ else {
 if (dossie) writeFileSync(`${dir}/relatorio.pdf`, await renderizarPdf(prepararDocumento(dossie, 'relatorio')));
 
 etapa(4, 'Aprovação humana e envio ao portal sandbox');
-let resultado: unknown = 'sem item com decisão disputar: nada a enviar';
+// Fatos do store, como no executarAcao: as pendências aprovadas são o texto gravado na decisão.
+const viaveis = store.getDecisions(tenderId).filter(d => d.estado === 'disputar' || d.estado === 'disputar_com_pendencia');
+const pendencias = [...new Set(viaveis.filter(d => d.estado === 'disputar_com_pendencia').flatMap(d => d.motivos))];
+let resultado: unknown = 'sem item viável: nada a enviar';
 if (viaveis.length && anexos.length) {
+  console.log(`  itens: ${viaveis.map(d => `${d.item} (${d.estado}, R$ ${d.precoProposto})`).join(', ')}; anexos: ${anexos.map(a => a.nome).join(', ')}`);
+  for (const p of pendencias) console.log(`  pendência: ${p}`);
   let aprovado = args.includes('--aprovar');
   if (!aprovado && process.stdin.isTTY) {
     const rl = createInterface({ input: process.stdin, output: process.stdout });
-    aprovado = /^s/i.test(await rl.question(`  Enviar a proposta dos itens ${viaveis.join(', ')} com ${anexos.length} PDF(s) ao portal sandbox? (s/N) `));
+    aprovado = /^s/i.test(await rl.question(`  Aprovar ${pendencias.length ? 'as pendências acima e ' : ''}o envio ao portal sandbox? (s/N) `));
     rl.close();
   }
   if (!aprovado) resultado = 'envio não aprovado';
   else {
-    resultado = await executarAcao({ tipo: 'enviar_proposta', tenderId, itens: viaveis, anexos }, {
+    if (pendencias.length) console.log('  aprovado pelo humano' + (args.includes('--aprovar') ? ' (flag --aprovar)' : ''));
+    resultado = await executarAcao({ tipo: 'enviar_proposta', tenderId, itens: viaveis.map(d => d.item), anexos, pendenciasAprovadas: pendencias }, {
       store, politica: company.politica, sandboxUrl: sbx.url, empresa: company.empresa.nome, catalogo: company.catalogo,
       recheck: id => recheckTender(id, store), anvisa: n => anvisa.byRegistro(n) });
     const res = resultado as any;

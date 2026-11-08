@@ -70,6 +70,15 @@ describe('enviar_proposta', () => {
     const r = evaluate('enviar_proposta', ctx({ decisoes: [disputar, { estado: 'disputar_com_pendencia', motivos: ['CND vence antes da sessão'] }] }), politica);
     assert.equal(r.permitido, false); assert.equal(r.escalar, true); assert.match(r.motivo, /pendência/);
   });
+  test('pendência aprovada pelo humano, texto a texto, libera; aprovação parcial ou antiga não libera', () => {
+    const pend: ItemDecision = { estado: 'disputar_com_pendencia', motivos: ['CND vence antes da sessão', 'confirmar cobertura ANVISA'] };
+    const todas = evaluate('enviar_proposta', ctx({ decisoes: [disputar, pend], pendenciasAprovadas: [...pend.motivos] }), politica);
+    assert.equal(todas.permitido, true); assert.match(todas.motivo, /aprovadas pelo humano/);
+    const parcial = evaluate('enviar_proposta', ctx({ decisoes: [pend], pendenciasAprovadas: ['CND vence antes da sessão'] }), politica);
+    assert.equal(parcial.permitido, false); assert.equal(parcial.escalar, true);
+    // Aprovação não passa por cima do limite de valor.
+    assert.equal(evaluate('enviar_proposta', ctx({ decisoes: [pend], valor: 1e9, pendenciasAprovadas: [...pend.motivos] }), politica).permitido, false);
+  });
   test('item a escalar ou esclarecer → escala', () => {
     assert.equal(evaluate('enviar_proposta', ctx({ decisoes: [{ estado: 'escalar', motivos: ['encaixe desconhecido'] }] }), politica).permitido, false);
     assert.equal(evaluate('enviar_proposta', ctx({ decisoes: [{ estado: 'esclarecer', motivos: ['variante'] }] }), politica).permitido, false);

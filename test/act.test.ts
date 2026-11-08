@@ -67,6 +67,18 @@ describe('envio permitido', () => {
     store.close();
   });
 
+  test('item com pendência só sai com as pendências gravadas aprovadas pelo humano', async () => {
+    const { store, posts, deps } = harness({ seed: { estado: 'disputar_com_pendencia' } });
+    assert.equal((await executarAcao(proposta(), deps)).resultado, 'escalada');
+    assert.equal((await executarAcao({ ...proposta(), pendenciasAprovadas: ['outra coisa'] } as PedidoAcao, deps)).resultado, 'escalada');
+    assert.equal(posts.length, 0);
+    const r = await executarAcao({ ...proposta(), pendenciasAprovadas: ['atributos conferidos'] } as PedidoAcao, deps);
+    assert.equal(r.resultado, 'confirmada');
+    assert.equal(posts.length, 1);
+    assert.ok(store.events().some(e => e.tipo === 'escalada_decidida' && /atributos conferidos/.test(e.resumo)));
+    store.close();
+  });
+
   test('esclarecimento com prazo legal ainda aberto confirma', async () => {
     const { store, posts, deps } = harness();
     const texto = 'Solicitamos informar a embalagem individual exigida no item, que não consta da ficha.';

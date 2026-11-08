@@ -56,11 +56,14 @@ export function evaluate(acao: AcaoTipo, c: AcaoContexto, politica: Politica | u
     const contagem = (estado: string) => c.decisoes.filter(d => d.estado === estado).length;
     if (contagem('nao_disputar')) return nega(true, 'proposta inclui item marcado como não disputar: inconsistência');
     if (contagem('escalar') || contagem('esclarecer')) return nega(true, 'proposta inclui item que precisa de escalada ou esclarecimento');
-    if (contagem('disputar_com_pendencia')) return nega(true, 'proposta com pendência (documento ou cobertura) exige decisão humana');
-    if (p.exigirTodosAtributosAtende && contagem('disputar') !== c.decisoes.length) return nega(true, 'nem todos os itens estão em disputar');
+    const aprovadas = new Set(c.pendenciasAprovadas ?? []);
+    const comPendencia = c.decisoes.filter(d => d.estado === 'disputar_com_pendencia');
+    const liberadas = comPendencia.length > 0 && comPendencia.every(d => d.motivos.length > 0 && d.motivos.every(m => aprovadas.has(m)));
+    if (comPendencia.length && !liberadas) return nega(true, 'proposta com pendência (documento ou cobertura) exige decisão humana');
+    if (p.exigirTodosAtributosAtende && contagem('disputar') + (liberadas ? comPendencia.length : 0) !== c.decisoes.length) return nega(true, 'nem todos os itens estão em disputar');
     if (c.valor == null || !Number.isFinite(c.valor)) return nega(true, 'valor da proposta desconhecido');
     if (c.valor > p.valorMaxAutomatico) return nega(true, `valor ${BRL(c.valor)} acima do limite automático de ${BRL(p.valorMaxAutomatico)}`);
-    return { permitido: true, escalar: false, motivo: `todos os itens em disputar; valor ${BRL(c.valor)} dentro do limite` };
+    return { permitido: true, escalar: false, motivo: `${liberadas ? 'pendências aprovadas pelo humano' : 'todos os itens em disputar'}; valor ${BRL(c.valor)} dentro do limite` };
   }
 
   return nega(true, `ação desconhecida: ${String(acao)}`);
