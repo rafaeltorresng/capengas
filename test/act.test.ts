@@ -2,6 +2,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { openStore, type LanceStore } from '../src/lib/store.ts';
 import { executarAcao, type ActDeps, type PedidoAcao } from '../src/lib/act.ts';
 import type { Politica, Recheque } from '../src/lib/contracts.ts';
@@ -53,6 +54,16 @@ describe('envio permitido', () => {
     assert.equal(action.status, 'confirmada');
     assert.equal(action.verificado, true);
     assert.equal(store.events().filter(event => event.tipo === 'proposta_enviada').length, 1);
+    store.close();
+  });
+
+  test('proposta leva os PDFs anexos com o hash do conteúdo', async () => {
+    const { store, posts, deps } = harness();
+    const pdf = new Uint8Array(Buffer.from('%PDF-1.7\nproposta'));
+    const result = await executarAcao({ ...proposta(), anexos: [{ nome: 'proposta.pdf', pdf }] } as PedidoAcao, deps);
+    assert.equal(result.resultado, 'confirmada');
+    assert.deepEqual(posts[0].anexos, [{ nome: 'proposta.pdf', conteudo: Buffer.from(pdf).toString('base64'),
+      sha256: createHash('sha256').update(pdf).digest('hex') }]);
     store.close();
   });
 

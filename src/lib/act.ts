@@ -9,7 +9,7 @@ import { conferirRegistro } from './catalogo.ts';
 import type { AcaoContexto, ItemDecision, Politica, Recheque } from './contracts.ts';
 import type { LanceStore } from './store.ts';
 
-export type PedidoProposta = { tipo: 'enviar_proposta'; tenderId: string; itens: number[] };
+export type PedidoProposta = { tipo: 'enviar_proposta'; tenderId: string; itens: number[]; anexos?: { nome: string; pdf: Uint8Array }[] };
 export type PedidoEsclarecimento = {
   tipo: 'enviar_esclarecimento'; tenderId: string; item: number; texto: string;
   motivo: 'nao_informado' | 'variante_nao_coberta' | 'marca_referencia';
@@ -182,7 +182,8 @@ export async function executarAcao(pedido: PedidoAcao, deps: ActDeps): Promise<R
   deps.store.updateAction(montado.key, { status: 'enviada' });
   const rota = portalTipo(pedido.tipo) === 'proposta' ? 'propostas' : 'esclarecimentos';
   const body = pedido.tipo === 'enviar_proposta'
-    ? { tender: pedido.tenderId, empresa: deps.empresa, itens: montado.linhas }
+    ? { tender: pedido.tenderId, empresa: deps.empresa, itens: montado.linhas, ...(pedido.anexos?.length ? { anexos: pedido.anexos.map(a => ({
+      nome: a.nome, conteudo: Buffer.from(a.pdf).toString('base64'), sha256: createHash('sha256').update(a.pdf).digest('hex') })) } : {}) }
     : { tender: pedido.tenderId, item: pedido.item, texto: pedido.texto };
   const envio = await enviar(`${deps.sandboxUrl}/api/${rota}`, body);
   if ('erro' in envio) {
