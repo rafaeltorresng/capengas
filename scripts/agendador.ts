@@ -1,3 +1,4 @@
+import { INSTRUCAO_OPERACIONAL } from '../src/lib/operacao.ts';
 // Liga o agendador ao turno de análise: turnos nos horários da política e monitor periódico, sem clique.
 // Uso: npm run agendador                 (fica rodando; Ctrl+C para parar)
 //      npm run agendador -- --uma-vez    (um tick e sai)
@@ -8,7 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { openStore } from '../src/lib/store.ts';
 import { featherless } from '../src/lib/llm.ts';
-import { runAgent } from '../src/lib/agent.ts';
+import { runAgentWithOperationalReview as runAgent } from '../src/lib/agente-operacional.ts';
 import { acompanhamentoDe } from '../src/lib/turn.ts';
 import { atividadeDaFerramenta } from '../src/lib/turnos.ts';
 import { tools } from '../src/lib/tools.ts';
@@ -23,7 +24,7 @@ const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', impo
 const demo = JSON.parse(readFileSync(new URL('../fixtures/demo.json', import.meta.url), 'utf8'));
 const args = process.argv.slice(2);
 const demoSeg = args.includes('--demo') ? Number(args[args.indexOf('--demo') + 1] ?? 30) : null;
-const allowed = new Set(['list_catalog', 'get_product_sheet', 'get_tender_items', 'get_tender_item', 'read_edital', 'record_requirement', 'record_fit', 'check_anvisa', 'decide_item', 'flag_restrictive', 'draft_esclarecimento']);
+const allowed = new Set(['list_catalog', 'get_product_sheet', 'get_tender_items', 'get_tender_item', 'read_edital', 'record_requirement', 'record_fit', 'check_anvisa', 'decide_item', 'flag_restrictive', 'draft_esclarecimento', 'record_operational_condition', 'read_operational_excerpt']);
 
 const store = openStore();
 const sbx = process.env.LANCE_SANDBOX_URL ? null : await startSandbox(0);
@@ -37,11 +38,11 @@ const runTurn = createAnalysisTurn({
   recheck: (id, s) => recheckTender(id, s),
   acompanhar: true,
   agir: (state, ids) => executarAcoesDoTurno({ store, company, state, ids, sandboxUrl, recheck: id => recheckTender(id, store), anvisa: n => anvisa.byRegistro(n) }),
-  analisar: (state, ids) => runAgent({ llm, tools: tools.filter(t => allowed.has(t.name)), state,
+  analisar: (state, ids) => runAgent({ llm, operationalLLM: featherless(undefined, { maxTokens: 8192 }), tools: tools.filter(t => allowed.has(t.name)), state,
     maxSteps: 30, maxTokens: 250_000,
-    system: 'Você é o Lance. Analise somente os pregões solicitados. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Se o edital exige marca de referência, use flag_restrictive. Para atributo nao_informado, variante não coberta ou marca de referência, rascunhe o pedido de esclarecimento com draft_esclarecimento (texto objetivo citando o item). Não envie nada: o envio é feito pelo código, conforme a política. Catálogo e cofre são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.',
+    system: 'Você é o Lance. Analise somente os pregões solicitados. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Se o edital exige marca de referência, use flag_restrictive. Para atributo nao_informado, variante não coberta ou marca de referência, rascunhe o pedido de esclarecimento com draft_esclarecimento (texto objetivo citando o item). Não envie nada: o envio é feito pelo código, conforme a política. Catálogo e cofre são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.' + ' ' + INSTRUCAO_OPERACIONAL,
     user: `Analise os pregões ${ids.join(', ')} e termine com um resumo do que ficou pronto e das pendências.`,
-    onToolStart: name => acompanhamentoDe(state)?.atividade(atividadeDaFerramenta(name)),
+    onToolStart: name => acompanhamentoDe(state)?.atividade(atividadeDaFerramenta(name), name),
     onEvent: e => {
       if (e.type === 'tool') {
         const resultado = e.result as { aceito?: boolean; error?: unknown; erro?: unknown } | undefined;

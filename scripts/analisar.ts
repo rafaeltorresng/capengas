@@ -1,8 +1,9 @@
+import { INSTRUCAO_OPERACIONAL } from '../src/lib/operacao.ts';
 // Turno de análise real, persistido. Não expõe ferramentas de envio ao modelo.
 import { readFileSync } from 'node:fs';
 import { openStore } from '../src/lib/store.ts';
 import { featherless } from '../src/lib/llm.ts';
-import { runAgent } from '../src/lib/agent.ts';
+import { runAgentWithOperationalReview as runAgent } from '../src/lib/agente-operacional.ts';
 import { tools, newState } from '../src/lib/tools.ts';
 import { acompanhamentoDe, runAnalysisTurn } from '../src/lib/turn.ts';
 import { atividadeDaFerramenta } from '../src/lib/turnos.ts';
@@ -16,17 +17,17 @@ const ids = process.argv.slice(2);
 if (!ids.length) throw new Error('Informe pelo menos um id CNPJ/ano/sequencial; use LANCE_DB para escolher o banco.');
 const state = newState(company, 'http://127.0.0.1:9');
 state.tenders = resolverPregoesSolicitados(ids, coverage, demo);
-const allowed = new Set(['list_catalog', 'get_product_sheet', 'get_tender_items', 'get_tender_item', 'read_edital', 'record_requirement', 'record_fit', 'check_anvisa', 'decide_item']);
+const allowed = new Set(['list_catalog', 'get_product_sheet', 'get_tender_items', 'get_tender_item', 'read_edital', 'record_requirement', 'record_fit', 'check_anvisa', 'decide_item', 'record_operational_condition', 'read_operational_excerpt']);
 const store = openStore();
 const llm = featherless();
 try {
   const saved = await runAnalysisTurn({
     store, state, origem: 'direto', acompanhar: true, snapshot: (id, banco) => snapshotTender(id, banco),
-    run: () => runAgent({ llm, tools: tools.filter(t => allowed.has(t.name)), state,
+    run: () => runAgent({ llm, operationalLLM: featherless(undefined, { maxTokens: 8192 }), tools: tools.filter(t => allowed.has(t.name)), state,
       maxSteps: 30, maxTokens: 250_000,
-      system: 'Você é o Lance. Analise somente os pregões solicitados. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Não envie nada. Catálogo e cofre são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.',
+      system: 'Você é o Lance. Analise somente os pregões solicitados. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Não envie nada. Catálogo e cofre são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.' + ' ' + INSTRUCAO_OPERACIONAL,
       user: `Analise os pregões ${ids.join(', ')} e termine com um resumo do que ficou pronto e das pendências.`,
-      onToolStart: name => acompanhamentoDe(state)?.atividade(atividadeDaFerramenta(name)),
+      onToolStart: name => acompanhamentoDe(state)?.atividade(atividadeDaFerramenta(name), name),
       onEvent: e => {
         if (e.type === 'tool') {
           const resultado = e.result as { aceito?: boolean; error?: unknown; erro?: unknown } | undefined;

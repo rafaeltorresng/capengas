@@ -37,3 +37,7 @@ Os números mudam com o tempo, porque os pregões abertos e os desfechos mudam t
 ## Experiência da análise — 08/11/2026
 
 `experiencia-analise-2026-11-08.json` registra uma execução real iniciada pelo onboarding, separada das anteriores: 25 chamadas ao modelo, 948.940 ms entre início/fim persistidos e US$ 0,11373776 somados do rastro. Dois itens decididos, um com pendência e outro não recomendado; minuta com o item viável e plano documental. A conferência final de arquivos no PNCP terminou em timeout e não houve envio. Meta de três minutos não cumprida; concordância e economia sem medição. Empresa e catálogo permanecem sintéticos. Detalhes e limites em `docs/dev2-experiencia-analise.md`.
+
+## Revisão operacional — 08/11/2026
+
+`operacao-2026-11-08.json` separa as tentativas de extração operacional sobre PDFs públicos já baixados do pregão 348. A última registrou cinco citações em quatro campos, em duas chamadas ao modelo, 118.695 ms e US$ 0,020694528. Validade de produto não identificada; entrega e amostra continuam para confirmação. Encaixe técnico preservado da análise anterior, sem nova conferência do PNCP nem envio. Tentativas anteriores falharam, encerraram sem registros ou tiveram citações recusadas; estão identificadas no arquivo. Isso não é medição de turno completo, precisão geral ou ganho de velocidade.

@@ -11,6 +11,8 @@ const ferramentas: Record<string, Fase> = {
   list_catalog: 'fontes', get_product_sheet: 'fontes', get_tender_items: 'fontes', get_tender_item: 'fontes', read_edital: 'fontes',
   record_requirement: 'analise', record_fit: 'analise', check_anvisa: 'analise', flag_restrictive: 'analise',
   decide_item: 'decisao', draft_esclarecimento: 'decisao',
+  read_operational_excerpt: 'analise', record_operational_condition: 'analise',
+  review_operational_conditions: 'analise',
   read_proposal_docs: 'documentos', read_proposal_excerpt: 'documentos', record_proposal_rule: 'documentos',
   record_document_requirement: 'documentos', draft_document_plan: 'documentos', draft_proposal_document: 'documentos',
   salvar_analise: 'documentos', conferir_publicacao: 'documentos',
@@ -46,7 +48,7 @@ export function resumirProgresso(turno: Turno) {
 }
 
 /** Não interpreta rótulos da tela nem aceita o resumo livre do modelo como decisão. */
-export function concluirAnalise(itens: { estadoCodigo?: string; estado?: string }[], reavaliar = false, desatualizado = false, publicacaoNaoConferida = false, naoAnalisados = 0) {
+export function concluirAnalise(itens: { estadoCodigo?: string; estado?: string }[], reavaliar = false, desatualizado = false, publicacaoNaoConferida = false, naoAnalisados = 0, operacaoPendente = false) {
   const liberados = itens.filter(i => i.estadoCodigo === 'disputar').length;
   const condicionados = itens.filter(i => i.estadoCodigo === 'disputar_com_pendencia').length;
   const recusados = itens.filter(i => i.estadoCodigo === 'nao_disputar').length;
@@ -56,6 +58,7 @@ export function concluirAnalise(itens: { estadoCodigo?: string; estado?: string 
   if (reavaliar) return { estado: 'revisao_necessaria' as const, titulo: 'O edital mudou. É preciso reavaliar.', detalhe: 'A análise anterior permanece para consulta. A proposta está bloqueada até a revisão.' + escopo, liberados, condicionados, recusados, revisar };
   if (desatualizado) return { estado: 'revisao_necessaria' as const, titulo: 'A análise precisa ser atualizada.', detalhe: 'Os dados ou as decisões mudaram desde esta execução. A proposta anterior está bloqueada.' + escopo, liberados, condicionados, recusados, revisar };
   if (publicacaoNaoConferida) return { estado: 'revisao_necessaria' as const, titulo: 'Confira a publicação antes de avançar.', detalhe: 'A análise dos itens está registrada, mas a atualidade da publicação não foi confirmada. Os documentos são minutas para revisão.' + escopo, liberados, condicionados, recusados, revisar };
+  if (operacaoPendente && liberados + condicionados > 0) return { estado: 'com_pendencias' as const, titulo: 'Há oportunidade, com condições a confirmar.', detalhe: 'Confira as condições para fornecer e as pendências da operação antes de participar. Produto compatível não comprova capacidade de entrega.' + escopo, liberados, condicionados, recusados, revisar };
   const estado = !itens.length || (!liberados && !condicionados && revisar) ? 'revisao_necessaria'
     : liberados && !condicionados && !revisar ? 'recomendada'
     : liberados || condicionados ? 'com_pendencias' : 'nao_recomendada';

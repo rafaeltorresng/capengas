@@ -45,7 +45,8 @@ test('onboarding liga ferramentas documentais e persiste proposta/plano no resul
   assert.equal(d.proposta?.total, 75); assert.equal(d.proposta?.origemDados, 'sinteticos');
   assert.match(d.proposta!.markdown, /90 dias/);
   assert.ok(d.planoDocumentos?.linhas.some(l => l.tipo === 'proposta_precos' && l.status === 'gerado'));
-  assert.equal(model.turnos().turnos[0].resultados?.[0].itens[0].estadoCodigo, 'disputar');
+  assert.equal(model.turnos().turnos[0].resultados?.[0].itens[0].estadoCodigo, 'disputar_com_pendencia');
+  assert.ok(d.operacao?.requerRevisao, 'cláusulas operacionais não registradas exigem confirmação');
   assert.equal(model.turnos().turnos[0].status, 'concluido');
   assert.deepEqual(store.getActions(), []);
   assert.match(prepararDocumento(d, 'proposta').markdown, /MINUTA/);

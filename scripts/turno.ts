@@ -6,7 +6,9 @@ import './_out.ts';
 import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { featherless } from '../src/lib/llm.ts';
 import { runAgent } from '../src/lib/agent.ts';
+import { runAgentWithOperationalReview } from '../src/lib/agente-operacional.ts';
 import { tools, newState } from '../src/lib/tools.ts';
+import { INSTRUCAO_OPERACIONAL } from '../src/lib/operacao.ts';
 import { startSandbox } from '../src/lib/sandbox.ts';
 import { openStore } from '../src/lib/store.ts';
 
@@ -19,6 +21,7 @@ const traceFile = `out/turno-${tag}.jsonl`;
 const sbx = await startSandbox(0);
 const store = openStore();
 const st = newState(company, sbx.url, new Date());
+st.operationalConditions = {};
 st.store = store;
 if (mode === 'focado') for (const c of cov) st.tenders[`${c.cnpj}/${c.ano}/${c.seq}`] = c;
 const llm = featherless(model);
@@ -36,14 +39,15 @@ Regras:
 - Só para pregão em que decide_item deu disputar ou disputar_com_pendencia: abra os documentos com read_proposal_docs, registre com record_proposal_rule as regras de apresentação da proposta (comece pelos trechos pré-selecionados; leia o modelo de proposta com read_proposal_excerpt; no máximo 8 leituras) e monte o documento com draft_proposal_document. Registre com record_document_requirement cada documento exigido que as regras da proposta não cobrem (certidões, AFE, licença sanitária, contrato social, balanço, atestado, comprovante de distribuidor), com fase, condição e prazo do trecho, e monte o plano com draft_document_plan. Pregão sem item viável não tem proposta nem plano.
 - Exceções: se uma ferramenta falhar, tente de novo uma vez e siga em frente registrando a pendência. Não analise itens sem produto compatível no catálogo.
 - Resultados antigos de ferramenta são resumidos no histórico. Se faltar uma citação, chame a ferramenta de novo.
-- Ao terminar, chame request_approval com um resumo curto (itens, decisão, preço, pendências, esclarecimentos, pendências do documento da proposta e do plano de documentos) e ENCERRE.`;
+- Ao terminar, chame request_approval com um resumo curto (itens, decisão, preço, pendências, esclarecimentos, pendências do documento da proposta e do plano de documentos) e ENCERRE.
+${INSTRUCAO_OPERACIONAL}`;
 
 const USER = mode === 'focado'
   ? `Turno de ${new Date().toLocaleDateString('pt-BR')}. Analise estes pregões abertos: 77816510000166/2026/348, 03648344000108/2026/14 e 80257355000108/2026/493. Comece por list_catalog.`
   : `Turno de ${new Date().toLocaleDateString('pt-BR')}. Encontre pregões abertos relevantes para o catálogo (no máximo 3 pregões, priorize os com mais itens compatíveis) e faça o trabalho completo. Comece por list_catalog.`;
 
 console.log(`# Turno ${mode} com ${model}`);
-const p1 = await runAgent({ llm, tools, system: SYSTEM, user: USER, maxSteps: 45, maxTokens: 900_000, state: st as any, onEvent });
+const p1 = await runAgentWithOperationalReview({ llm, operationalLLM: featherless(model, { maxTokens: 8192 }), tools, system: SYSTEM, user: USER, maxSteps: 45, maxTokens: 900_000, state: st, onEvent });
 const approvalId = Object.keys(st.approvals)[0];
 console.log('\n# Fase 1:', p1.stopped, `${(p1.ms / 1000).toFixed(0)}s`, p1.usage, 'aprovação:', approvalId ?? 'NÃO PEDIU');
 console.log(p1.final?.slice(0, 1500));
