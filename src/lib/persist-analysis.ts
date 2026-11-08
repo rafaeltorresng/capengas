@@ -39,14 +39,10 @@ export function persistAnalysis(state: LanceState, store: Store, options: { anal
       items.push({ tender: id, item: String(item) });
       if (['escalar', 'disputar_com_pendencia'].includes(d.estado) && tender.abertura) {
         const operacional = d.motivos.some((m: string) => m.startsWith('Operação: '));
-        // A condição detalhada vive no dossiê atual. Mudança de texto/estado da mesma ressalva
-        // não abre outra tarefa idêntica a cada reanálise.
-        const motivo = operacional
-          ? [...d.motivos.filter((m: string) => !m.startsWith('Operação: ')), 'Operação: conferir condições para fornecer antes de participar.'].join('; ')
-          : d.motivos.join('; ');
-        const exists = store.openEscalations().some(e => e.tender === id && e.item === String(item) && (!operacional || e.motivo === motivo))
+        const motivo = d.motivos.join('; ');
+        const exists = store.openEscalations().some(e => e.tender === id && e.item === String(item) && e.analiseId === options.analiseId && e.motivo === motivo)
           || jaDecidida(store as LanceStore, id, String(item), motivo);
-        if (!exists) store.openEscalation({ tender: id, item: String(item), motivo, recomendacao: operacional ? 'Conferir as cláusulas e a capacidade de fornecimento antes de participar. Aprovar libera o envio com estas pendências; recusar descarta o item; solicitar ajuste faz o agente reanalisar com o seu texto.' : 'Revisar as evidências. Aprovar libera o envio com estas pendências; recusar descarta o item; solicitar ajuste faz o agente reanalisar com o seu texto.',
+        if (!exists) store.openEscalation({ tender: id, item: String(item), analiseId: options.analiseId, motivo, recomendacao: operacional ? 'Conferir as condições listadas. A aprovação vale para as pendências desta análise; recusar descarta o item; solicitar ajuste faz o agente reanalisar com o seu texto.' : 'Revisar as evidências. A aprovação vale para as pendências desta análise; recusar descarta o item; solicitar ajuste faz o agente reanalisar com o seu texto.',
           prazo: /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(tender.abertura) ? tender.abertura + ':00-03:00' : tender.abertura });
       }
     }

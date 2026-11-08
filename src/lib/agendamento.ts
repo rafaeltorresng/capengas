@@ -1,6 +1,7 @@
 // Turno chamado pelo agendador: escolhe os pregões, monta o estado do agente, roda a análise, grava a foto e,
 // na fase de ações, o código envia pela porta (executarAcao) o que a evidência e a política permitem.
 // O modelo não chama envio. O agente é injetado; os eventos turno_inicio/turno_fim são do agendador.
+import { randomUUID } from 'node:crypto';
 import { newState, motivosDaEvidencia, type LanceState } from './tools.ts';
 import { runAnalysisTurn, type AnalysisExecution } from './turn.ts';
 import { parseId } from './recheck.ts';
@@ -45,7 +46,7 @@ const ORDEM_MOTIVO = ['marca_referencia', 'variante_nao_coberta', 'nao_informado
 const SEM_EVIDENCIA = 'rascunho de esclarecimento sem evidência no encaixe gravado nesta análise: conferir antes de enviar';
 
 export async function executarAcoesDoTurno(d: {
-  store: LanceStore; company: any; state: LanceState; ids: string[]; sandboxUrl: string;
+  store: LanceStore; company: any; state: LanceState; ids: string[]; sandboxUrl: string; analiseId?: string;
   recheck: NonNullable<ActDeps['recheck']>; enviar?: ActDeps['enviar']; consultar?: ActDeps['consultar']; anvisa?: ActDeps['anvisa']; now?: () => Date;
 }): Promise<ResumoAcoes> {
   const now = d.now ?? (() => new Date());
@@ -87,12 +88,10 @@ export async function executarAcoesDoTurno(d: {
     // Item com pendência entra só se o humano aprovou todas as pendências; item recusado pelo humano não entra.
     const recusados = itensRecusados(d.store, id);
     const atuais = d.store.getDecisions(id).filter(x => d.state.decisions[`${id}#${x.item}`]?.estado === x.estado && !recusados.includes(x.item));
-    const aprovadas = atuais.filter(x => x.estado === 'disputar_com_pendencia')
-      .map(x => ({ item: x.item, motivos: x.motivos, ok: pendenciasAprovadas(d.store, id, x.item, x.motivos) }))
-      .filter(x => x.ok.length === x.motivos.length);
-    const disputar = [...new Set([...atuais.filter(x => x.estado === 'disputar').map(x => x.item), ...aprovadas.map(x => x.item)])];
+    const disputar = [...new Set(atuais.filter(x => x.estado === 'disputar' ||
+      (x.estado === 'disputar_com_pendencia' && pendenciasAprovadas(d.store, id, d.analiseId, x.item, x.motivos))).map(x => x.item))];
     if (disputar.length) {
-      const res = await executarAcao({ tipo: 'enviar_proposta', tenderId: id, itens: disputar, pendenciasAprovadas: aprovadas.flatMap(x => x.ok) }, deps);
+      const res = await executarAcao({ tipo: 'enviar_proposta', tenderId: id, itens: disputar, analiseId: d.analiseId }, deps);
       if (res.resultado === 'bloqueada') d.store.logEvent({ tipo: 'bloqueio', resumo: `proposta não enviada: ${res.motivo}`, tender: id });
       conta(r.propostas, res.resultado);
     }
@@ -137,7 +136,7 @@ export function createAnalysisTurn(d: {
   snapshot: (tenderId: string, store: LanceStore) => Promise<unknown>;
   recheck: (tenderId: string, store: LanceStore) => Promise<Recheque>;
   /** Fase de ações depois da análise e da foto (executarAcoesDoTurno). Sem ela, o turno só analisa. */
-  agir?: (state: LanceState, ids: string[]) => Promise<ResumoAcoes>;
+  agir?: (state: LanceState, ids: string[], analiseId: string) => Promise<ResumoAcoes>;
   /** Progresso ao vivo na tela. Desligado nos testes que travam o par início/fim. */
   acompanhar?: boolean;
   now?: () => Date;
@@ -153,8 +152,9 @@ export function createAnalysisTurn(d: {
     const state = newState(d.company, 'http://127.0.0.1:9', now());
     const porId = new Map(d.demo.pregoes.concat(d.demo.editalIlegivel ?? []).map(p => [p.id, p]));
     for (const id of ids) state.tenders[id] = tenderRef(id, porId.get(id) ?? d.store.getTender(id));
-    const r = await runAnalysisTurn({ store: d.store, state, origem: ctx.origem, run: () => d.analisar(state, ids), snapshot: d.snapshot, acompanhar: d.acompanhar });
-    const acoes = d.agir ? `; ${textoAcoes(await d.agir(state, ids))}` : '';
+    const analiseId = randomUUID();
+    const r = await runAnalysisTurn({ turnoId: analiseId, store: d.store, state, origem: ctx.origem, run: () => d.analisar(state, ids), snapshot: d.snapshot, acompanhar: d.acompanhar });
+    const acoes = d.agir ? `; ${textoAcoes(await d.agir(state, ids, analiseId))}` : '';
     return { resumo: `${ids.join(', ')}: ${r.resumo}${acoes}` };
   };
 }

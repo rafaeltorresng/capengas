@@ -51,7 +51,9 @@ test('cláusula registrada atravessa decisão, store, API, pendência, minuta e 
   assert.equal(d.operacao?.fontes[0].texto, quote);
   assert.equal(store.getDecisions(tid)[0].estado, 'disputar_com_pendencia');
   assert.equal(store.getDecisions(tid)[0].precoProposto, 7.5);
-  assert.ok(store.openEscalations().some(e => /Operação: conferir condições/.test(e.motivo)), 'pendência anterior não esconde conflito operacional');
+  const primeira = store.openEscalations().find(e => e.analiseId === 'operacao-teste');
+  assert.ok(primeira, 'pendência anterior não esconde conflito operacional');
+  assert.match(primeira.motivo, /Operação: Prazo de entrega/);
   assert.match(prepararDocumento(d, 'relatorio').markdown, /15 dias corridos/);
   assert.match(prepararDocumento(d, 'proposta').markdown, /Condições operacionais/);
   assert.equal(evaluate('enviar_proposta', { tenderId: tid, valor: 150, decisoes: store.getDecisions(tid), recheque: { status: 'ok', arquivosHash: 'h', situacao: 'aberto', em: now().toISOString() } }, company.politica).permitido, false);
@@ -65,14 +67,17 @@ test('cláusula registrada atravessa decisão, store, API, pendência, minuta e 
   });
   assert.equal(acao.resultado, 'escalada'); assert.equal(posts, 0);
   st.operationalConditions![tid].push({ campo: 'amostra', citacao: 'Se solicitada, apresentar amostra em 3 dias úteis.', fonte: { nome: fonte.nome, url: fonte.url } });
-  persistAnalysis(st, store, { analiseId: 'operacao-teste' });
-  assert.equal(store.openEscalations().filter(e => /Operação: conferir condições/.test(e.motivo)).length, 1, 'reanálise não duplica a mesma tarefa operacional');
+  persistAnalysis(st, store, { analiseId: 'operacao-reanalise' });
+  assert.deepEqual(store.resolveEscalation(primeira.id, { decisao: 'aprovar' }), { status: 'expirada' });
+  const atuais = store.openEscalations().filter(e => e.analiseId === 'operacao-reanalise');
+  assert.equal(atuais.length, 1);
+  assert.match(atuais[0].motivo, /Operação: Amostra/);
   assert.deepEqual(store.getActions(), []);
   const server = createServer(createIntegratedStore(store, model)); server.listen(0, '127.0.0.1'); await once(server, 'listening');
   t.after(() => new Promise<void>(r => server.close(() => r())));
   const base = `http://127.0.0.1:${(server.address() as { port: number }).port}/api/dossies/${encodeURIComponent(tid)}`;
   const data = await (await fetch(base)).json(); assert.equal(data.dados.operacao.linhas[0].estado, 'conflito');
-  const pdf = await fetch(base + '/relatorio.pdf?analise=operacao-teste');
+  const pdf = await fetch(base + '/relatorio.pdf?analise=operacao-reanalise');
   assert.equal(pdf.status, 200); assert.equal(Buffer.from(await pdf.arrayBuffer()).subarray(0, 5).toString(), '%PDF-');
 });
 test('agente que omite a extração não deixa recomendação irrestrita no fim do turno', async () => {

@@ -121,7 +121,7 @@ export type Event = {
 export type EscalationStatus = 'aberta' | 'decidida' | 'expirada';
 export type Escalation = {
   id: string; tender: string; item?: string; motivo: string; recomendacao: string;
-  prazo: string; status: EscalationStatus;
+  prazo: string; status: EscalationStatus; analiseId?: string;
 };
 export type Decision = { decisao: 'aprovar' | 'recusar' | 'ajustar'; ajuste?: string };
 export type SavedDecision = Decision & { id: string; horario: string };
