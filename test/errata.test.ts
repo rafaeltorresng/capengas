@@ -171,3 +171,22 @@ describe('abertura, itens novos e removidos', () => {
     assert.equal(diffErrata(entrada()).sintetico, false);
   });
 });
+
+test('quantidade com custo ausente fica desconhecida, nunca vira custo zero', () => {
+  const e = entrada({ depois: { itens: [{ numero: 4, descricao: DESC, quantidade: 150, valorEstimado: 12, sigiloso: false }] } });
+  const d = diffErrata({ ...e, custos: {} });
+  assert.equal(d.itens[0].preco?.depois, null);
+  assert.equal(d.itens[0].preco?.viavel, null);
+  assert.equal(d.proposta.total, null);
+});
+
+test('encaixe com um atributo sem citação não reaproveita os demais como se estivesse completo', () => {
+  const e = entrada();
+  (e.antes.fits[0].atributos as any).attributes.push({ atributo: 'embalagem', veredito: 'atende' });
+  assert.equal(diffErrata(e).itens[0].evidencia, 'pendente_agente');
+});
+
+test('descrição ilegível não chama modelo nem entra em reaproveitamento', () => {
+  const d = diffErrata(entrada({ depois: { itens: [{ numero: 4, descricao: '', quantidade: 150, valorEstimado: 12, sigiloso: false }] } }));
+  assert.equal(d.itens[0].evidencia, 'ilegivel');
+});

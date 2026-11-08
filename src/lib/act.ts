@@ -142,9 +142,16 @@ export async function executarAcao(pedido: PedidoAcao, deps: ActDeps): Promise<R
     return consultarEFechar(deps, pedido, montado.key, existente.protocolo, consultar);
   }
 
+  if (deps.store.getTender(pedido.tenderId)?.reavaliar) {
+    return { resultado: 'bloqueada', motivo: 'pregão marcado para reavaliar; a versão da retificação não autoriza envio' };
+  }
+
   const recheque = deps.recheck
     ? await deps.recheck(pedido.tenderId, deps.store)
     : { status: 'bloquear' as const, motivo: 'fonte_indisponivel' as const, em: now.toISOString() };
+  if (deps.store.getTender(pedido.tenderId)?.reavaliar) {
+    return { resultado: 'bloqueada', motivo: 'pregão marcado para reavaliar durante o recheque; nenhuma intenção criada' };
+  }
   const contexto: AcaoContexto = {
     tenderId: pedido.tenderId, valor: montado.valor, decisoes: montado.decisoes, recheque,
     ...(pedido.tipo === 'enviar_esclarecimento' ? { esclarecimento: { motivo: pedido.motivo, prazoAberto: montado.prazoAberto === true } } : {}),

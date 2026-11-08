@@ -131,6 +131,8 @@ export type DecisionResult =
 
 export type TenderRow = {
   id: string; orgao: string; uf: string; abertura: string | null; situacao: string;
+  /** Abertura da foto analisada. Só snapshotTender renova; monitor atualiza apenas a publicada. */
+  aberturaAnalise?: string | null;
   plataforma: string; arquivosHash: string | null; ultimoCheck: string | null;
   /** true quando o monitor viu mudança desde a análise; a foto (arquivosHash) só muda na reanálise. */
   reavaliar?: boolean;

@@ -23,6 +23,7 @@ Projeto da equipe Capengas para o Converge Challenge 2026 (Recife, 7–8/11/2026
 | [docs/lance-plano-fixo.md](docs/lance-plano-fixo.md) | Plano final aprovado: escopo, demo, riscos e ordem de corte |
 | [docs/lance-execucao.md](docs/lance-execucao.md) | Plano de execução para 3 devs: contratos, tarefas, cronograma e portões |
 | [docs/dev2-analise-produto.md](docs/dev2-analise-produto.md) | Revisão de produto, concorrência, limites das evidências e prioridades do agente |
+| [docs/dev2-retificacao-persistida.md](docs/dev2-retificacao-persistida.md) | Monitor → diff único → histórico do dossiê → Pauta, migração e reprodução sintética |
 | [docs/dev2-integracao.md](docs/dev2-integracao.md) | Contrato do dossiê e da projeção para a tela, amostra e verificação da integração |
 
 ## Números principais
@@ -39,7 +40,7 @@ Fontes e metodologia em [docs/lance-pesquisa.md](docs/lance-pesquisa.md); mediç
 
 ## Como rodar
 
-Requer **Node 24+** e **pdftotext** (`brew install poppler` no macOS). Não há dependências npm.
+Requer **Node 24+** e **pdftotext** (`brew install poppler` no macOS). A tela usa React e Vite; instale as dependências com `npm ci`.
 
 ```bash
 npm run setup        # baixa a base da ANVISA (~28 MB) e o CATMAT de saúde; monta os bancos locais
@@ -50,7 +51,7 @@ npm run smoke        # confere a chave e o tool calling do modelo
 npm run turno        # turno ponta a ponta em 3 pregões reais (usa o modelo; ~US$ 0,20)
 npm run evals        # evals do modelo com gabarito (~US$ 0,80)
 node scripts/estado-exemplo.ts # gera a amostra identificada para integrar a tela, sem rede ou modelo
-npm run errata:sintetica  # caso da quantidade (#25, fase 1) num banco importado; ver o cabeçalho do script
+npm run errata:sintetica  # caso da quantidade com versão persistida (#25) num banco importado; ver o cabeçalho do script
 ```
 
 | Pasta | Conteúdo |

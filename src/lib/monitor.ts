@@ -45,13 +45,21 @@ export async function runMonitor(store: LanceStore, d: RecheckDeps & { errata?: 
     const mudancas: string[] = [];
     const nova = c?.situacaoCompraNome ?? t.situacao;
     if (nova !== t.situacao) mudancas.push(`situação: ${t.situacao} → ${nova}`);
-    const arquivosMudaram = !t.reavaliar && !!t.arquivosHash && filesHash(files) !== t.arquivosHash;
+    const ultimoDiff = store.getErrataDiff(t.id);
+    const aberturaAnalise = t.aberturaAnalise !== undefined ? t.aberturaAnalise
+      : t.reavaliar && ultimoDiff ? ultimoDiff.abertura.antes : t.abertura;
+    const ultimaPublicacao = t.reavaliar ? ultimoDiff?.publicacao : undefined;
+    const hashObservado = filesHash(files);
+    // A publicação observada não é a foto analisada. Falha no diff não avança esta referência.
+    const arquivosMudaram = !!t.arquivosHash && hashObservado !== (ultimaPublicacao?.arquivosHash ?? t.arquivosHash)
+      && (!!d.errata || !t.reavaliar);
     if (arquivosMudaram) mudancas.push('arquivos novos desde a análise (errata, aviso ou anexo)');
     const aberturaNova = c?.dataEncerramentoProposta ? String(c.dataEncerramentoProposta).slice(0, 16) : null;
-    const aberturaMudou = !!aberturaNova && !!t.abertura && !mesmaAbertura(t.abertura, aberturaNova);
+    const aberturaMudou = !mesmaAbertura(ultimaPublicacao ? ultimaPublicacao.abertura : t.abertura, aberturaNova);
     if (aberturaMudou) mudancas.push(`abertura: ${t.abertura} → ${aberturaNova}`);
     let detalhe = 'pregão marcado para reavaliar';
-    if ((arquivosMudaram || aberturaMudou) && d.errata) {
+    if (mudancas.length) store.setReavaliar(t.id, true);
+    if ((arquivosMudaram || aberturaMudou || (t.reavaliar && !ultimaPublicacao)) && d.errata) {
       try {
         const e = d.errata;
         const [itens, textos] = await Promise.all([
@@ -59,8 +67,10 @@ export async function runMonitor(store: LanceStore, d: RecheckDeps & { errata?: 
           (e.fetchTextos ?? textosPadrao)(files),
         ]);
         const diff = diffErrata({ tenderId: t.id, hoje, politica: e.politica, custos: e.custos,
-          antes: { abertura: t.abertura, itens: store.getItems(t.id), fits: store.getFits(t.id), decisoes: store.getDecisions(t.id), requisitos: store.getRequirements(t.id) },
-          depois: { abertura: aberturaNova ?? t.abertura, itens, textos } });
+          antes: { abertura: aberturaAnalise,
+            itens: store.getItems(t.id), fits: store.getFits(t.id), decisoes: store.getDecisions(t.id), requisitos: store.getRequirements(t.id) },
+          depois: { abertura: aberturaNova, itens, textos } });
+        diff.publicacao = { arquivosHash: hashObservado, abertura: aberturaNova, observadoEm: now().toISOString() };
         store.saveErrataDiff(diff);
         const n = diff.contagem;
         detalhe = `errata conferida sem modelo: ${n.reaproveitada} reaproveitada(s), ${n.recalculada} recalculada(s), ${n.citacao_orfa} órfã(s), ${n.ilegivel} ilegível(is)`
@@ -70,7 +80,8 @@ export async function runMonitor(store: LanceStore, d: RecheckDeps & { errata?: 
         store.logEvent({ tipo: 'erro_fonte', resumo: `monitor: diff da errata não calculado (${String(err?.message ?? err).slice(0, 80)}); pregão segue marcado para reavaliar`, tender: t.id });
       }
     }
-    store.upsertTender({ ...t, situacao: nova, ...(aberturaMudou ? { abertura: aberturaNova } : {}), ultimoCheck: now().toISOString() });
+    store.upsertTender({ ...t, situacao: nova, abertura: aberturaNova, aberturaAnalise,
+      reavaliar: t.reavaliar || mudancas.length > 0, ultimoCheck: now().toISOString() });
     if (mudancas.length) {
       r.mudancas++;
       store.setReavaliar(t.id, true);
