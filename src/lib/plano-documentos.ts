@@ -5,6 +5,7 @@ import type { Schema } from './schema.ts';
 import type { CofreDoc } from './contracts.ts';
 import type { Documento, RegraProposta } from './regras-proposta.ts';
 import type { LanceState } from './tools.ts';
+import { assuntosDoModelo, extrairModelosDeclaracao, gerarDeclaracao, impedimentoDeclaracao, temRedacao, type EmpresaDeclarante, type ModeloDeclaracao } from './declaracoes.ts';
 
 export type Classe = 'gerado' | 'cofre' | 'produto' | 'terceiro' | 'evento' | 'humano';
 export type Fase = 'proposta_inicial' | 'proposta_ajustada' | 'habilitacao' | 'nao_informada';
@@ -50,10 +51,12 @@ const CONDICOES: Condicao[] = ['sempre', 'se_exigido', 'se_solicitado', 'se_dist
 /** Tipos que um mesmo pregão pode pedir mais de uma vez com conteúdos diferentes. */
 const MULTIPLOS = new Set<TipoDocumento>(['declaracao_outra', 'documento_outro']);
 
-export type Origem = 'agente' | 'regra_proposta' | 'exigencia_edital' | 'implicito';
+export type Origem = 'agente' | 'regra_proposta' | 'exigencia_edital' | 'implicito' | 'modelo_edital';
 export type ExigenciaDocumental = {
   tipo: TipoDocumento; fase: Fase; condicoes: Condicao[]; prazo?: string; resumo?: string;
   citacao?: string; fonte?: { nome: string; url: string }; origem: Origem; noSistema?: boolean; naProposta?: boolean;
+  /** Modelo do anexo do edital que originou a exigência (origem modelo_edital). */
+  modelo?: ModeloDeclaracao;
 };
 
 const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ');
@@ -166,6 +169,8 @@ export type LinhaPlano = {
   tipo: TipoDocumento; documento: string; classe: Classe; fase: Fase; condicoes: Condicao[]; condicional: boolean;
   status: Status; rotulo: string; responsavel: 'lance' | 'humano' | 'terceiro'; acao: string;
   ate: string | null; prazo?: string; itens?: number[]; citacao?: string; fonte?: { nome: string; url: string }; origem: Origem;
+  /** Minuta da declaração, gerada com o plano e persistida no dossiê; o PDF é só a leitura dela. */
+  declaracao?: { titulo: string; markdown: string; pendencias: string[]; modelo: string | null; origemDados: 'sinteticos' | 'nao_verificada' };
 };
 export type PlanoDocumentos = {
   tender: string; sessao: string | null; itens: number[]; linhas: LinhaPlano[]; pendencias: string[];
@@ -176,7 +181,7 @@ export type ProdutoViavel = {
   regularizacao?: string;
 };
 
-const PRIORIDADE: Record<Origem, number> = { agente: 0, regra_proposta: 1, exigencia_edital: 2, implicito: 3 };
+const PRIORIDADE: Record<Origem, number> = { agente: 0, regra_proposta: 1, exigencia_edital: 2, implicito: 3, modelo_edital: 4 };
 function consolidar(exigencias: ExigenciaDocumental[]) {
   const porTipo = new Map<string, ExigenciaDocumental>();
   for (const e of [...exigencias].sort((a, b) => PRIORIDADE[a.origem] - PRIORIDADE[b.origem])) {
@@ -202,12 +207,18 @@ const fmt = (xs: string[]) => [...new Set(xs)].join(', ');
 
 export function montarPlano(o: {
   tenderId: string; exigencias: ExigenciaDocumental[]; cofre: CofreDoc[]; sessao: string | null; hoje: string;
-  empresa: { atuacao?: string; porte?: string; programaIntegridade?: boolean } | undefined; produtos: ProdutoViavel[]; propostaGerada?: boolean; prazoPropostaAjustada?: string;
+  empresa: (Partial<EmpresaDeclarante> & { atuacao?: string }) | undefined; produtos: ProdutoViavel[]; propostaGerada?: boolean; prazoPropostaAjustada?: string;
   /** Texto dos documentos do pregão, para achar as declarações feitas em campo próprio do sistema. */
   textos?: string[];
+  /** Para gerar as declarações em arquivo: modelos dos anexos do edital, pregão e data da assinatura. Sem isso, a declaração fica para o humano. */
+  declaracoes?: { modelos: ModeloDeclaracao[]; pregao: { id: string; orgao: string }; hoje: Date; origemDados?: 'sinteticos' | 'nao_verificada' };
 }): PlanoDocumentos {
   const textos = (o.textos ?? []).map(norm);
-  const exigencias = consolidar([...o.exigencias, { tipo: 'proposta_precos', fase: 'proposta_ajustada', condicoes: ['sempre'], origem: 'implicito' }]);
+  const modelos = o.declaracoes?.modelos ?? [];
+  // Cada modelo de declaração do anexo é uma exigência do edital; a exigência citada do mesmo tipo prevalece.
+  const doAnexo: ExigenciaDocumental[] = modelos.map(m => ({ tipo: m.tipo, fase: 'nao_informada', condicoes: ['sempre'], citacao: m.titulo, fonte: m.fonte, origem: 'modelo_edital', modelo: m }));
+  const exigencias = consolidar([...o.exigencias, ...doAnexo, { tipo: 'proposta_precos', fase: 'proposta_ajustada', condicoes: ['sempre'], origem: 'implicito' }]);
+  const pendenciasDeclaracao: string[] = [];
   const atuacao = o.empresa?.atuacao;
   const linhas: LinhaPlano[] = exigencias.map(e => {
     const def = TIPOS_DOCUMENTO[e.tipo];
@@ -215,7 +226,8 @@ export function montarPlano(o: {
     const condicoes = e.condicoes.filter(c => !(c === 'se_distribuidor' && revende));
     const condicional = condicoes.some(c => c === 'se_exigido' || c === 'se_solicitado');
     let status: Status = 'conferir'; let responsavel: LinhaPlano['responsavel'] = 'humano'; let acao = 'Conferir a exigência no edital e decidir quem providencia.';
-    let ate: string | null = null; let itens: number[] | undefined; let prazo = e.prazo;
+    let ate: string | null = null; let itens: number[] | undefined; let prazo = e.prazo; let declaracao: LinhaPlano['declaracao'];
+    let documento: string = e.tipo === 'declaracao_outra' && e.modelo ? e.modelo.titulo : def.nome;
     if (e.tipo === 'proposta_precos') {
       status = o.propostaGerada ? 'gerado' : 'lance_gera'; responsavel = 'lance'; prazo ??= o.prazoPropostaAjustada;
       acao = 'Atualizar com o preço do último lance e enviar dentro do prazo da convocação.';
@@ -228,6 +240,29 @@ export function montarPlano(o: {
         status = 'marcar_no_sistema';
         acao = ressalva ?? `Marcar a declaração no portal ao cadastrar a proposta.${e.naProposta && !e.noSistema ? ' O texto da proposta também a traz, como pede o modelo.' : ''}`;
       } else if (e.naProposta && !ressalva) { status = 'na_proposta'; responsavel = 'lance'; acao = 'A declaração vai no texto da proposta, como pede o modelo do edital.'; }
+      else if (o.declaracoes) {
+        const modelo = e.modelo ?? (e.tipo === 'declaracao_outra' ? undefined : modelos.find(m => m.tipo === e.tipo));
+        const unificada = modelo ? undefined : modelos.find(m => m.tipo === 'declaracao_outra' && assuntosDoModelo(m).includes(e.tipo));
+        const bloqueio = impedimentoDeclaracao(e.tipo, o.empresa);
+        if (bloqueio) { status = bloqueio.status; acao = bloqueio.motivo; }
+        else if (unificada) { status = 'lance_gera'; responsavel = 'lance'; acao = `Vai na "${unificada.titulo}" do edital, que o Lance preenche; o representante confere e assina.`; }
+        else if (temRedacao(e.tipo, modelo)) {
+          const d = gerarDeclaracao({ tipo: e.tipo, modelo, citacao: modelo && e.origem === 'modelo_edital' ? undefined : e.citacao, fonte: e.fonte,
+            pregao: o.declaracoes.pregao, empresa: { ...o.empresa, nome: o.empresa?.nome || '[preencher]' }, hoje: o.declaracoes.hoje });
+          // O modelo pode trazer outros assuntos (declaração unificada): o que o cadastro não sustenta fica para o humano.
+          for (const t of modelo ? assuntosDoModelo(modelo) : []) {
+            const b = t === e.tipo ? null : impedimentoDeclaracao(t, o.empresa);
+            if (b?.status === 'conferir') d.pendencias.push(`o modelo também declara: ${TIPOS_DOCUMENTO[t].nome.toLowerCase()}. ${b.motivo}`);
+          }
+          declaracao = { titulo: d.titulo, markdown: d.markdown, pendencias: d.pendencias, modelo: modelo?.fonte.nome ?? null,
+            origemDados: o.declaracoes.origemDados === 'sinteticos' ? 'sinteticos' : 'nao_verificada' };
+          status = 'lance_gera'; responsavel = 'lance';
+          acao = `${e.origem === 'modelo_edital' ? 'O edital traz este modelo em anexo; confirmar no edital quando ele é entregue. ' : ''}${modelo
+            ? 'O Lance preenche o modelo do edital com o cadastro, sem mudar a redação do órgão'
+            : 'O edital não traz modelo; o Lance redige com a redação legal'}. O representante confere e assina.${d.pendencias.length ? ` Completar antes de assinar: ${d.pendencias.join('; ')}.` : ''}`;
+          if (d.pendencias.length) pendenciasDeclaracao.push(`${documento}: completar antes de assinar (${d.pendencias.join('; ')}).`);
+        } else acao = 'O edital pede esta declaração fora do sistema e da proposta e não traz modelo; redigir conforme o edital e assinar.';
+      }
       else acao = ressalva ?? 'O edital pede esta declaração fora do sistema e da proposta; redigir pelo modelo do edital e assinar.';
     } else if (def.classe === 'cofre') {
       const [r] = checkDocs(o.cofre, [{ tipo: e.tipo, citacao: e.citacao ?? '' }], o.sessao ?? o.hoje);
@@ -266,10 +301,11 @@ export function montarPlano(o: {
       acao = `Separar amostra dos itens ${itens.join(', ') || 'ofertados'} para entregar no prazo.`;
     }
     if (condicional && status !== 'nao_se_aplica') acao = `${condicoes.includes('se_solicitado') ? 'Só se o pregoeiro solicitar' : 'Só se o termo de referência exigir'}; deixar encaminhado. ${acao}`;
-    return { tipo: e.tipo, documento: def.nome, classe: def.classe, fase: status === 'marcar_no_sistema' ? 'proposta_inicial' : e.fase, condicoes, condicional, status, rotulo: ROTULOS[status], responsavel, acao,
-      ate, ...(prazo ? { prazo } : {}), ...(itens ? { itens } : {}), ...(e.citacao ? { citacao: e.citacao } : {}), ...(e.fonte ? { fonte: e.fonte } : {}), origem: e.origem };
+    return { tipo: e.tipo, documento, classe: def.classe, fase: status === 'marcar_no_sistema' ? 'proposta_inicial' : e.fase, condicoes, condicional, status, rotulo: ROTULOS[status], responsavel, acao,
+      ate, ...(prazo ? { prazo } : {}), ...(itens ? { itens } : {}), ...(e.citacao ? { citacao: e.citacao } : {}), ...(e.fonte ? { fonte: e.fonte } : {}), origem: e.origem,
+      ...(declaracao ? { declaracao } : {}) };
   }).sort((a, b) => ORDEM_FASE[a.fase] - ORDEM_FASE[b.fase] || TIPOS.indexOf(a.tipo) - TIPOS.indexOf(b.tipo));
-  const pendencias = linhas.filter(l => PROBLEMA.has(l.status)).map(l => `${l.condicional ? '(condicional) ' : ''}${l.documento}: ${l.rotulo}. ${l.acao}`);
+  const pendencias = [...linhas.filter(l => PROBLEMA.has(l.status)).map(l => `${l.condicional ? '(condicional) ' : ''}${l.documento}: ${l.rotulo}. ${l.acao}`), ...pendenciasDeclaracao];
   const resumo = {
     total: linhas.length, prontos: linhas.filter(l => l.status === 'pronto' || l.status === 'gerado').length,
     lance: linhas.filter(l => l.responsavel === 'lance').length, humano: linhas.filter(l => l.responsavel === 'humano').length,
@@ -298,5 +334,6 @@ export function planoDoEstado(st: LanceState, tenderId: string): PlanoDocumentos
     exigencias: [...(st.documentRequirements?.[tenderId] ?? []), ...deRegrasProposta(regras), ...deRequisitos(requirements)],
     cofre: st.company.cofre ?? [], empresa: st.company.empresa, produtos, propostaGerada: !!st.proposals?.[tenderId], prazoPropostaAjustada: prazoAjustada,
     textos: (st.proposalDocs?.[tenderId] ?? []).map(d => d.texto),
+    declaracoes: { modelos: extrairModelosDeclaracao(st.proposalDocs?.[tenderId] ?? []), pregao: { id: tenderId, orgao: tender.orgao ?? '' }, hoje: st.now, origemDados: st.company.origemDados },
   });
 }
