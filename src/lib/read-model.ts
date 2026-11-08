@@ -1,14 +1,25 @@
 // Adapta leituras persistidas à API do Dev 3. Não executa regras, modelo ou envios.
-import type { Action, Decision, DecisionRow, Store } from './contracts.ts';
+import type { Action, AnvisaCheck, CofreDoc, Decision, DecisionRow, Store } from './contracts.ts';
+import { calendarioCofre } from './cofre.ts';
+import { montarPauta } from './pauta.ts';
+import type { DiffErrata } from './errata.ts';
+import type { EntePregao, Sancao } from './carteira.ts';
+import type { SemaforoFiscal } from './siconfi.ts';
 import type { buildDossie, DossierSource } from './dossie.ts';
+import type { EvidenceValidation } from '../server/contract.ts';
+import type { VersaoRetificacao } from './versao.ts';
 import { agruparResultados, pncpUrl, projetarTurnos } from './turnos.ts';
 
-export type ReadStore = Pick<Store, 'events' | 'openEscalations' | 'getTender' | 'getItems' | 'getDecisions' | 'getDossie' | 'resolveEscalation'>;
+export type ReadStore = Pick<Store, 'events' | 'openEscalations' | 'getTender' | 'getItems' | 'getDecisions' | 'getDossie' | 'resolveEscalation'>
+  & Partial<Pick<Store, 'getTenders' | 'getRequirements'>> & {
+    getErrataDiff?(tenderId: string): DiffErrata | undefined;
+    getRetificacoes?(tenderId: string): VersaoRetificacao[];
+  };
 export type Proof = {
   fonte: string; avaliacoes: { nome: string; valor: string }[]; cenarios: { nome: string; resultado: string }[];
   concordancia: number | null; custoUsd: number | null; duracaoMs: number | null;
 };
-type Dossie = ReturnType<typeof buildDossie>;
+type Dossie = ReturnType<typeof buildDossie> & { retificacao?: VersaoRetificacao; retificacoes?: VersaoRetificacao[]; reavaliar?: boolean };
 const labels: Record<string, string> = { disputar: 'Disputar', disputar_com_pendencia: 'Com pendência', esclarecer: 'Em esclarecimento', escalar: 'Escalar', nao_disputar: 'Não disputar' };
 const fitLabels: Record<string, string> = { atende: 'Atende', nao_atende: 'Não atende', nao_informado: 'Não informado' };
 const localDay = (date: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
@@ -21,14 +32,28 @@ function timestamp(raw: string | null | undefined) {
 export function createReadModel(store: ReadStore, options: {
   // Leitura explícita: não supor zero envios quando não há acesso a ações.
   actions: () => Action[]; now?: () => Date; proof?: () => Proof; origem?: 'amostra' | 'integrado';
+  /** Cofre da empresa. Sem ele, ou sem getTenders/getRequirements, Hoje devolve cofre vazio. */
+  cofre?: CofreDoc[];
+  /** Pauta: sanções do cliente no CEIS (null = não consultado), ente e semáforo fiscal por pregão. */
+  sancoes?: Sancao[] | null;
+  entes?: Record<string, EntePregao>;
+  semaforos?: Record<string, SemaforoFiscal>;
 }) {
   if (typeof options.actions !== 'function') throw new Error('forneça a leitura das ações confirmadas');
   const now = options.now ?? (() => new Date());
-  function dossie(tender: string): Dossie | undefined {
+  function dossieSalvo(tender: string): Dossie | undefined {
     const value = store.getDossie(tender) as Dossie | undefined;
     if (!value || value.tender !== tender || !Array.isArray(value.checklist) || !Array.isArray(value.pendencias)
       || !Array.isArray(value.documentos) || !Array.isArray(value.itens)) return undefined;
     return structuredClone(value);
+  }
+  function dossie(tender: string): Dossie | undefined {
+    const value = dossieSalvo(tender);
+    if (!value) return undefined;
+    const retificacoes = store.getRetificacoes?.(tender) ?? [];
+    const retificacao = retificacoes.at(-1) ?? value.retificacao;
+    return { ...value, reavaliar: store.getTender(tender)?.reavaliar === true,
+      ...(retificacao ? { retificacao: { ...retificacao, pauta: pauta().linhas.filter(l => l.tenderId === tender && l.tipo === 'errata') }, retificacoes } : {}) };
   }
   function queue(decision: DecisionRow) {
     const tender = store.getTender(decision.tenderId);
@@ -48,7 +73,7 @@ export function createReadModel(store: ReadStore, options: {
     return [...groups.values()].map(rows => {
       if (rows.length === 1) return rows[0];
       const first = rows[0];
-      const chosen = dossie(first.tenderId)?.itens.find(i => i.item === first.item)?.produto?.id;
+      const chosen = dossieSalvo(first.tenderId)?.itens.find(i => i.item === first.item)?.produto?.id;
       return rows.find(d => d.produto === chosen) ?? { ...first, produto: '', estado: 'escalar' as const, precoProposto: null,
         motivos: ['Há decisões para mais de um produto e nenhuma seleção explícita no dossiê.'] };
     });
@@ -63,8 +88,18 @@ export function createReadModel(store: ReadStore, options: {
     const pncp = pncpUrl(tender);
     const fontes: DossierSource[] = [...(dossier?.documentos ?? [])];
     if (pncp) fontes.push({ nome: 'Publicação do pregão no PNCP', url: pncp });
-    const anvisa = evidence?.anvisa;
-    return { ...queue(decision),
+    const anvisa = evidence?.anvisa as Partial<AnvisaCheck> | null | undefined;
+    const regularizacao = anvisa?.regularizacao;
+    const cobertura = anvisa?.cobertura;
+    const validacao = evidence?.validacao;
+    const technicalEvidence: EvidenceValidation = {
+      citacoes: validacao?.citacoes === 'conferidas' ? 'conferidas' : 'nao_verificadas',
+      cobertura: validacao?.cobertura === 'conferida' ? 'conferida' : 'nao_verificada',
+      semantica: validacao?.semantica === 'julgamento_modelo' ? 'julgamento_modelo' : 'nao_verificada',
+      lacunas: Array.isArray(validacao?.lacunas) ? validacao.lacunas.filter((value: unknown): value is string => typeof value === 'string') : [],
+    };
+    return { ...queue(decision), validacao: technicalEvidence,
+      regularizacao, cobertura,
       encaixe: (evidence?.atributos ?? []).map((a: any) => ({ atributo: a.atributo,
         exigido: a.exigido ?? a.citacao_item, ofertado: a.ofertado ?? a.citacao_ficha ?? 'Não informado',
         resultado: fitLabels[a.veredito] ?? 'Não verificado',
@@ -77,8 +112,28 @@ export function createReadModel(store: ReadStore, options: {
       dossie: !!dossier,
     };
   }
+  function itemDisponivel(tender: string, item: string) {
+    return store.getDecisions(tender).some(decision => String(decision.item) === item);
+  }
   function escaladas() {
-    return store.openEscalations().map(e => ({ ...e, pregao: e.tender, prazo: timestamp(e.prazo), prazoTipo: 'decisao_humana' as const, dossie: !!dossie(e.tender) }));
+    return store.openEscalations().map(e => ({ ...e, pregao: e.tender, prazo: timestamp(e.prazo), prazoTipo: 'decisao_humana' as const, dossie: !!dossie(e.tender),
+      itemDisponivel: e.item ? itemDisponivel(e.tender, e.item) : false }));
+  }
+  function alertasCofre(day: string) {
+    return !options.cofre?.length || !store.getTenders || !store.getRequirements ? [] : calendarioCofre(options.cofre,
+      store.getTenders().filter(t => t.abertura).map(t => ({ tenderId: t.id, sessao: t.abertura!.slice(0, 10),
+        exigencias: store.getRequirements!(t.id).map(r => ({ tipo: r.tipo, citacao: r.citacao })) })), day);
+  }
+  function pauta() {
+    const day = localDay(now());
+    const tenders = store.getTenders?.() ?? [];
+    const p = montarPauta({ hoje: day, cofre: alertasCofre(day), sancoes: options.sancoes,
+      pregoes: tenders.map(tender => ({ tender, decisoes: selectedDecisions(tender.id), requisitos: store.getRequirements?.(tender.id) ?? [],
+        diff: store.getErrataDiff?.(tender.id) ?? null, ajustes: store.getRetificacoes?.(tender.id).at(-1)?.ajustes,
+        ente: options.entes?.[tender.id], semaforo: options.semaforos?.[tender.id] ?? null })) });
+    return { ...p, linhas: p.linhas.map(l => ({ ...l,
+      ...(l.tenderId ? { dossie: !!dossieSalvo(l.tenderId) } : {}),
+      ...(l.tenderId && l.item !== undefined ? { itemDisponivel: itemDisponivel(l.tenderId, String(l.item)) } : {}) })) };
   }
   function hoje() {
     const day = localDay(now());
@@ -86,7 +141,9 @@ export function createReadModel(store: ReadStore, options: {
     const inDay = (iso: string) => Date.parse(iso) >= start && Date.parse(iso) < end;
     const events = store.events({ desde: new Date(start).toISOString() }).filter(e => inDay(e.horario));
     const decided = new Set(events.filter(e => e.tipo === 'decisao' && e.tender && e.item).map(e => `${e.tender}#${e.item}`));
-    const decisions = selectedDecisions().filter(d => decided.has(`${d.tenderId}#${d.item}`));
+    const allDecisions = selectedDecisions();
+    const availableItems = new Set(allDecisions.map(d => d.tenderId + '#' + d.item));
+    const decisions = allDecisions.filter(d => decided.has(`${d.tenderId}#${d.item}`));
     const actions = new Map(options.actions().map(a => [a.key, a]));
     const confirmed = [...actions.values()].filter(a => a.status === 'confirmada' && a.verificado === true && !!a.protocolo && inDay(a.atualizadaEm));
     const counts = new Map<string, number>();
@@ -94,11 +151,17 @@ export function createReadModel(store: ReadStore, options: {
     const calls = events.flatMap(e => e.rastro ?? []).filter(t => t.ferramenta === 'llm' || t.ferramenta.startsWith('llm:'));
     const custoUsd = calls.length && calls.every(c => typeof c.custoUsd === 'number' && Number.isFinite(c.custoUsd))
       ? calls.reduce((sum, c) => sum + c.custoUsd!, 0) : null;
+    const cofre = alertasCofre(day).map(alerta => ({
+      ...alerta,
+      pregoes: alerta.pregoes.map(pregao => dossie(pregao.tenderId) ? { ...pregao, dossie: true } : pregao),
+    }));
     return { data: day, pregoes: new Set(decisions.map(d => d.tenderId)).size, itens: decisions.length,
       disputar: counts.get('disputar') ?? 0, pendencias: counts.get('disputar_com_pendencia') ?? 0,
       envios: confirmed.length, escaladasAbertas: store.openEscalations().length, custoUsd,
       porDecisao: [...counts].map(([estado, quantidade]) => ({ estado: labels[estado] ?? estado, quantidade })),
-      eventos: [...events].sort((a, b) => Date.parse(a.horario) - Date.parse(b.horario)),
+      eventos: events.map(event => ({ ...event, itemDisponivel: event.tender && event.item
+        ? availableItems.has(event.tender + '#' + event.item) : undefined }))
+        .sort((a, b) => Date.parse(a.horario) - Date.parse(b.horario)), cofre,
     };
   }
   function atividade() {
@@ -110,7 +173,7 @@ export function createReadModel(store: ReadStore, options: {
     });
   }
   return {
-    origem: options.origem ?? 'integrado', hoje, fila, item, dossie, escaladas,
+    origem: options.origem ?? 'integrado', hoje, fila, item, dossie, escaladas, pauta,
     turnos: () => ({ turnos: atividade().turnos.map(turno => ({
       ...turno,
       nomesEditais: Object.fromEntries(turno.pregoes.map(id => {

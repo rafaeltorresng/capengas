@@ -1,0 +1,99 @@
+{
+ "medicao": "Situação dos itens de pregões do Compras.gov.br publicados em abril/2026, por classe de material",
+ "coletadoEm": "2026-11-07",
+ "fonte": "Compras.gov.br dados abertos: modulo-contratacoes/2_consultarItensContratacoes_PNCP_14133 (codigoClasse, dataInclusaoPncp abril/2026)",
+ "script": "scripts/pesquisa/estimativa2.ts (taxas) e scripts/pesquisa/valor.ts (valores)",
+ "amostra": "até 6 páginas de 500 itens por classe (primeiras páginas da API, não aleatórias)",
+ "ressalvas": [
+  "cerca de 40% dos itens ainda em andamento, fora do denominador",
+  "um único mês",
+  "a extrapolação mensal de valor (≈ R$ 63 mi) é estimativa: valor médio da amostra × itens do mês",
+  "fracasso do item ≠ desclassificação de uma proposta específica"
+ ],
+ "classes": {
+  "saude_6515_instrumentos_material": {
+   "concluidos": 1802,
+   "emAndamento": 1198,
+   "homologado": 1368,
+   "fracassado": 376,
+   "deserto": 47,
+   "cancelado": 11,
+   "fracassadoPct": 20.9,
+   "desertoPct": 2.6,
+   "valor": {
+    "itensNoMes": 12836,
+    "amostra": 3000,
+    "valorAmostra": 255294943,
+    "porSituacao": {
+     "Em andamento": {
+      "itens": 1198,
+      "valor": 87055754
+     },
+     "Homologado": {
+      "itens": 1368,
+      "valor": 159264317
+     },
+     "Fracassado": {
+      "itens": 376,
+      "valor": 8822662
+     },
+     "Deserto": {
+      "itens": 47,
+      "valor": 102105
+     },
+     "Anulado/Revogado/Cancelado": {
+      "itens": 11,
+      "valor": 50105
+     }
+    }
+   }
+  },
+  "saude_6510_cirurgico_curativos": {
+   "concluidos": 706,
+   "emAndamento": 530,
+   "homologado": 542,
+   "fracassado": 115,
+   "deserto": 22,
+   "cancelado": 27,
+   "fracassadoPct": 16.3,
+   "desertoPct": 3.1,
+   "valor": {
+    "itensNoMes": 1236,
+    "amostra": 1236,
+    "valorAmostra": 124369421,
+    "porSituacao": {
+     "Deserto": {
+      "itens": 22,
+      "valor": 22177
+     },
+     "Em andamento": {
+      "itens": 530,
+      "valor": 39162134
+     },
+     "Homologado": {
+      "itens": 542,
+      "valor": 81758989
+     },
+     "Fracassado": {
+      "itens": 115,
+      "valor": 3315387
+     },
+     "Anulado/Revogado/Cancelado": {
+      "itens": 27,
+      "valor": 110735
+     }
+    }
+   }
+  },
+  "controle_7510_escritorio": {
+   "concluidos": 2027,
+   "emAndamento": 973,
+   "homologado": 1883,
+   "fracassado": 93,
+   "deserto": 7,
+   "cancelado": 44,
+   "fracassadoPct": 4.6,
+   "desertoPct": 0.3
+  }
+ }
+}

@@ -1,18 +1,18 @@
-import type { DemoStore, Dossier, Escalation, Event, Item, Proof, QueueItem, SavedDecision, Today } from './contract.ts';
+import type { DemoStore, Dossier, Escalation, Event, Item, Pauta, Proof, QueueItem, SavedDecision, Today } from './contract.ts';
 import seed from '../../fixtures/dev3-amostra.json' with { type: 'json' };
 import { agruparResultados, pncpUrl } from '../lib/turnos.ts';
 
 export type SampleState = {
   hoje: Today; fila: QueueItem[]; itens: Item[]; dossies: Dossier[];
   escaladas: Escalation[]; prova: Proof;
+  /** A amostra do Dev 3 ainda não traz pauta; sem ela, a pauta vem vazia. */
+  pauta?: Pauta;
 };
 
 export function createSampleStore(initial: SampleState = seed): DemoStore {
-  const { hoje, fila, itens, dossies, escaladas, prova } = structuredClone(initial);
+  const { hoje, fila, itens, dossies, escaladas, prova, pauta } = structuredClone(initial as SampleState);
   const eventos: Event[] = hoje.eventos;
   const decisoes = new Map<string, SavedDecision>();
-  const inicioAtual = new Date(Date.now() - 120_000).toISOString();
-  const etapaAtual = new Date(Date.now() - 60_000).toISOString();
   const inicioAnterior = hoje.data + 'T08:00:00-03:00';
   const fimAnterior = hoje.data + 'T09:00:00-03:00';
 
@@ -26,9 +26,6 @@ export function createSampleStore(initial: SampleState = seed): DemoStore {
       const nomesEditais = Object.fromEntries(fila.map(row => [row.tender, row.pregao]));
       const pregoes = Object.keys(nomesEditais);
       return { aprovacoes: abertas().length, turnos: pregoes.length ? [
-        { id: 'amostra-atual', inicio: inicioAtual, atualizadoEm: new Date().toISOString(), status: 'ativo', pregoes: pregoes.slice(-1), nomesEditais,
-          etapas: [{ horario: inicioAtual, atividade: 'Consultando os itens do pregão', estado: 'concluida' },
-            { horario: etapaAtual, atividade: 'Lendo o edital', estado: 'em_andamento' }] },
         { id: 'amostra-concluida', inicio: inicioAnterior, atualizadoEm: fimAnterior, status: 'concluido', pregoes, nomesEditais,
           etapas: [{ horario: fimAnterior, atividade: 'Registrando a análise', estado: 'concluida' }] },
       ] : [] };
@@ -47,6 +44,7 @@ export function createSampleStore(initial: SampleState = seed): DemoStore {
     dossie: tender => dossies.find(entry => entry.tender === tender),
     escaladas: abertas,
     prova: () => prova,
+    pauta: () => pauta ?? { data: hoje.data, linhas: [], contagem: { acionaveis: 0, informativas: 0 } },
     decidir(id, decision) {
       const escalada = escaladas.find(entry => entry.id === id);
       if (!escalada) return { status: 'ausente' };

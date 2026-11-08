@@ -4,6 +4,8 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { DATA } from './data.ts';
+import type { DiffErrata } from './errata.ts';
+import { versaoDaRetificacao, type AjusteHumano, type VersaoRetificacao } from './versao.ts';
 import type {
   Store, TenderRow, ItemRow, FitRow, RequirementRow, DecisionRow, Action, ActionStatus,
   Escalation, Decision, DecisionResult, Event,
@@ -17,6 +19,10 @@ export type StoreOptions = {
 
 export type LanceStore = Store & {
   transaction<T>(fn: () => T): T;
+  /** Diff de errata calculado pelo monitor (fase 1 da #25). Guarda o histórico; a leitura devolve o mais recente. */
+  saveErrataDiff(d: DiffErrata): void;
+  getErrataDiff(tenderId: string): DiffErrata | undefined;
+  getRetificacoes(tenderId: string): VersaoRetificacao[];
   close(): void;
   /** Auxiliares de teste e diagnóstico. */
   _count(table: string): number;
@@ -55,9 +61,12 @@ CREATE TABLE IF NOT EXISTS events (
   resumo TEXT NOT NULL, detalhe TEXT, tender TEXT, item TEXT, dossie INTEGER, rastro TEXT);
 CREATE INDEX IF NOT EXISTS ix_events_horario ON events(horario);
 CREATE INDEX IF NOT EXISTS ix_actions_status ON actions(status);
+CREATE TABLE IF NOT EXISTS errata_diffs (
+  seq INTEGER PRIMARY KEY AUTOINCREMENT, tender_id TEXT NOT NULL, json TEXT NOT NULL, criado_em TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_errata_diffs_tender ON errata_diffs(tender_id, seq);
 `;
 
-const TABLES = new Set(['tenders', 'items', 'fits', 'requirements', 'decisions', 'dossies', 'actions', 'escalations', 'events']);
+const TABLES = new Set(['tenders', 'items', 'fits', 'requirements', 'decisions', 'dossies', 'actions', 'escalations', 'events', 'errata_diffs']);
 const json = (v: unknown) => (v === undefined ? null : JSON.stringify(v));
 const parse = (s: unknown) => (s == null ? undefined : JSON.parse(String(s)));
 
@@ -66,11 +75,18 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
   const iso = () => now().toISOString();
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
+  // Agendador e servidor integrado abrem o mesmo arquivo: quem grava espera a trava do outro (até 5 s).
   db.exec('PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   db.exec(SCHEMA);
   // Migração: bancos criados antes da coluna reavaliar.
   if (!(db.prepare('PRAGMA table_info(tenders)').all() as any[]).some(c => c.name === 'reavaliar'))
     db.exec('ALTER TABLE tenders ADD COLUMN reavaliar INTEGER NOT NULL DEFAULT 0');
+  if (!(db.prepare('PRAGMA table_info(errata_diffs)').all() as any[]).some(c => c.name === 'versao_json'))
+    db.exec('ALTER TABLE errata_diffs ADD COLUMN versao_json TEXT');
+  if (!(db.prepare('PRAGMA table_info(escalations)').all() as any[]).some(c => c.name === 'versao_retificacao'))
+    db.exec('ALTER TABLE escalations ADD COLUMN versao_retificacao INTEGER');
+  if (!(db.prepare('PRAGMA table_info(tenders)').all() as any[]).some(c => c.name === 'abertura_analise'))
+    db.exec('ALTER TABLE tenders ADD COLUMN abertura_analise TEXT');
 
   const tx = <T>(fn: () => T): T => {
     if (db.isTransaction) return fn();
@@ -81,6 +97,7 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
   const toTender = (r: any): TenderRow => ({
     id: r.id, orgao: r.orgao, uf: r.uf, abertura: r.abertura, situacao: r.situacao, plataforma: r.plataforma,
     arquivosHash: r.arquivos_hash, ultimoCheck: r.ultimo_check, reavaliar: !!r.reavaliar,
+    ...(r.abertura_analise != null ? { aberturaAnalise: JSON.parse(r.abertura_analise) } : {}),
   });
   const toAction = (r: any): Action => ({
     key: r.key, tipo: r.tipo, tenderId: r.tender_id, ...(r.item != null ? { item: Number(r.item) } : {}),
@@ -113,17 +130,29 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
     const r = db.prepare('SELECT * FROM actions WHERE key = ?').get(key);
     return r ? toAction(r) : undefined;
   };
+  const getRetificacoes = (tenderId: string): VersaoRetificacao[] => db.prepare(
+    'SELECT versao_json FROM errata_diffs WHERE tender_id = ? AND versao_json IS NOT NULL ORDER BY seq',
+  ).all(tenderId).map((r: any) => JSON.parse(r.versao_json));
+  const getAjustes = (tenderId: string): AjusteHumano[] => db.prepare(
+    "SELECT item, versao_retificacao, decisao, motivo FROM escalations WHERE tender = ? AND status = 'decidida' AND versao_retificacao IS NOT NULL ORDER BY seq",
+  ).all(tenderId).flatMap((r: any) => {
+    if (r.item == null || !/^\d+$/.test(r.item)) return [];
+    const d = JSON.parse(r.decisao) as Decision;
+    return [{ item: Number(r.item), versao: Number(r.versao_retificacao), decisao: d.decisao, motivo: d.ajuste ?? r.motivo }];
+  });
 
   return {
     transaction: tx,
     upsertTender(t: TenderRow) {
       // reavaliar omitido mantém o valor gravado.
       const rv = t.reavaliar == null ? null : Number(t.reavaliar);
-      db.prepare(`INSERT INTO tenders (id, orgao, uf, abertura, situacao, plataforma, arquivos_hash, ultimo_check, reavaliar, atualizado_em)
-        VALUES (?,?,?,?,?,?,?,?,COALESCE(?, 0),?) ON CONFLICT(id) DO UPDATE SET orgao=excluded.orgao, uf=excluded.uf, abertura=excluded.abertura,
+      db.prepare(`INSERT INTO tenders (id, orgao, uf, abertura, situacao, plataforma, arquivos_hash, ultimo_check, reavaliar, atualizado_em, abertura_analise)
+        VALUES (?,?,?,?,?,?,?,?,COALESCE(?, 0),?,?) ON CONFLICT(id) DO UPDATE SET orgao=excluded.orgao, uf=excluded.uf, abertura=excluded.abertura,
         situacao=excluded.situacao, plataforma=excluded.plataforma, arquivos_hash=excluded.arquivos_hash,
-        ultimo_check=excluded.ultimo_check, reavaliar=COALESCE(?, tenders.reavaliar), atualizado_em=excluded.atualizado_em`)
-        .run(t.id, t.orgao, t.uf, t.abertura, t.situacao, t.plataforma, t.arquivosHash, t.ultimoCheck, rv, iso(), rv);
+        ultimo_check=excluded.ultimo_check, reavaliar=COALESCE(?, tenders.reavaliar), atualizado_em=excluded.atualizado_em,
+        abertura_analise=COALESCE(?, tenders.abertura_analise)`)
+        .run(t.id, t.orgao, t.uf, t.abertura, t.situacao, t.plataforma, t.arquivosHash, t.ultimoCheck, rv, iso(),
+          json(t.aberturaAnalise === undefined ? t.abertura : t.aberturaAnalise), rv, json(t.aberturaAnalise));
     },
     upsertItems(tenderId: string, items: ItemRow[]) {
       const st = db.prepare(`INSERT INTO items (tender_id, numero, descricao, catalog_code, quantidade, estimativa, sigiloso, atualizado_em)
@@ -149,9 +178,13 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
         .run(d.tenderId, d.item, d.produto, d.estado, JSON.stringify(d.motivos), d.precoProposto, iso());
     },
     upsertDossie(tenderId: string, dossie: unknown) {
-      db.prepare(`INSERT INTO dossies (tender_id, json, versao, atualizado_em) VALUES (?,?,1,?)
-        ON CONFLICT(tender_id) DO UPDATE SET json=excluded.json, versao=dossies.versao + 1, atualizado_em=excluded.atualizado_em`)
-        .run(tenderId, JSON.stringify(dossie), iso());
+      tx(() => {
+        const retificacao = getRetificacoes(tenderId).at(-1);
+        const value = retificacao && dossie && typeof dossie === 'object' ? { ...dossie, retificacao } : dossie;
+        db.prepare(`INSERT INTO dossies (tender_id, json, versao, atualizado_em) VALUES (?,?,1,?)
+          ON CONFLICT(tender_id) DO UPDATE SET json=excluded.json, versao=dossies.versao + 1, atualizado_em=excluded.atualizado_em`)
+          .run(tenderId, JSON.stringify(value), iso());
+      });
     },
 
     recordIntent(a) {
@@ -182,10 +215,18 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
       return db.prepare(`SELECT * FROM actions ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY criada_em, key`).all(...args).map(toAction);
     },
 
-    openEscalation(e) {
+    openEscalation(e, options) {
       return tx(() => {
-        const { lastInsertRowid } = db.prepare(`INSERT INTO escalations (id, tender, item, motivo, recomendacao, prazo, status) VALUES (?,?,?,?,?,?,'aberta')`)
-          .run(`tmp_${Math.random().toString(36).slice(2)}`, e.tender, e.item ?? null, e.motivo, e.recomendacao, e.prazo);
+        if (options?.reuseOpen) {
+          const existing = db.prepare(
+            "SELECT * FROM escalations WHERE tender = ? AND item IS ? AND motivo = ? AND status = 'aberta' ORDER BY seq",
+          ).all(e.tender, e.item ?? null, e.motivo)
+            .map(toEscalation).find(row => Date.parse(row.prazo) >= now().getTime());
+          if (existing) return existing;
+        }
+        const versao = getRetificacoes(e.tender).at(-1)?.versao ?? 0;
+        const { lastInsertRowid } = db.prepare(`INSERT INTO escalations (id, tender, item, motivo, recomendacao, prazo, status, versao_retificacao) VALUES (?,?,?,?,?,?,'aberta',?)`)
+          .run(`tmp_${Math.random().toString(36).slice(2)}`, e.tender, e.item ?? null, e.motivo, e.recomendacao, e.prazo, versao);
         const id = `esc_${lastInsertRowid}`;
         db.prepare('UPDATE escalations SET id = ? WHERE seq = ?').run(id, lastInsertRowid);
         insertEvent({ tipo: 'escalada_aberta', resumo: e.motivo, tender: e.tender, ...(e.item ? { item: e.item } : {}) });
@@ -247,16 +288,47 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
         quantidade: Number(r.quantidade), estimativa: r.estimativa == null ? null : Number(r.estimativa), sigiloso: !!r.sigiloso,
       }));
     },
+    getRequirements(tenderId) {
+      return db.prepare('SELECT tender_id, tipo, citacao FROM requirements WHERE tender_id = ? ORDER BY tipo, citacao').all(tenderId)
+        .map((r: any) => ({ tenderId: r.tender_id, tipo: r.tipo, citacao: r.citacao }));
+    },
     getDecisions(tenderId?: string) {
       const rows = tenderId
         ? db.prepare('SELECT * FROM decisions WHERE tender_id = ? ORDER BY item, produto').all(tenderId)
         : db.prepare('SELECT * FROM decisions ORDER BY tender_id, item, produto').all();
       return rows.map((r: any) => ({ tenderId: r.tender_id, item: Number(r.item), produto: r.produto, estado: r.estado, motivos: JSON.parse(r.motivos), precoProposto: r.preco_proposto == null ? null : Number(r.preco_proposto) }));
     },
+    getFits(tenderId: string) {
+      return db.prepare('SELECT * FROM fits WHERE tender_id = ? ORDER BY item, produto').all(tenderId).map((r: any) => ({
+        tenderId: r.tender_id, item: Number(r.item), produto: r.produto, fit: r.fit, atributos: JSON.parse(r.atributos),
+      }));
+    },
     getDossie(tenderId) {
       const r: any = db.prepare('SELECT json FROM dossies WHERE tender_id = ?').get(tenderId);
       return r ? JSON.parse(r.json) : undefined;
     },
+    saveErrataDiff(d: DiffErrata) {
+      tx(() => {
+        const previous: any = db.prepare('SELECT json FROM errata_diffs WHERE tender_id = ? ORDER BY seq DESC LIMIT 1').get(d.tenderId);
+        const observed = previous ? (JSON.parse(previous.json) as DiffErrata).publicacao : undefined;
+        if (observed && d.publicacao && observed.arquivosHash === d.publicacao.arquivosHash && observed.abertura === d.publicacao.abertura) return;
+        const versions = getRetificacoes(d.tenderId);
+        const hoje = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife' }).format(now());
+        const retificacao = versaoDaRetificacao({ diff: d, versao: (versions.at(-1)?.versao ?? 0) + 1, hoje, ajustes: getAjustes(d.tenderId) });
+        db.prepare('INSERT INTO errata_diffs (tender_id, json, criado_em, versao_json) VALUES (?,?,?,?)')
+          .run(d.tenderId, JSON.stringify(d), iso(), JSON.stringify(retificacao));
+        const saved: any = db.prepare('SELECT json FROM dossies WHERE tender_id = ?').get(d.tenderId);
+        if (saved) db.prepare('UPDATE dossies SET json = ?, versao = versao + 1, atualizado_em = ? WHERE tender_id = ?')
+          .run(JSON.stringify({ ...JSON.parse(saved.json), retificacao }), iso(), d.tenderId);
+        // Não altera itens, decisões ou hash da análise: a versão registra, não autoriza envio.
+        db.prepare('UPDATE tenders SET reavaliar = 1, atualizado_em = ? WHERE id = ?').run(iso(), d.tenderId);
+      });
+    },
+    getErrataDiff(tenderId: string) {
+      const r: any = db.prepare('SELECT json FROM errata_diffs WHERE tender_id = ? ORDER BY seq DESC LIMIT 1').get(tenderId);
+      return r ? JSON.parse(r.json) : undefined;
+    },
+    getRetificacoes,
 
     close() { db.close(); },
     _count(table: string) {

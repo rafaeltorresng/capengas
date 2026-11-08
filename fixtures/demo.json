@@ -1,0 +1,455 @@
+{
+  "_nota": "Pregões reais escolhidos para a demo (dados públicos do PNCP). Gerado por scripts/preparar-demo.ts; o cache fica em cache/ (fora do Git). O casamento item × produto é um pré-filtro por termos: o encaixe técnico é do agente.",
+  "geradoEm": "2026-11-07T19:11:27.831Z",
+  "hoje": "2026-11-07",
+  "criterio": "Compras.gov.br, divulgado, sessão em ≥ 2 dias, mais produtos distintos do catálogo e depois mais itens",
+  "buscas": [
+    "material hospitalar",
+    "material medico hospitalar",
+    "instrumental cirurgico",
+    "cabo de bisturi",
+    "tesoura cirurgica",
+    "cadeira de rodas",
+    "cpap neonatal",
+    "escova degermacao"
+  ],
+  "encontrados": 52,
+  "comItensDoCatalogo": 23,
+  "pregoes": [
+    {
+      "id": "77816510000166/2026/348",
+      "orgao": "MUNICIPIO DE FRANCISCO BELTRAO",
+      "uf": "PR",
+      "municipio": "Francisco Beltrão",
+      "abertura": "2026-11-23T09:00",
+      "plataforma": "Compras.gov.br",
+      "situacao": "Divulgada no PNCP",
+      "url": "https://pncp.gov.br/app/editais/77816510000166/2026/348",
+      "cache": {
+        "compra": true,
+        "editais": [
+          {
+            "titulo": "EDITAL PE SRP 90114.2026.pdf",
+            "tipo": "pdf",
+            "caracteres": 131475
+          },
+          {
+            "titulo": "TERMO DE REFERENCIA.pdf",
+            "tipo": "pdf",
+            "caracteres": 60549
+          }
+        ]
+      },
+      "arquivos": [
+        {
+          "tipo": "Edital",
+          "titulo": "EDITAL PE SRP 90114.2026.pdf"
+        },
+        {
+          "tipo": "Outros Documentos",
+          "titulo": "AVISO PE 90114.2026.pdf"
+        },
+        {
+          "tipo": "Outros Documentos",
+          "titulo": "ETP.pdf"
+        },
+        {
+          "tipo": "Outros Documentos",
+          "titulo": "PARECER CONTABIL.pdf"
+        },
+        {
+          "tipo": "Outros Documentos",
+          "titulo": "PARECER JURIDICO.pdf"
+        },
+        {
+          "tipo": "Termo de Referência",
+          "titulo": "TERMO DE REFERENCIA.pdf"
+        },
+        {
+          "tipo": "Outros Documentos",
+          "titulo": "ANEXOS AO TERMO.zip"
+        }
+      ],
+      "editalLegivel": true,
+      "matches": [
+        {
+          "item": 3,
+          "produto": "P1",
+          "descricao": "Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 3 CABO DE BISTURI Nº3 13 CM AÇO INOX AUTOCLAVÁVEL -  CONFORME DESCRIÇÃO DO",
+          "estimativa": 126.97,
+          "sigiloso": false,
+          "catalogCode": 299683,
+          "historicoPrecos": 100,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 4,
+          "produto": "P1",
+          "descricao": "Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4 CABO DE BISTURI Nº4 13 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO ",
+          "estimativa": 126.97,
+          "sigiloso": false,
+          "catalogCode": 299116,
+          "historicoPrecos": 100,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 38,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental característica ponta: fina c/ vídea, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidáv",
+          "estimativa": 153.41,
+          "sigiloso": false,
+          "catalogCode": 471576,
+          "historicoPrecos": 72,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 39,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, ti",
+          "estimativa": 428.26,
+          "sigiloso": false,
+          "catalogCode": 471555,
+          "historicoPrecos": 7,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 40,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, ti",
+          "estimativa": 424.47,
+          "sigiloso": false,
+          "catalogCode": 471547,
+          "historicoPrecos": 8,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 41,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, ",
+          "estimativa": 236.74,
+          "sigiloso": false,
+          "catalogCode": 471453,
+          "historicoPrecos": 6,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 42,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, ",
+          "estimativa": 236.74,
+          "sigiloso": false,
+          "catalogCode": 471454,
+          "historicoPrecos": 10,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 43,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, ",
+          "estimativa": 234.85,
+          "sigiloso": false,
+          "catalogCode": 471447,
+          "historicoPrecos": 12,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 44,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, ",
+          "estimativa": 234.85,
+          "sigiloso": false,
+          "catalogCode": 471448,
+          "historicoPrecos": 31,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 45,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental característica ponta: romba fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável,",
+          "estimativa": 210.15,
+          "sigiloso": false,
+          "catalogCode": 471435,
+          "historicoPrecos": 10,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 46,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental característica ponta: romba fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável,",
+          "estimativa": 218.13,
+          "sigiloso": false,
+          "catalogCode": 471436,
+          "historicoPrecos": 29,
+          "anvisa": "VIGENTE"
+        }
+      ],
+      "semaforoFiscal": {
+        "status": "verde",
+        "resumo": "Despesa com pessoal em 45,91% da RCL (2º quadrimestre de 2026), abaixo do alerta de 48,6% da LRF.",
+        "dtpPct": 45.91,
+        "limites": {
+          "alerta": 48.6,
+          "prudencial": 51.3,
+          "maximo": 54
+        },
+        "periodo": {
+          "exercicio": 2026,
+          "periodicidade": "Q",
+          "periodo": 2
+        },
+        "fonte": "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rgf?an_exercicio=2026&in_periodicidade=Q&nr_periodo=2&co_tipo_demonstrativo=RGF&no_anexo=RGF-Anexo%2001&co_esfera=M&co_poder=E&id_ente=4108403",
+        "ente": "Francisco Beltrão/PR"
+      }
+    },
+    {
+      "id": "00394452000103/2026/22617",
+      "orgao": "COMANDO DO EXERCITO",
+      "uf": "PA",
+      "municipio": "Belém",
+      "abertura": "2026-11-16T09:00",
+      "plataforma": "Compras.gov.br",
+      "situacao": "Divulgada no PNCP",
+      "url": "https://pncp.gov.br/app/editais/00394452000103/2026/22617",
+      "cache": {
+        "compra": true,
+        "editais": [
+          {
+            "titulo": "Termo de Referencia 28_2026.pdf",
+            "tipo": "pdf",
+            "caracteres": 201698
+          },
+          {
+            "titulo": "Minuta Edital.pdf",
+            "tipo": "pdf",
+            "caracteres": 78531
+          }
+        ]
+      },
+      "arquivos": [
+        {
+          "tipo": "Estudo Técnico Preliminar",
+          "titulo": "Estudo Tecnico Preliminar 41_2026.pdf"
+        },
+        {
+          "tipo": "Termo de Referência",
+          "titulo": "Termo de Referencia 28_2026.pdf"
+        },
+        {
+          "tipo": "Minuta de Ata de Registro de Preços",
+          "titulo": "Minuta do anexo II - Ata de registro de preco.pdf"
+        },
+        {
+          "tipo": "Edital",
+          "titulo": "Minuta Edital.pdf"
+        }
+      ],
+      "editalLegivel": true,
+      "matches": [
+        {
+          "item": 87,
+          "produto": "P7",
+          "descricao": "Pinça Para Bisturi Elétrico material: aço inoxidável, modelo: bipolar, modelo haste: haste baioneta, comprimento total: 20, tipo ponta: ponta reta, diâmetro pon",
+          "estimativa": 1500,
+          "sigiloso": false,
+          "catalogCode": 433377,
+          "historicoPrecos": 44,
+          "anvisa": "30/01/2027"
+        },
+        {
+          "item": 124,
+          "produto": "P6",
+          "descricao": "Ventilador Não Invasivo tipo*: cpap, aplicação: adulto, faixa de pressão: cerca de 0 a 20 cm h20, componente 1: rampa, adicional: filtro, adicional 1: traqueia ",
+          "estimativa": 3849,
+          "sigiloso": false,
+          "catalogCode": 454291,
+          "historicoPrecos": 73,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 126,
+          "produto": "P6",
+          "descricao": "Material P/ Vni - Cpap / Bipap tipo 1: conector p/ traqueostomia, material*: polímero, característica adicional: p/ alto fluxo, tamanho*: adulto, tipo conector:",
+          "estimativa": 3592.23,
+          "sigiloso": false,
+          "catalogCode": 618233,
+          "historicoPrecos": 49,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 127,
+          "produto": "P6",
+          "descricao": "Material P/ Vni - Cpap / Bipap tipo 1: máscara facial total, material*: polímero, tipo borda: coxim silicone, característica adicional: sem fenda exalatória, ta",
+          "estimativa": 1165,
+          "sigiloso": false,
+          "catalogCode": 606911,
+          "historicoPrecos": 38,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 128,
+          "produto": "P6",
+          "descricao": "Material P/ Vni - Cpap / Bipap tipo 1: pronga nasal, material*: polímero, característica adicional: p/ alto fluxo, tamanho*: adulto, tipo conector: conector pad",
+          "estimativa": 1290,
+          "sigiloso": false,
+          "catalogCode": 477462,
+          "historicoPrecos": 90,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 129,
+          "produto": "P6",
+          "descricao": "Material P/ Vni - Cpap / Bipap tipo 1: máscara nasal, material*: silicone, tamanho*: neonatal m, tipo conector: conectores padrão, tipo extensão: traqueias, tip",
+          "estimativa": 975,
+          "sigiloso": false,
+          "catalogCode": 455940,
+          "historicoPrecos": 60,
+          "anvisa": "VIGENTE"
+        }
+      ],
+      "semaforoFiscal": {
+        "status": "sem_dado",
+        "resumo": "O CNPJ do órgão não é de município ou estado no SICONFI (órgão federal ou entidade sem RGF próprio)."
+      }
+    },
+    {
+      "id": "00394429000100/2026/2941",
+      "orgao": "COMANDO DA AERONAUTICA",
+      "uf": "GO",
+      "municipio": "Anápolis",
+      "abertura": "2026-11-30T09:30",
+      "plataforma": "Compras.gov.br",
+      "situacao": "Divulgada no PNCP",
+      "url": "https://pncp.gov.br/app/editais/00394429000100/2026/2941",
+      "cache": {
+        "compra": true,
+        "editais": [
+          {
+            "titulo": "EDITAL PR 310_2026.pdf",
+            "tipo": "pdf",
+            "caracteres": 99439
+          },
+          {
+            "titulo": "TR.pdf",
+            "tipo": "pdf",
+            "caracteres": 63374
+          }
+        ]
+      },
+      "arquivos": [
+        {
+          "tipo": "Edital",
+          "titulo": "EDITAL PR 310_2026.pdf"
+        },
+        {
+          "tipo": "Estudo Técnico Preliminar",
+          "titulo": "ETP.pdf"
+        },
+        {
+          "tipo": "Minuta de Ata de Registro de Preços",
+          "titulo": "MINUTA DA ATA.pdf"
+        },
+        {
+          "tipo": "Outros Documentos",
+          "titulo": "LISTA DE ITENS.pdf"
+        },
+        {
+          "tipo": "Termo de Referência",
+          "titulo": "TR.pdf"
+        }
+      ],
+      "editalLegivel": true,
+      "matches": [
+        {
+          "item": 182,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental Tesoura Instrumental, Modelo 1:Íris, Tipo Ponta:Ponta Reta, Característica Ponta:Fina C/ Vídea, Haste:Haste Reta, Comprimento Total:Cerca D",
+          "estimativa": 16.93,
+          "sigiloso": false,
+          "catalogCode": 471569,
+          "historicoPrecos": 71,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 198,
+          "produto": "P1",
+          "descricao": "Cabo Bisturi Cabo Bisturi, Material:Aço Inoxidável, Tamanho:Nº 3",
+          "estimativa": 6.57,
+          "sigiloso": false,
+          "catalogCode": 272821,
+          "historicoPrecos": 100,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 223,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental Tesoura Instrumental, Modelo 1:Íris, Tipo Ponta:Ponta Reta, Característica Ponta:Romba, Haste:Haste Reta, Comprimento Total:Cerca De 12 CM,",
+          "estimativa": 16.97,
+          "sigiloso": false,
+          "catalogCode": 471570,
+          "historicoPrecos": 66,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 224,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental Tesoura Instrumental, Modelo 1:Metzenbaum, Tipo Ponta:Ponta Curva, Característica Ponta:Delicada, Haste:Haste Reta, Comprimento Total:Cerca",
+          "estimativa": 19.27,
+          "sigiloso": false,
+          "catalogCode": 471537,
+          "historicoPrecos": 39,
+          "anvisa": "VIGENTE"
+        },
+        {
+          "item": 225,
+          "produto": "P2",
+          "descricao": "Tesoura Instrumental Tesoura Instrumental, Modelo 1:Spencer / Buck, Tipo Ponta:Ponta Curva, Haste:Haste Reta, Comprimento Total:Cerca De 12 CM, Material:Aço Ino",
+          "estimativa": 34.49,
+          "sigiloso": false,
+          "catalogCode": 471596,
+          "historicoPrecos": 46,
+          "anvisa": "VIGENTE"
+        }
+      ],
+      "semaforoFiscal": {
+        "status": "sem_dado",
+        "resumo": "O CNPJ do órgão não é de município ou estado no SICONFI (órgão federal ou entidade sem RGF próprio)."
+      }
+    }
+  ],
+  "evento": {
+    "id": "60448040000122/2026/701",
+    "orgao": "HOSPITAL DAS CLINICAS DA FACULDADE DE MEDICINA DA U S P",
+    "situacao": "Suspensa",
+    "motivo": "suspenso no PNCP"
+  },
+  "editalIlegivel": {
+    "id": "95422986000102/2026/309",
+    "orgao": "MUNICIPIO DE FAZENDA RIO GRANDE",
+    "editais": [
+      {
+        "titulo": "111_-_Edital_Pregao_104.26_assinado.zip",
+        "tipo": "zip",
+        "caracteres": 0
+      }
+    ],
+    "motivo": "edital sem texto legível (ZIP ou escaneado)",
+    "semaforoFiscal": {
+      "status": "verde",
+      "resumo": "Despesa com pessoal em 48,35% da RCL (2º quadrimestre de 2026), abaixo do alerta de 48,6% da LRF.",
+      "dtpPct": 48.35,
+      "limites": {
+        "alerta": 48.6,
+        "prudencial": 51.3,
+        "maximo": 54
+      },
+      "periodo": {
+        "exercicio": 2026,
+        "periodicidade": "Q",
+        "periodo": 2
+      },
+      "fonte": "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rgf?an_exercicio=2026&in_periodicidade=Q&nr_periodo=2&co_tipo_demonstrativo=RGF&no_anexo=RGF-Anexo%2001&co_esfera=M&co_poder=E&id_ente=4107652",
+      "ente": "Fazenda Rio Grande/PR"
+    }
+  },
+  "avisos": []
+}

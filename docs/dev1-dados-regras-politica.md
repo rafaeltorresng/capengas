@@ -46,9 +46,10 @@ Primeiro o que é **regra pura** (mais valor, sem dependência, fácil de testar
 | **4** | ✅ `store.ts`: estado em SQLite | 45 min | Necessário para recheque, monitor e agendador |
 | **5** | ✅ Recheque antes de agir + verificação de esclarecimento | 1 h | Corrige as duas falhas reais do turno |
 | **6** | ✅ `monitor.ts`: detectar mudança nos pregões acompanhados | 1 h | Reação a eventos reais |
-| **7** | `scheduler.ts`: turnos e monitor sem clique | 30 min | Autonomia de verdade |
-| **8** | Dados da demo: filtro Compras.gov.br, atualização da ANVISA, cache pré-carregado | 45 min | Demo estável |
-| 9 (desejável) | Calendário do cofre | 45 min | "Renove a CND até X ou perde N pregões" |
+| **7** | ✅ `scheduler.ts`: turnos e monitor sem clique | 30 min | Autonomia de verdade |
+| **8** | ✅ Dados da demo: filtro Compras.gov.br, cache pré-carregado, modo offline | 45 min | Demo estável |
+| 9 (desejável) | ✅ Calendário do cofre (PR #11) | 45 min | "Renove a CND até X ou perde N pregões" |
+| 11 | Fase de ações no turno agendado (PR #15) | 1 h | O código envia sozinho o que a evidência e a política permitem |
 | 10 (desejável) | Semáforo financeiro do órgão (SICONFI) | 1 h | Informação extra no dossiê |
 
 ---
@@ -169,6 +170,16 @@ Configuração (em `fixtures/company.json`, campo `politica`):
 - Script `scripts/preparar-demo.ts`: escolhe de 2 a 3 pregões com itens compatíveis com o catálogo
   + 1 suspenso ou com errata; pré-carrega o cache; grava `fixtures/demo.json`.
 - **Pronto quando:** a demo roda com a rede desligada, a partir do cache.
+
+### Tarefa 11 — Fase de ações no turno agendado (`agendamento.ts`)
+- Depois da análise e da foto, `executarAcoesDoTurno` manda pela porta `executarAcao`:
+  - o rascunho de esclarecimento do modelo, se a evidência gravada sustenta o motivo; sem evidência, abre escalada e não envia;
+  - a proposta dos itens em `disputar` (limite, recheque, catálogo e idempotência ficam na porta).
+- Pregão sem foto ou marcado pelo monitor: nada sai.
+- **Medição real (07/11, 21:10Z, banco separado, `npm run agendador -- --demo 0 --uma-vez`):**
+  - 1 pregão (77816510000166/2026/348), 428,5 s de turno, US$ 0,0867, 14 chamadas ao modelo;
+  - o pregão suspenso (60448040000122/2026/701) foi barrado no recheque;
+  - item 39: `nao_disputar` (haste curva × reta); item 4: escalado, e o esclarecimento sobre "longo" foi enviado sozinho e confirmado no sandbox (SBX-E-2CCF85).
 
 ---
 

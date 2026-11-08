@@ -8,6 +8,7 @@
     "envios": 1,
     "escaladasAbertas": 1,
     "custoUsd": 0,
+    "cofre": [],
     "porDecisao": [
       {
         "estado": "Em esclarecimento",

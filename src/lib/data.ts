@@ -2,7 +2,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, statSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,19 +15,25 @@ export const DATA = process.env.LANCE_DATA_DIR ?? join(ROOT, 'data');
 const FRESH = { ttlMs: 0, allowStale: false, retries: 3 };
 const http = (url: string, extra: object = {}) => fetchJson(url, { cacheDir: CACHE, retries: 5, baseDelayMs: 800, timeoutMs: 45000, ...extra });
 
-export type Tender = { cnpj: string; ano: number; seq: number; abertura: string; objeto: string; orgao: string; uf: string; municipio: string; modalidade: string; url: string };
+export type Tender = { cnpj: string; ano: number; seq: number; abertura: string; objeto: string; orgao: string; uf: string; municipio: string; modalidade: string; url: string; plataforma: string; situacao: string; valorEstimado: number | null };
 export type TenderItem = { numero: number; descricao: string; quantidade: number; valorEstimado: number | null; catalogCode: number | null; beneficio: string; criterio: string; temResultado: boolean; sigiloso: boolean };
+
+/** Converte um resultado da busca do PNCP; plataforma = sistema que publicou (só o Compras.gov.br traz código de catálogo). */
+export function mapSearchItem(i: any): Tender {
+  return {
+    cnpj: i.orgao_cnpj, ano: Number(i.ano), seq: Number(i.numero_sequencial),
+    abertura: String(i.data_fim_vigencia ?? '').slice(0, 16), objeto: i.description ?? '', orgao: i.orgao_nome ?? '',
+    uf: i.uf ?? '', municipio: i.municipio_nome ?? '', modalidade: i.modalidade_licitacao_nome ?? '',
+    url: `https://pncp.gov.br/app/editais/${i.orgao_cnpj}/${i.ano}/${i.numero_sequencial}`,
+    plataforma: i.usuario_nome ?? '', situacao: i.situacao_nome ?? '', valorEstimado: Number(i.valor_total_estimado) || null,
+  };
+}
 
 export const pncp = {
   async searchOpen(q: string, page = 1, size = 20) {
     const u = `https://pncp.gov.br/api/search/?q=${encodeURIComponent(q)}&tipos_documento=edital&ordenacao=-data&pagina=${page}&tam_pagina=${size}&status=recebendo_proposta`;
     const { data } = await http(u, { ttlMs: 30 * 60e3, retries: 8 });
-    const items: Tender[] = (data.items ?? []).map((i: any) => ({
-      cnpj: i.orgao_cnpj, ano: Number(i.ano), seq: Number(i.numero_sequencial),
-      abertura: String(i.data_fim_vigencia ?? '').slice(0, 16), objeto: i.description ?? '', orgao: i.orgao_nome ?? '',
-      uf: i.uf ?? '', municipio: i.municipio_nome ?? '', modalidade: i.modalidade_licitacao_nome ?? '',
-      url: `https://pncp.gov.br/app/editais/${i.orgao_cnpj}/${i.ano}/${i.numero_sequencial}`,
-    }));
+    const items: Tender[] = (data.items ?? []).map(mapSearchItem);
     return { total: Number(data.total ?? 0), items };
   },
   /** fresh: lê na hora, sem cache e sem cache vencido (falha se a fonte não responder). Usado pelo recheque. */
@@ -35,10 +41,11 @@ export const pncp = {
     const { data } = await http(`https://pncp.gov.br/api/consulta/v1/orgaos/${cnpj}/compras/${ano}/${seq}`, o.fresh ? FRESH : { ttlMs: 10 * 60e3 });
     return data;
   },
-  async items(cnpj: string, ano: number, seq: number): Promise<TenderItem[]> {
+  /** fresh: usado pelo monitor para comparar os itens publicados agora com os da análise. */
+  async items(cnpj: string, ano: number, seq: number, o: { fresh?: boolean } = {}): Promise<TenderItem[]> {
     const out: TenderItem[] = [];
     for (let p = 1; p <= 20; p++) {
-      const { data } = await http(`https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${seq}/itens?pagina=${p}&tamanhoPagina=100`);
+      const { data } = await http(`https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${seq}/itens?pagina=${p}&tamanhoPagina=100`, o.fresh ? FRESH : {});
       const arr = Array.isArray(data) ? data : [];
       for (const i of arr) out.push({
         numero: i.numeroItem, descricao: i.descricao ?? '', quantidade: i.quantidade, valorEstimado: i.valorUnitarioEstimado || null,
@@ -77,6 +84,8 @@ let db: DatabaseSync | null = null;
 function anvisaDb() {
   if (db) return db;
   mkdirSync(CACHE, { recursive: true });
+  // CSV baixado depois da importação: a cópia SQLite é refeita, para nunca consultar registro desatualizado.
+  if (existsSync(DB_PATH) && existsSync(ANVISA_CSV) && statSync(ANVISA_CSV).mtimeMs > statSync(DB_PATH).mtimeMs) rmSync(DB_PATH);
   const fresh = !existsSync(DB_PATH);
   db = new DatabaseSync(DB_PATH);
   if (fresh) {
@@ -98,6 +107,7 @@ function anvisaDb() {
 }
 export const anvisa = {
   count: () => Number((anvisaDb().prepare('SELECT count(*) c FROM p').get() as any).c),
+  linhas: () => anvisaDb().prepare('SELECT * FROM p').iterate() as Iterable<Record<string, string>>,
   byRegistro: (n: string) => anvisaDb().prepare('SELECT * FROM p WHERE NUMERO_REGISTRO_CADASTRO = ?').get(n.replace(/\D/g, '')) as Record<string, string> | undefined,
   searchName: (term: string, limit = 50) => {
     const t = term.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

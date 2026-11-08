@@ -3,7 +3,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { validate } from '../src/lib/schema.ts';
-import { runAgent, type Tool, type LLM } from '../src/lib/agent.ts';
+import { runAgent, resumirResultadoAntigo, type Tool, type LLM } from '../src/lib/agent.ts';
 
 describe('validate (JSON Schema mínimo)', () => {
   const s = { type: 'object', required: ['a', 'b'], properties: { a: { type: 'string' }, b: { type: 'integer' }, c: { type: 'string', enum: ['x', 'y'] }, d: { type: 'array', items: { type: 'number' } } } };
@@ -81,6 +81,39 @@ describe('runAgent', () => {
     const submit: Tool = { name: 'submit', description: '', requiresApproval: true, parameters: { type: 'object', required: ['approval_id'], properties: { approval_id: { type: 'string' } } }, run: async () => { sent++; return { ok: true }; } };
     await runAgent({ llm: scripted([call('submit', { approval_id: 'ap-1' }), { role: 'assistant', content: 'enviado' }]), tools: [submit], system: 's', user: 'u', approvals: new Set(['ap-1']) });
     assert.equal(sent, 1);
+  });
+  test('resumo de resultado antigo só repete o que o JSON traz', () => {
+    const lista = JSON.stringify({ total_itens: 46, filtrados: 2, pagina: 1, proxima_pagina: null, itens: [{ numero: 40, descricao: 'x'.repeat(400) }, { numero: 54, descricao: 'y'.repeat(400) }] });
+    const resumo = resumirResultadoAntigo(lista);
+    assert.match(resumo, /\[histórico compactado\]/);
+    assert.match(resumo, /2 de 46 itens/);
+    assert.match(resumo, /números 40, 54/);
+    assert.ok(resumo.length < lista.length);
+    assert.equal(resumo.includes('x'.repeat(50)), false);
+    const edital = JSON.stringify({ caracteres_edital: 80000, trechos: [{ topico: 'ANVISA', trecho: 'z'.repeat(2000) }] });
+    assert.match(resumirResultadoAntigo(edital), /edital de 80000 caracteres, 1 trecho; tópicos ANVISA/);
+    assert.equal(resumirResultadoAntigo('{"aceito":true}'), '{"aceito":true}');
+  });
+  test('resultados antigos encolhem e o último passo chega inteiro ao modelo', async () => {
+    const fat = { s: 'item '.repeat(800) };
+    const big: Tool = { ...echo, run: async () => fat };
+    const vistos: string[] = [];
+    const llm: LLM = {
+      model: 's',
+      async chat(msgs) {
+        vistos.push(msgs.filter(m => m.role === 'tool').map(m => m.content).join('\n'));
+        const passo = vistos.length;
+        if (passo < 4) return { message: call('echo', { x: String(passo) }, 'c' + passo), usage: { prompt_tokens: 1, completion_tokens: 1 }, ms: 1 };
+        return { message: { role: 'assistant', content: 'ok' }, usage: { prompt_tokens: 1, completion_tokens: 1 }, ms: 1 };
+      },
+    };
+    const r = await runAgent({ llm, tools: [big], system: 's', user: 'u', maxToolChars: 20_000 });
+    assert.equal(vistos[2].includes('[histórico compactado]'), false);
+    assert.equal(vistos[2].split(fat.s).length - 1, 2);
+    assert.match(vistos[3], /\[histórico compactado\]/);
+    assert.equal(vistos[3].split(fat.s).length - 1, 2);
+    assert.ok(vistos[3].length < fat.s.length * 3);
+    assert.equal((r.trace.find(e => e.type === 'tool')!.result as any).s, fat.s);
   });
   test('resultado grande é truncado para o modelo, mas íntegro no rastro', async () => {
     const big: Tool = { ...echo, run: async () => ({ s: 'x'.repeat(50_000) }) };

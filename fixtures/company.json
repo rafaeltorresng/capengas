@@ -1,5 +1,5 @@
 {
-  "_nota": "Empresa FICTÍCIA. Números de registro ANVISA são reais (base aberta TA_PRODUTO_SAUDE_SITE); custos, fichas técnicas, documentos do cofre e política são sintéticos. validade null = documento sem vencimento (AFE).",
+  "_nota": "Empresa FICTÍCIA. Números de registro ANVISA são reais (base aberta TA_PRODUTO_SAUDE_SITE); custos, fichas técnicas, documentos do cofre e política são sintéticos. validade null = documento sem vencimento (AFE). termos = palavras que um item precisa conter para ser candidato ao produto (pré-filtro; o encaixe técnico é do agente).",
   "empresa": {
     "nome": "Distribuidora Modelo Ltda (fictícia)",
     "porte": "EPP",
@@ -33,10 +33,13 @@
     {
       "id": "P1",
       "nome": "Cabo de bisturi nº 4",
-      "marca": "Allplan",
-      "registroAnvisa": "80243520033",
+      "marca": "Straumed",
+      "registroAnvisa": "82936150004",
       "custo": 6.0,
-      "ficha": "Cabo de bisturi nº 4. Comprimento total 13 cm. Material: aço inoxidável AISI 420. Reutilizável e autoclavável. Encaixe para lâminas nº 18 a 36. Embalagem individual."
+      "ficha": "Cabo de bisturi nº 4. Comprimento total 13 cm. Material: aço inoxidável AISI 420. Reutilizável e autoclavável. Encaixe para lâminas nº 18 a 36. Embalagem individual.",
+      "termos": [
+        "cabo de bisturi|cabo bisturi|cabo para bisturi"
+      ]
     },
     {
       "id": "P2",
@@ -44,15 +47,22 @@
       "marca": "Professional",
       "registroAnvisa": "10150470165",
       "custo": 22.0,
-      "ficha": "Tesoura cirúrgica Metzenbaum. Comprimento total 20 cm. Haste curva, ponta romba. Material: aço inoxidável. Esterilizável em autoclave."
+      "ficha": "Tesoura cirúrgica Metzenbaum. Comprimento total 20 cm. Haste curva, ponta romba. Material: aço inoxidável. Esterilizável em autoclave.",
+      "termos": [
+        "tesoura"
+      ]
     },
     {
       "id": "P4",
       "nome": "Cadeira de rodas manual dobrável",
-      "marca": "Modelo",
+      "marca": "Jumper",
       "registroAnvisa": "82052410001",
       "custo": 780.0,
-      "ficha": "Cadeira de rodas manual adulto, dobrável em X, com desengate rápido das rodas. Estrutura em liga de alumínio com pintura epóxi. Rodas dianteiras: rodízios com pneu maciço. Rodas traseiras: pneu maciço. Freios bilaterais com trava. Assento e encosto em nylon impermeável almofadado; encosto fixo. Apoio de braços fixo. Apoio de pés removível. Capacidade 120 kg."
+      "ficha": "Cadeira de rodas manual adulto, dobrável em X, com desengate rápido das rodas. Estrutura em liga de alumínio com pintura epóxi. Rodas dianteiras: rodízios com pneu maciço. Rodas traseiras: pneu maciço. Freios bilaterais com trava. Assento e encosto em nylon impermeável almofadado; encosto fixo. Apoio de braços fixo. Apoio de pés removível. Capacidade 120 kg.",
+      "termos": [
+        "cadeira",
+        "rodas"
+      ]
     },
     {
       "id": "P5",
@@ -60,7 +70,11 @@
       "marca": "Oxetil",
       "registroAnvisa": "10356160001",
       "custo": 1.1,
-      "ficha": "Escova descartável para antissepsia cirúrgica das mãos. Dupla face: cerdas macias e esponja impregnada com digliconato de clorexidina 2%. Estéril, uso único. Acompanha limpador de unhas."
+      "ficha": "Escova descartável para antissepsia cirúrgica das mãos. Dupla face: cerdas macias e esponja impregnada com digliconato de clorexidina 2%. Estéril, uso único. Acompanha limpador de unhas.",
+      "termos": [
+        "escova",
+        "degermacao|clorexidina"
+      ]
     },
     {
       "id": "P6",
@@ -68,7 +82,10 @@
       "marca": "Solumed",
       "registroAnvisa": "80019169010",
       "custo": 38.0,
-      "ficha": "Conjunto completo para CPAP nasal neonatal: pronga nasal em silicone (tamanhos 0 a 5, incluindo nº 4), traqueias corrugadas, linha de pressão, conectores padrão 15/22 mm e fixador tipo touca. Embalagem individual, estéril."
+      "ficha": "Conjunto completo para CPAP nasal neonatal: pronga nasal em silicone (tamanhos 0 a 5, incluindo nº 4), traqueias corrugadas, linha de pressão, conectores padrão 15/22 mm e fixador tipo touca. Embalagem individual, estéril.",
+      "termos": [
+        "cpap|pronga"
+      ]
     },
     {
       "id": "P7",
@@ -76,7 +93,11 @@
       "marca": "Taimin",
       "registroAnvisa": "80082910158",
       "custo": 900.0,
-      "ficha": "Pinça tripolar para alta frequência, reutilizável, comprimento 20 cm, cabo de conexão incluso."
+      "ficha": "Pinça tripolar para alta frequência, reutilizável, comprimento 20 cm, cabo de conexão incluso.",
+      "termos": [
+        "pinca",
+        "tripolar|bipolar"
+      ]
     }
   ],
   "politica": {

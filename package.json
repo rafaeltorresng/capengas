@@ -12,10 +12,14 @@
     "smoke": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env scripts/smoke.ts",
     "turno": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env scripts/turno.ts",
     "evals": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env scripts/evals.ts",
+    "demo:preparar": "node --disable-warning=ExperimentalWarning scripts/preparar-demo.ts",
+    "agendador": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env scripts/agendador.ts",
+    "errata:sintetica": "node --disable-warning=ExperimentalWarning scripts/errata-sintetica.ts",
     "typecheck": "tsc --noEmit",
     "build": "vite build web",
     "demo": "node src/server/main.ts amostra",
-    "integrado": "node src/server/main.ts integrado"
+    "integrado": "node src/server/main.ts integrado",
+    "catalogo:anvisa": "node --disable-warning=ExperimentalWarning scripts/catalogo-anvisa.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",

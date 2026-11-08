@@ -18,18 +18,38 @@ export function agruparResultados(rows: QueueItem[], dossie: (tender: string) =>
   return [...resultados.values()];
 }
 
-export type TurnoEvent = { turno: string } & (
+export type TurnoEvento =
   | { tipo: 'inicio'; pregoes: string[]; nomesEditais?: Record<string, string> }
   | { tipo: 'atividade'; atividade: string }
   | { tipo: 'resultado'; concluida: boolean }
   | { tipo: 'sinal' }
-  | { tipo: 'fim'; status: 'concluido' | 'incompleto' | 'falhou'; resultados: ResultadoPregao[] }
-);
+  | { tipo: 'fim'; status: 'concluido' | 'incompleto' | 'falhou'; resultados: ResultadoPregao[] };
+
+export type TurnoEvent = { turno: string } & TurnoEvento;
+
+const ATIVIDADES: Record<string, string> = {
+  list_catalog: 'Consultando o catálogo da empresa',
+  get_product_sheet: 'Consultando as fichas dos produtos',
+  get_tender_items: 'Consultando os itens do pregão',
+  get_tender_item: 'Consultando os itens do pregão',
+  read_edital: 'Lendo o edital',
+  record_requirement: 'Registrando as exigências do edital',
+  record_fit: 'Conferindo os requisitos dos itens',
+  check_anvisa: 'Consultando o registro na Anvisa',
+  decide_item: 'Preparando a recomendação por item',
+  flag_restrictive: 'Registrando exigência restritiva',
+  draft_esclarecimento: 'Rascunhando o pedido de esclarecimento',
+};
+
+export function atividadeDaFerramenta(nome: string) {
+  return ATIVIDADES[nome] ?? 'Analisando o pregão';
+}
 
 export function eventoTurno(evento: TurnoEvent): Omit<Event, 'id' | 'horario'> {
-  const tipo = evento.tipo === 'inicio' ? 'turno_inicio' : evento.tipo === 'fim' ? 'turno_fim' : 'turno_progresso';
+  // O par turno_inicio/turno_fim é do agendador e da prova. O progresso vive à parte,
+  // senão um segundo início desfaz a duração medida e o controle de horário.
   const resumo = evento.tipo === 'atividade' ? evento.atividade : 'Atualização de turno';
-  return { tipo, resumo, detalhe: JSON.stringify(evento) };
+  return { tipo: 'turno_progresso', resumo, detalhe: JSON.stringify(evento) };
 }
 
 function payload(event: Event): TurnoEvent | undefined {
@@ -83,8 +103,8 @@ export function projetarTurnos(events: Event[], agora: Date, resultadoLegado: (e
     } else if (legado && event.tipo === 'turno_fim') {
       const { turno, decisoes, ambiguo } = legado;
       legado = undefined;
+      if (ambiguo) { turnos.delete(turno.id); continue; }
       turno.atualizadoEm = event.horario;
-      if (ambiguo) continue;
       turno.pregoes = [...new Set(decisoes.flatMap(row => row.tender ? [row.tender] : []))];
       const total = /^Análise encerrada: final; ([1-9]\d*) decisões persistidas\.$/.exec(event.resumo)?.[1];
       const concluido = total !== undefined && Number(total) === decisoes.length;

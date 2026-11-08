@@ -1,7 +1,15 @@
 // Ferramentas do Lance. Princípio: o modelo julga e cita; o código verifica, calcula e monta o que é enviado.
 import type { Tool, Ctx } from './agent.ts';
 import { pncp, compras, anvisa, pdf, catmat } from './data.ts';
-import { checkAnvisa, priceStats, brandConcentration, priceCheck, checkDocs, verifyQuote, esclarecimentoDeadline, decideItem } from './rules.ts';
+import { checkAnvisa, priceStats, brandConcentration, priceCheck, checkDocs, verifyQuote, decideItem } from './rules.ts';
+import { conferirRegistro, type ConferenciaRegistro } from './catalogo.ts';
+import { executarAcao, instanteAbertura, prazoEsclarecimentoAberto, type ActDeps, type PedidoAcao } from './act.ts';
+import { leituraDoEdital } from './edital.ts';
+import { recheckTender, situacao } from './recheck.ts';
+import { consultarProtocolo } from './portal.ts';
+import { isDeepStrictEqual } from 'node:util';
+import { inventarioCobertura } from './cobertura.ts';
+import type { LanceStore } from './store.ts';
 import { randomUUID } from 'node:crypto';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -14,6 +22,11 @@ export type LanceState = {
   requirements: any[]; fits: Record<string, any>; restrictive: Record<string, any>; decisions: Record<string, any>;
   drafts: Record<string, any>; approvals: Record<string, any>; submissions: any[];
   editalSources?: Record<string, { nome: string; url: string; texto: string }[]>;
+  /** Sem store, as ferramentas de envio não chamam o portal. */
+  store?: LanceStore;
+  analysisStore?: Pick<LanceStore, 'openEscalation'>;
+  recheck?: ActDeps['recheck'];
+  snapshot?: (tenderId: string, store: LanceStore) => Promise<unknown>;
 };
 export const newState = (company: any, sandboxUrl: string, now = new Date()): LanceState =>
   ({ company, now, sandboxUrl, tenders: {}, items: {}, editais: {}, requirements: [], fits: {}, restrictive: {}, decisions: {}, drafts: {}, approvals: {}, submissions: [], editalSources: {} });
@@ -24,6 +37,36 @@ const tenderItem = async (st: LanceState, tid: string, n: number) => {
   const it = st.items[tid].find(i => i.numero === n); if (!it) throw new Error(`item ${n} não existe no pregão ${tid}`); return it;
 };
 const key = (tid: string, n: number) => `${tid}#${n}`;
+
+export function motivosDaEvidencia(store: LanceStore, tenderId: string, item: number, produto?: string) {
+  const motivos = new Set<'nao_informado' | 'variante_nao_coberta' | 'marca_referencia'>();
+  for (const fit of store.getFits(tenderId)) {
+    if (fit.item !== item || (produto !== undefined && fit.produto !== produto)) continue;
+    const atributos = fit.atributos as { attributes?: { atributo?: string; veredito?: string }[]; restritivo?: unknown; varianteNaoCoberta?: boolean } | null;
+    for (const atributo of atributos?.attributes ?? []) {
+      if (atributo.veredito === 'nao_informado') motivos.add('nao_informado');
+      if (atributo.veredito === 'nao_atende' && norm(atributo.atributo ?? '').includes('variante')) motivos.add('variante_nao_coberta');
+    }
+    if (atributos?.varianteNaoCoberta === true) motivos.add('variante_nao_coberta');
+    if (atributos?.restritivo) motivos.add('marca_referencia');
+  }
+  return motivos;
+}
+
+async function enviarPelaPorta(st: LanceState, pedido: PedidoAcao) {
+  if (!st.store) return { resultado: 'bloqueada' as const, motivo: 'envio indisponível sem estado persistente; nada foi enviado' };
+  const tender = st.store.getTender(pedido.tenderId);
+  if (!tender?.arquivosHash || tender.reavaliar === true) {
+    return { resultado: 'bloqueada' as const, motivo: 'reavaliar antes de agir: a foto da análise está ausente ou o monitor marcou o pregão' };
+  }
+  const resultado = await executarAcao(pedido, {
+    store: st.store, politica: st.company.politica, sandboxUrl: st.sandboxUrl,
+    empresa: st.company.empresa?.nome ?? '', catalogo: st.company.catalogo ?? [], now: () => st.now,
+    recheck: st.recheck ?? ((id, store) => recheckTender(id, store)),
+  });
+  if (resultado.resultado === 'confirmada') st.submissions.push({ tender_id: pedido.tenderId, protocolo: resultado.protocolo });
+  return resultado;
+}
 
 // Somente medidas exatas e isoladas. Faixas, tolerâncias e descrições compostas
 // continuam como julgamento do modelo; este bloqueio não é um validador semântico geral.
@@ -89,11 +132,24 @@ export const tools: Tool[] = [
       if (!st.editais[a.tender_id]) {
         const { cnpj, ano, seq } = parseId(a.tender_id);
         const files = (await pncp.files(cnpj, ano, seq)).filter(f => /edital|termo de refer/i.test(f.tipo + ' ' + f.titulo));
-        let text = ''; const kinds: string[] = [];
+        const kinds: string[] = [];
         const sources: { nome: string; url: string; texto: string }[] = [];
-        for (const f of files.slice(0, 2)) { const r = await pdf.fromUrl(f.url); kinds.push(`${f.titulo}: ${r.kind}`); if (r.text) { text += '\n' + r.text; sources.push({ nome: f.titulo || f.tipo, url: f.url, texto: r.text }); } }
-        if (!text) return { erro: 'nenhum edital legível (ZIP, escaneado ou ausente)', arquivos: kinds };
-        st.editais[a.tender_id] = text.replace(/\s+/g, ' ');
+        const anexos: { titulo: string; texto: string }[] = [];
+        for (const f of files.slice(0, 2)) {
+          const r = await pdf.fromUrl(f.url); kinds.push(`${f.titulo}: ${r.kind}`);
+          anexos.push({ titulo: f.titulo, texto: r.text ?? '' });
+          if (r.text) sources.push({ nome: f.titulo || f.tipo, url: f.url, texto: r.text });
+        }
+        const leitura = leituraDoEdital(anexos);
+        if (!leitura.legivel) {
+          const analysisStore = st.analysisStore ?? st.store;
+          analysisStore?.openEscalation({
+            tender: a.tender_id, motivo: leitura.motivo, recomendacao: 'Ler o anexo manualmente ou aguardar um PDF com texto.',
+            prazo: new Date(st.now.getTime() + 864e5).toISOString(),
+          }, { reuseOpen: true });
+          return { erro: leitura.motivo, arquivos: kinds, escalar: true };
+        }
+        st.editais[a.tender_id] = leitura.texto.replace(/\s+/g, ' ');
         (st.editalSources ??= {})[a.tender_id] = sources;
       }
       const flat = st.editais[a.tender_id]; const nf = norm(flat);
@@ -126,11 +182,13 @@ export const tools: Tool[] = [
     parameters: { type: 'object', required: ['product_id', 'tender_id'], properties: { product_id: { type: 'string' }, tender_id: { type: 'string' } } },
     async run(a, ctx) {
       const st = S(ctx); const p = product(st, a.product_id);
-      const t = st.tenders[a.tender_id]; const opening = t ? new Date(t.abertura + ':00-03:00') : st.now;
+      const opening = instanteAbertura(st.tenders[a.tender_id]?.abertura);
+      if (!opening) return { erro: 'abertura do pregão ausente ou ilegível; regularização não conferida' };
       const deliveryBy = new Date(opening.getTime() + st.company.empresa.prazoEntregaDias * 86400e3);
       const row = anvisa.byRegistro(p.registroAnvisa);
-      const r = checkAnvisa(row, { today: st.now, deliveryBy });
-      return { ...r, registro: p.registroAnvisa, nome_tecnico: row?.NOME_TECNICO, nome_comercial: row?.NOME_COMERCIAL, detentor: row?.DETENTOR_REGISTRO_CADASTRO, entrega_ate: deliveryBy.toISOString().slice(0, 10) };
+      const r = checkAnvisa(row, { today: st.now, deliveryBy, coberturaDeclarada: p.coberturaDeclarada === true });
+      return { ...r, registro: p.registroAnvisa, nome_tecnico: row?.NOME_TECNICO, nome_comercial: row?.NOME_COMERCIAL, detentor: row?.DETENTOR_REGISTRO_CADASTRO,
+        fabricante: row?.NOME_FABRICANTE, conferencia: conferirRegistro(p, row, st.now), entrega_ate: deliveryBy.toISOString().slice(0, 10) };
     },
   },
   {
@@ -148,7 +206,7 @@ export const tools: Tool[] = [
     },
   },
   {
-    name: 'record_fit', description: 'Registra o encaixe técnico item × produto, atributo a atributo. Cada atributo exige citação literal do item (citacao_item) e, se atende/não atende, da ficha (citacao_ficha). Citações são conferidas.',
+    name: 'record_fit', description: 'Registra o encaixe técnico item × produto, atributo a atributo. Cada atributo exige citação literal do item (citacao_item) e, se atende/não atende, da ficha (citacao_ficha). Citações são conferidas. Cada campo "nome: valor" do item precisa da própria citação; campo de fora deixa a cobertura não verificada.',
     parameters: { type: 'object', required: ['tender_id', 'item', 'product_id', 'attributes'], properties: {
       tender_id: { type: 'string' }, item: { type: 'integer' }, product_id: { type: 'string' },
       attributes: { type: 'array', items: { type: 'object', required: ['atributo', 'veredito', 'citacao_item'], properties: {
@@ -176,9 +234,12 @@ export const tools: Tool[] = [
       if (errors.length) return { aceito: false, erros: errors, instrucao: 'corrija as citações copiando trechos literais e chame record_fit de novo' };
       const v = a.attributes.map((x: any) => x.veredito);
       const overall = v.includes('nao_atende') ? 'nao_atende' : v.includes('nao_informado') ? 'nao_informado' : 'atende';
-      const validacao = { citacoes: 'conferidas', cobertura: 'nao_verificada', semantica: 'julgamento_modelo' };
-      st.fits[key(a.tender_id, a.item)] = { product_id: a.product_id, overall, attributes: a.attributes, validacao };
-      return { aceito: true, resultado: overall, validacao };
+      const inventario = inventarioCobertura(it.descricao ?? '', a.attributes);
+      const varianteNaoCoberta = a.attributes.some((at: { atributo?: string; veredito?: string }) => at.veredito === 'nao_atende' && norm(at.atributo ?? '').includes('variante'));
+      const validacao = { citacoes: 'conferidas', cobertura: inventario.cobertura, semantica: 'julgamento_modelo', lacunas: inventario.lacunas };
+      st.fits[key(a.tender_id, a.item)] = { product_id: a.product_id, overall, attributes: a.attributes, varianteNaoCoberta, validacao };
+      return { aceito: true, resultado: overall, validacao, lacunas: inventario.lacunas,
+        instrucao: inventario.cobertura === 'conferida' ? 'todos os campos nomeados do item foram citados' : 'cada campo "nome: valor" do item precisa da própria citação literal; o que faltar continua não verificado' };
     },
   },
   {
@@ -204,8 +265,8 @@ export const tools: Tool[] = [
       if (!fit || fit.product_id !== a.product_id) return { erro: 'registre o encaixe (record_fit) antes de decidir' };
       const p = product(st, a.product_id); const t = st.tenders[a.tender_id];
       const raw = t?.abertura ?? '';
-      const opening = new Date(/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(raw) ? raw + ':00-03:00' : raw);
-      if (!Number.isFinite(opening.getTime())) return { erro: 'data da sessão desconhecida; não agir' };
+      const opening = instanteAbertura(raw);
+      if (!opening) return { erro: 'data da sessão desconhecida; não agir' };
       const it = await tenderItem(st, a.tender_id, a.item);
       const policy = st.company.politica;
       const price = policy && Number.isFinite(policy.margemMinima) && Number.isFinite(policy.margemAlvo)
@@ -213,17 +274,27 @@ export const tools: Tool[] = [
         : { viavel: null, precoProposto: null, motivo: 'política de preço ausente' };
       const deliveryBy = new Date(opening.getTime() + st.company.empresa.prazoEntregaDias * 86400e3);
       let an;
-      try { an = checkAnvisa(anvisa.byRegistro(p.registroAnvisa), { today: st.now, deliveryBy, coberturaDeclarada: p.coberturaDeclarada === true }); }
+      let conferencia: ConferenciaRegistro | null = null;
+      try {
+        const row = anvisa.byRegistro(p.registroAnvisa);
+        an = checkAnvisa(row, { today: st.now, deliveryBy, coberturaDeclarada: p.coberturaDeclarada === true });
+        conferencia = conferirRegistro(p, row, st.now);
+      }
       catch { an = { regularizacao: 'nao_verificado' as const, cobertura: 'nao_comprovada' as const, classe: null, detentor: null, validUntil: null }; }
       const requirements = st.requirements.filter(r => r.tender_id === a.tender_id);
       const docs = checkDocs(st.company.cofre, requirements.map(r => ({ tipo: r.requirement, citacao: r.quote })), raw.slice(0, 10));
-      // Sem extração explícita do prazo, não inferir autorização de esclarecimento.
+      const prazo = prazoEsclarecimentoAberto(raw, st.now);
+      const varianteNaoCoberta = fit.varianteNaoCoberta === true || (fit.attributes ?? []).some((at: { atributo?: string; veredito?: string }) => at.veredito === 'nao_atende' && norm(at.atributo ?? '').includes('variante'));
       const d = decideItem({ fit: fit.validacao?.cobertura === 'conferida' ? fit.overall : 'desconhecido', regularizacao: an.regularizacao,
-        cobertura: an.cobertura, preco: price, docs, restritivo: !!st.restrictive[k], varianteNaoCoberta: false,
-        prazoEsclarecimentoAberto: null, venceAntesEntrega: 'venceAntesEntrega' in an && an.venceAntesEntrega === true });
+        cobertura: an.cobertura, preco: price, docs, restritivo: !!st.restrictive[k], varianteNaoCoberta,
+        prazoEsclarecimentoAberto: prazo.prazo ? prazo.aberto : null, venceAntesEntrega: 'venceAntesEntrega' in an && an.venceAntesEntrega === true });
+      // Ofertar exige que o registro seja da marca declarada; esclarecer não oferta produto e segue.
+      if (conferencia?.status === 'marca_divergente' && (d.estado === 'disputar' || d.estado === 'disputar_com_pendencia')) {
+        d.estado = 'escalar'; d.motivos = [...d.motivos, conferencia.motivo];
+      }
       const legacy: Record<string, string> = { disputar: 'ofertar', disputar_com_pendencia: 'ofertar_com_pendencia', nao_disputar: 'nao_ofertar', esclarecer: 'escalar', escalar: 'escalar' };
       const dec = { ...d, tenderId: a.tender_id, item: a.item, produto: a.product_id, product_id: a.product_id,
-        precoProposto: price.precoProposto, preco_sugerido: price.precoProposto, preco: price, anvisa: an, docs,
+        precoProposto: price.precoProposto, preco_sugerido: price.precoProposto, preco: price, anvisa: { ...an, conferencia }, docs,
         decision: legacy[d.estado], reasons: d.motivos, docs_vencidos: docs.filter(x => !['vigente', 'sem_vencimento'].includes(x.status)).map(x => x.exigencia) };
       st.decisions[k] = dec;
       return dec;
@@ -233,8 +304,11 @@ export const tools: Tool[] = [
     name: 'draft_esclarecimento', description: 'Redige pedido de esclarecimento ao órgão (não envia). Retorna o prazo legal.',
     parameters: { type: 'object', required: ['tender_id', 'item', 'texto'], properties: { tender_id: { type: 'string' }, item: { type: 'integer' }, texto: { type: 'string' } } },
     async run(a, ctx) {
-      const st = S(ctx); const t = st.tenders[a.tender_id]; const prazo = esclarecimentoDeadline(t ? new Date(t.abertura + ':00-03:00') : st.now);
-      st.drafts[key(a.tender_id, a.item)] = { texto: a.texto, prazo }; return { salvo: true, prazo, no_prazo: st.now.toISOString().slice(0, 10) <= prazo };
+      const st = S(ctx);
+      const situacaoPrazo = prazoEsclarecimentoAberto(st.tenders[a.tender_id]?.abertura, st.now);
+      if (!situacaoPrazo.prazo) return { salvo: false, erro: 'abertura do pregão ausente ou ilegível; rascunho não gravado' };
+      st.drafts[key(a.tender_id, a.item)] = { texto: a.texto, prazo: situacaoPrazo.prazo };
+      return { salvo: true, prazo: situacaoPrazo.prazo, no_prazo: situacaoPrazo.aberto };
     },
   },
   {
@@ -248,41 +322,65 @@ export const tools: Tool[] = [
     },
   },
   {
-    name: 'submit_proposal', description: 'Envia ao portal a proposta de um pregão com os itens aprovados. Exige approval_id aprovado pelo humano. Preços vêm das decisões calculadas, não do modelo.',
-    requiresApproval: true,
-    parameters: { type: 'object', required: ['approval_id', 'tender_id'], properties: { approval_id: { type: 'string' }, tender_id: { type: 'string' } } },
+    name: 'submit_proposal', description: 'Pede o envio da proposta dos itens indicados. O código relê decisão, quantidade e preço no store, passa pela política e pelo recheque, e só então fala com o portal. Preço e aprovação não autorizam o envio.',
+    parameters: { type: 'object', required: ['tender_id', 'itens'], properties: { tender_id: { type: 'string' }, itens: { type: 'array', items: { type: 'integer' } } } },
     async run(a, ctx) {
-      const st = S(ctx); const ap = st.approvals[a.approval_id];
-      const keys = ap.ofertas.filter((k: string) => k.startsWith(a.tender_id + '#'));
-      if (!keys.length) return { erro: 'nenhum item aprovado para este pregão' };
-      const itens = keys.map((k: string) => { const d = st.decisions[k]; const p = product(st, d.product_id); return { numero: Number(k.split('#')[1]), produto: p.id, marca: p.marca, registroAnvisa: p.registroAnvisa, precoUnitario: d.preco_sugerido }; });
-      const res = await fetch(st.sandboxUrl + '/api/propostas', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tender: a.tender_id, empresa: st.company.empresa.nome, itens }) });
-      const j = await res.json(); if (res.status !== 201) return { erro: 'portal rejeitou', detalhes: j };
-      st.submissions.push({ tender_id: a.tender_id, protocolo: j.protocolo, itens }); return { protocolo: j.protocolo, itens: itens.length };
+      return enviarPelaPorta(S(ctx), { tipo: 'enviar_proposta', tenderId: a.tender_id, itens: a.itens });
     },
   },
   {
-    name: 'send_esclarecimento', description: 'Envia ao portal um pedido de esclarecimento já redigido e aprovado. Exige approval_id.',
-    requiresApproval: true,
-    parameters: { type: 'object', required: ['approval_id', 'tender_id', 'item'], properties: { approval_id: { type: 'string' }, tender_id: { type: 'string' }, item: { type: 'integer' } } },
+    name: 'send_esclarecimento', description: 'Pede o envio de um esclarecimento já redigido. O motivo precisa coincidir com a evidência gravada no encaixe ou na sinalização restritiva. O prazo sai da abertura persistida. O texto vem do rascunho.',
+    parameters: { type: 'object', required: ['tender_id', 'item', 'motivo'], properties: { tender_id: { type: 'string' }, item: { type: 'integer' }, motivo: { type: 'string', enum: ['nao_informado', 'variante_nao_coberta', 'marca_referencia'] } } },
     async run(a, ctx) {
-      const st = S(ctx); const k = key(a.tender_id, a.item); const dr = st.drafts[k];
-      if (!dr || !st.approvals[a.approval_id].esclarecimentos.includes(k)) return { erro: 'esclarecimento não redigido ou não aprovado' };
-      const res = await fetch(st.sandboxUrl + '/api/esclarecimentos', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tender: a.tender_id, item: a.item, texto: dr.texto }) });
-      return { status: res.status, ...(await res.json()) };
+      const st = S(ctx); const dr = st.drafts[key(a.tender_id, a.item)];
+      if (!dr?.texto) return { resultado: 'bloqueada', motivo: 'esclarecimento sem rascunho; nada foi enviado' };
+      if (!st.store) return { resultado: 'bloqueada', motivo: 'envio indisponível sem estado persistente; nada foi enviado' };
+      const decisions = st.store.getDecisions(a.tender_id).filter(row => row.item === a.item);
+      const [decision] = decisions;
+      const evidencias = decisions.length === 1 && decision.produto
+        ? motivosDaEvidencia(st.store, a.tender_id, a.item, decision.produto) : new Set<string>();
+      if (!evidencias.has(a.motivo)) {
+        if (!st.store.getItems(a.tender_id).some(item => item.numero === a.item)) {
+          return { resultado: 'bloqueada', motivo: 'item do esclarecimento ausente no store' };
+        }
+        const motivo = 'motivo do esclarecimento não confere com a evidência gravada';
+        st.store.openEscalation({
+          tender: a.tender_id, item: String(a.item), motivo,
+          recomendacao: 'Revisar a evidência e o rascunho antes de enviar o esclarecimento.',
+          prazo: new Date(st.now.getTime() + 864e5).toISOString(),
+        }, { reuseOpen: true });
+        return { resultado: 'escalada', motivo };
+      }
+      return enviarPelaPorta(st, { tipo: 'enviar_esclarecimento', tenderId: a.tender_id, item: a.item, texto: dr.texto, motivo: a.motivo });
     },
   },
   {
-    name: 'verify_submission', description: 'Confere no portal que a proposta foi registrada como aprovada e, no PNCP, que o pregão segue aberto.',
+    name: 'verify_submission', description: 'Consulta a proposta ou o esclarecimento no portal pelo protocolo persistido e verifica se o pregão segue aberto.',
     parameters: { type: 'object', required: ['protocolo', 'tender_id'], properties: { protocolo: { type: 'string' }, tender_id: { type: 'string' } } },
     async run(a, ctx) {
-      const st = S(ctx); const sub = st.submissions.find(s => s.protocolo === a.protocolo);
-      const r = await fetch(`${st.sandboxUrl}/api/propostas/${a.protocolo}`); if (r.status !== 200) return { ok: false, motivo: 'protocolo não encontrado no portal' };
-      const got = await r.json();
-      const same = JSON.stringify(got.itens) === JSON.stringify(sub?.itens);
-      const { cnpj, ano, seq } = parseId(a.tender_id); const c = await pncp.compra(cnpj, ano, seq);
-      const fim = String(c.dataEncerramentoProposta ?? ''); const aberto = fim > st.now.toISOString();
-      return { ok: same && aberto, portal_confere: same, pncp_aberto: aberto, encerramento_propostas: fim, situacao: c.situacaoCompraNome };
+      const st = S(ctx);
+      const actions = st.store?.getActions({ tenderId: a.tender_id }).filter(row => row.protocolo === a.protocolo) ?? [];
+      if (!a.protocolo || actions.length !== 1) return { ok: false, motivo: 'protocolo sem ação única neste pregão no store' };
+      const [action] = actions;
+      const consulta = await consultarProtocolo(st.sandboxUrl, action.tipo, a.protocolo);
+      if (!consulta.encontrado) return { ok: false, portal_confere: false, motivo: consulta.erro ?? 'protocolo não encontrado no portal' };
+      const got = consulta.registro as { protocolo?: unknown; tender?: unknown; empresa?: unknown; itens?: unknown; item?: unknown; texto?: unknown } | null;
+      const expected = action.payload as { empresa?: unknown; itens?: unknown; texto?: unknown } | null;
+      const same = got != null && got.protocolo === a.protocolo && got.tender === a.tender_id
+        && (action.tipo === 'proposta'
+          ? Array.isArray(expected?.itens) && got.empresa === expected.empresa && isDeepStrictEqual(got.itens, expected.itens)
+          : typeof expected?.texto === 'string' && got.item === action.item && got.texto === expected.texto);
+
+      const { cnpj, ano, seq } = parseId(a.tender_id);
+      try {
+        const c = await pncp.compra(cnpj, ano, seq, { fresh: true });
+        const fim = String(c.dataEncerramentoProposta ?? '');
+        const timestamp = /^\d{4}-\d\d-\d\dT\d\d:\d\d(?::\d\d(?:\.\d+)?)?$/.test(fim) ? fim + '-03:00' : fim;
+        const aberto = situacao(c.situacaoCompraNome) === 'aberto' && Date.parse(timestamp) > st.now.getTime();
+        return { ok: same && aberto, portal_confere: same, pncp_aberto: aberto, encerramento_propostas: fim, situacao: c.situacaoCompraNome };
+      } catch {
+        return { ok: false, portal_confere: same, pncp_aberto: null, motivo: 'PNCP indisponível para verificar a situação atual' };
+      }
     },
   },
 ];

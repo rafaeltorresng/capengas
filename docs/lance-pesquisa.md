@@ -1,6 +1,7 @@
 # Lance — dossiê de pesquisa: problema, números, público e escopo inicial
 
 > Consolida toda a pesquisa útil feita entre 06 e 07/11/2026 para embasar o problema e o produto.
+> As medições próprias estão agregadas, com denominadores e ressalvas, em [`research/`](../research/README.md).
 > **Medição própria** = calculado por nós com dados abertos (scripts em `spike/scripts/`, fora do repositório).
 > **[hipótese]** = ainda não comprovado. Hipóteses testadas e **descartadas** também estão registradas
 > (seção 8), porque fazem parte do embasamento.
@@ -12,18 +13,23 @@
 1. **O governo não consegue comprar 1 em cada 5 itens de saúde na primeira tentativa.** No
    Compras.gov.br (abr/2026), **16–21%** dos itens de material médico fracassaram (nenhuma proposta
    aceita), contra **4,6%** em material de escritório. *Medição própria.*
-2. **O preço não explica isso.** Num backtest com 494 itens, a estimativa do órgão abaixo ou acima do
-   mercado não muda a taxa de fracasso de forma útil. *Medição própria.* A explicação que sobra é a
-   **complexidade técnica e regulatória** dos editais de saúde **[hipótese apoiada por estudos e casos]**.
+2. **O histórico de preços não serviu como filtro.** Num backtest com 494 itens, as regras de preço
+   testadas não separaram bem os itens que fracassam. *Medição própria.* Isso **não prova** que o preço
+   não cause fracassos. Uma explicação plausível é a **complexidade técnica e regulatória** dos editais
+   de saúde **[hipótese apoiada por estudos e casos, não demonstrada]**.
 3. **O mercado é grande e pulverizado:** **1.647 pregões de saúde abertos** (≥ R$ 3,8 bi) num único
    dia; **5.513 distribuidoras** de material médico cadastradas para vender ao governo. *Medição própria.*
 4. **O risco continua depois de ganhar:** **145 dessas distribuidoras** estão hoje com sanção vigente
    (impedimento, suspensão, inidoneidade), a maioria ligada a inexecução ou entrega. *Medição própria.*
-5. **As ferramentas existentes leem editais; nenhuma que encontramos cruza o edital com o catálogo da
-   empresa, a ANVISA e os documentos para dizer se a proposta passa.**
+5. **Já existe concorrência direta.** O [Olicita](https://olicita.com.br/licitacoes-de-saude) anuncia
+   comparação das exigências com a ficha técnica do catálogo, checklist de habilitação e alerta de
+   mudança no edital, de R$ 199 a R$ 1.299/mês. Pelas páginas públicas, a consulta do registro ANVISA
+   continua manual e não há envio autônomo. O espaço que sobra para o Lance é estreito: **ANVISA
+   automática, citações conferidas e agir sozinho dentro de uma política**. É um diferencial a
+   validar, não uma exclusividade.
 6. **A tecnologia funciona com dados reais:** a cadeia PNCP → ANVISA → edital → decisão foi testada de
-   ponta a ponta. O modelo acertou o **encaixe técnico em 18 de 18** casos rotulados, e um turno real
-   custou **US$ 0,22**.
+   ponta a ponta. O modelo acertou o **encaixe técnico em 18 de 18** execuções (**6 pares distintos ×
+   3 repetições, com fichas sintéticas**; não é precisão de produção), e um turno real custou **US$ 0,22**.
 
 ---
 
@@ -75,6 +81,7 @@ municipais:**
 | [TRE-SP, indicadores 2023](https://www.tre-sp.jus.br/transparencia-e-prestacao-de-contas/licitacoes/governanca-de-aquisicoes-e-contratacoes/arquivos-pac/indicadores-pca-2023) | 120 itens | 15% desertos ou fracassados |
 
 **Ressalvas:**
+- **fracasso de item não é desclassificação de uma proposta específica**: o item fracassa quando nenhuma proposta é aceita;
 - as amostras próprias seguem a ordem das APIs, não são aleatórias;
 - cerca de 40% dos itens de abril ainda estavam "em andamento" e foram excluídos;
 - um item que falha **volta a ser licitado**: o valor atrasa, não some.
@@ -200,10 +207,12 @@ por item **não foram validadas**.
 
 | Recorte | Conta | Resultado |
 |---|---|---|
-| Material médico | 5.513 × R$ 500–1.500/mês × 12 | ≈ R$ 33–99 mi/ano |
+| Material médico | 5.513 × R$ 500–1.500/mês × 12 | ≈ R$ 33–99 mi/ano (teto: cadastro ativo não é comprador qualificado) |
 | Saúde completa | 9.434 × R$ 500–1.500/mês × 12 | ≈ R$ 57–170 mi/ano |
 
-O preço é uma **hipótese**. Ferramentas simples de licitação cobram de R$ 27 a R$ 30/mês, e a Effecti tem plano gratuito.
+O preço é uma **hipótese**. Ferramentas simples de licitação cobram de R$ 27 a R$ 30/mês, a Effecti tem
+plano gratuito e o Olicita, concorrente direto, vai de R$ 199 a R$ 1.299/mês. Os R$ 1 trilhão em compras
+públicas (seção 1) mostram o tamanho do setor, **não o TAM de um software**.
 
 ---
 
@@ -211,6 +220,7 @@ O preço é uma **hipótese**. Ferramentas simples de licitação cobram de R$ 2
 
 | Categoria | Quem | O que faz | O que não encontramos |
 |---|---|---|---|
+| **Concorrente direto (saúde)** | [Olicita](https://olicita.com.br/licitacoes-de-saude) ([planos](https://olicita.com.br/precos): R$ 199/15 pareceres, R$ 399/40, R$ 799/100, R$ 1.299 com uso justo; da STREMATEC Soluções e Tecnologia) | Compara exigências do edital com a **ficha técnica do catálogo** (atende / em parte / não atende, com trecho da ficha), checklist de habilitação, validade de documentos, alerta de mudança no edital, minuta de impugnação | Pela página: a consulta do registro ANVISA "continua sendo feita por você"; não anuncia envio autônomo. **Não testamos o produto autenticado** |
 | Busca + IA para editais | [Effecti](https://effecti.com.br/aime/) (Aimê; [robô de lances](https://effecti.com.br/robo-de-lance/); [3 mil+ empresas](https://effecti.com.br/teste-gratis-effecti/)) | Busca, alertas, perguntas ao edital, lances automáticos | Encaixe com o catálogo, ANVISA, dossiê de conformidade |
 | | [ConLicitação](https://conlicitacao.com.br/grupo-conlicitacao-faz-investimento-milionario-e-lanca-no-mercado-a-maior-plataforma-de-ia-para-licitacoes-publicas/) (plataforma de IA, investimento milionário) | Busca, resumo, perguntas ao edital | Idem |
 | | [licitAI](https://licitai.advances.com.br/licitai), [Liciton](https://www.liciton.com.br/blog/ia-aplicada-licitacoes-futuro-chegou), ferramentas de R$ 27–30/mês | Busca e alertas no PNCP | Idem |
@@ -221,8 +231,10 @@ O preço é uma **hipótese**. Ferramentas simples de licitação cobram de R$ 2
 | Crédito | [AntecipaGov](https://conlicitacao.com.br/antecipagov-o-que-e-e-como-funciona/), [Antecipa Fácil](https://antecipafacil.com.br/sacados/setor-publico), [Ótmow](https://www.letsmoney.com.br/fintech/otmow-capta-fidc-recebiveis-publicos/) | Antecipar recebíveis | Não previnem desclassificação nem sanção |
 
 **Conclusões:**
-- **"IA que lê edital" já é commodity.** O espaço livre está em **cruzar o edital com dados do setor**
-  (catálogo do cliente, ANVISA, documentos) e **entregar a proposta conferida**.
+- **"IA que lê edital" já é commodity**, e **cruzar edital × catálogo × checklist também já existe**
+  (Olicita). O espaço que sobra é estreito: verificação automática da ANVISA, citações conferidas no texto
+  e **autonomia com política** (agir sozinho, rechecar, escalar). É diferencial a validar.
+- Não podemos afirmar que os concorrentes não agem sozinhos só porque a página não diz.
 - O fosso técnico é baixo; a defesa é foco no setor, velocidade e histórico de resultados por cliente.
 - Não testamos os concorrentes por dentro.
 
@@ -262,7 +274,7 @@ O preço é uma **hipótese**. Ferramentas simples de licitação cobram de R$ 2
 
 | O que aconteceu | Detalhe |
 |---|---|
-| Exigências registradas | 10, todas com citação aceita na conferência |
+| Exigências registradas | 9 aceitas; 1 citação rejeitada pela conferência (a marca de referência do SENAC, depois sinalizada como restritiva) |
 | Encaixe por variante | CPAP: atende nos tamanhos 0 a 5 (11 itens), não atende no tamanho 00 → esclarecimento |
 | Escalada | Escova sem "embalagem individual" na ficha → esclarecimento |
 | Marca de referência | Sinalizada em 9 itens |

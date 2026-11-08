@@ -21,7 +21,8 @@ export function persistAnalysis(state: LanceState, store: Store) {
     for (const [key, fit] of Object.entries(state.fits)) {
       if (!key.startsWith(id + '#')) continue;
       store.upsertFit({ tenderId: id, item: Number(key.split('#')[1]), produto: fit.product_id,
-        fit: fit.validacao?.cobertura === 'conferida' ? fit.overall : 'desconhecido', atributos: { attributes: fit.attributes, validacao: fit.validacao } });
+        fit: fit.validacao?.cobertura === 'conferida' ? fit.overall : 'desconhecido',
+        atributos: { attributes: fit.attributes, validacao: fit.validacao, restritivo: state.restrictive[key]?.evidence ?? null, varianteNaoCoberta: fit.varianteNaoCoberta === true } });
     }
     const docs = tender.abertura ? checkDocs(state.company.cofre, requirements.map(r => ({ tipo: r.requirement, citacao: r.quote })), tender.abertura.slice(0, 10)) : [];
     store.upsertDossie(id, buildDossie(state, id, { documentos: docs }));

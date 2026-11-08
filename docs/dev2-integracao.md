@@ -11,6 +11,7 @@ import { createReadModel } from '../lib/read-model.ts';
 const store = openStore();
 const projection = createReadModel(store, {
   actions: () => store.getActions(),
+  cofre: company.cofre, // hoje().cofre; sem o cofre a lista vem vazia
   // proof: () => relatorioDaExecucao, // opcional; ausência mantém métricas null
 });
 
@@ -49,7 +50,7 @@ O resultado mantém `tender`, `pregao`, `versao`, `checklist`, `pendencias`, `do
 
 - `get_tender_items({ tender_id, keywords?, page?, page_size? })`: até 25 resumos de 240 caracteres por página. Siga `proxima_pagina`. O resumo curto evita truncar uma página inteira no limite padrão do histórico do agente.
 - `get_tender_item({ tender_id, item, offset? })`: descrição em partes de 6000 caracteres. Siga `proximo_offset` até `null` antes de concluir a comparação.
-- `record_fit`: recusa lista vazia, nomes vazios/duplicados e citações não encontradas; invalida a decisão anterior quando se refaz a análise. Bloqueia divergência de medidas exatas isoladas em mm/cm/m. Não valida toda a semântica ou completude: registra `validacao.cobertura: 'nao_verificada'`.
+- `record_fit`: recusa lista vazia, nomes vazios/duplicados e citações não encontradas; invalida a decisão anterior quando se refaz a análise. Bloqueia divergência de medidas exatas isoladas em mm/cm/m. Não valida toda a semântica. A cobertura só fica `conferida` quando cada campo `nome: valor` do item tem a própria citação; texto sem campo nomeado, ou campo omitido, permanece `nao_verificada`.
 - `record_requirement`: preserva o arquivo de origem quando a citação foi localizada nele. Não inventa página de PDF.
 
 ```bash
@@ -76,7 +77,7 @@ O gerador escreve `fixtures/estado-exemplo.json` com o formato da tela (`hoje`, 
 LANCE_DB=data/turno-validacao.db node --env-file-if-exists=.env scripts/analisar.ts 77816510000166/2026/348
 ```
 
-O comando limita a análise a três itens relevantes por instrução, com limites de passos e tokens. O limite de itens é uma instrução ao modelo, não uma quota garantida pelo código. A empresa continua fictícia; as fontes do pregão são reais. O comando não expõe ferramentas de envio e não substitui o fluxo de ações com política/recheque. Não versionar o banco gerado.
+O comando limita a análise a três itens relevantes por instrução, com limites de passos e tokens. O limite de itens é uma instrução ao modelo, não uma quota garantida pelo código. A empresa continua fictícia; as fontes do pregão são reais. O comando não expõe ferramentas de envio. A porta de envio está em `src/lib/act.ts` (`executarAcao`) e ainda não foi ligada às ferramentas do modelo. Não versionar o banco gerado.
 
 `decide_item` usa agora preço pela estimativa, documentos e regularização do contrato novo. Cobertura técnica não verificada escala; preço desconhecido permanece nulo. Campos de saída legados são mantidos temporariamente para os consumidores do spike. As funções legadas de `rules.ts` ainda são usadas por testes e não devem ser removidas sem migrá-los.
 
@@ -84,6 +85,14 @@ O turno real foi executado: 3 decisões, dossiê e 3 escaladas, 292 segundos e U
 
 Implementação própria: `tools.ts`, `dossie.ts`, `read-model.ts`, gerador/amostra, ajustes dos scripts de turno/evals e testes correspondentes. A entrega foi integrada sobre os commits do Dev 1 na `main`, preservando contratos, regras, store, política, recheque, dados e testes já publicados por ele; essas mudanças não são autoria do Dev 2.
 
-Ainda faltam: migrar `decide_item` ao contrato novo e persistir seu fluxo; conectar geração de dossiê/eventos ao turno; integrar política, recheque e idempotência nas ações; inventário de exigências técnicas e cobertura; avaliações distintas do modelo, relatório de prova e medição de latência. Cobertura técnica não verificada deve ser passada ao novo decisor como `fit: 'desconhecido'`, conforme alinhamento na #2.
+Já na `main`: `decide_item` no contrato novo, persistência do turno de análise, dossiê, projeção e o snapshot `fixtures/execucoes/analise-2026-11-07.json`. O PR #3 foi integrado. Cobertura técnica não verificada continua indo para `decideItem` como `fit: 'desconhecido'`.
 
-A publicação desta entrega na `main` foi autorizada pelo usuário. O PR #3 do Dev 3 continua independente; seu adaptador já pode consumir o módulo `src/lib/read-model.ts` por meio do ponto de entrada documentado acima. O progresso e os resultados de publicação ficam na issue #4.
+`executarAcao` aplica a ordem da #2: recheque, `evaluate`, `recordIntent`, POST no sandbox, `consultarProtocolo` e `updateAction`. O pedido só informa pregão e números de item (e o texto do esclarecimento). Quantidade, decisão, `precoProposto` e o prazo legal saem do store e de `esclarecimentoDeadline`. Sem `recheck` injetado, a função bloqueia. Timeout ou consulta falha depois do POST não gera outro envio. O `runAnalysisTurn` grava a foto com `snapshotTender` quando o chamador passa `snapshot`; falha da foto não apaga a análise, e sem foto o recheque continua bloqueando. `submit_proposal` e `send_esclarecimento` chamam `executarAcao` sobre a análise já gravada. O envio não tira nova foto nem regrava a decisão. Sem foto, ou com `reavaliar`, o resultado é bloqueio. O motivo do esclarecimento tem de coincidir com o encaixe ou com a sinalização restritiva gravados. Sem `store` no estado, não há POST. O preço continua o `precoProposto` gravado. O `scripts/analisar.ts` segue sem essas ferramentas. O `scripts/turno.ts` liga o store para a segunda fase passar pela mesma porta.
+
+`runAnalysisTurn` (`src/lib/turn.ts`) persiste a análise. Com `origem: 'direto'`, grava `turno_inicio` e `turno_fim`. Com `origem: 'agendador'`, não grava esses dois eventos: o `createScheduler` já os grava, e o teste conjunto garante um único par. O `scripts/analisar.ts` usa a origem direta e não oferece as ferramentas de envio.
+
+`record_fit` inventaria os campos `nome: valor` do item. Cada campo precisa da própria citação literal; uma citação que junta vários campos só cobre um. Sem campo nomeado, ou com algum de fora, `validacao.cobertura` continua `nao_verificada` e `decide_item` segue com `fit: 'desconhecido'`. Isso não julga a semântica do veredito.
+
+`executarCenarios` (`src/lib/cenarios.ts`) roda os 10 cenários de exceção sem modelo e sem rede. O modo integrado publica o resultado em `prova()`, com o 18/18 histórico separado e a concordância humana ainda nula. O turno publicado continua em 292 s; a meta de 3 minutos não foi atingida.
+
+As funções legadas de `rules.ts` continuam nos testes e não devem ser removidas sem migrá-los.

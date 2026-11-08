@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { ApiResponse, DeadlineKind, Decision, Dossier, Escalation, HistoricoPregao, Item, SavedDecision, Source, Turnos, TurnoStatus } from '../src/server/contract.ts';
+import type { ApiResponse, CofreAlert, DeadlineKind, Decision, Dossier, Escalation, HistoricoPregao, Item, LinhaPauta, Origem, Papel, Pauta, Proof, QueueItem, SavedDecision, Source, Today, Trace, Turnos, TurnoStatus, Urgencia } from '../src/server/contract.ts';
 import { Search, UserRound, ExternalLink, AlertCircle, Check, X, Pencil, FileText, Clock3, ChevronDown } from 'lucide-react';
 import { Avatar, AvatarFallback } from './components/ui/avatar.tsx';
 import { Button, buttonVariants } from './components/ui/button.tsx';
@@ -16,8 +16,11 @@ const time = new Intl.DateTimeFormat('pt-BR', { timeZone: fortaleza, timeStyle: 
 const dateTime = new Intl.DateTimeFormat('pt-BR', { timeZone: fortaleza, dateStyle: 'short', timeStyle: 'short' });
 const dateTimeWithSeconds = new Intl.DateTimeFormat('pt-BR', { timeZone: fortaleza, dateStyle: 'short', timeStyle: 'medium' });
 const localDay = new Intl.DateTimeFormat('en-CA', { timeZone: fortaleza, year: 'numeric', month: '2-digit', day: '2-digit' });
+const day = new Intl.DateTimeFormat('pt-BR', { timeZone: fortaleza, dateStyle: 'long' });
 const money = (amount: number | null, currency: string) => amount === null ? 'Sem medição' :
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(amount);
+const duration = (ms: number) => ms < 1000 ? ms + ' ms' :
+  ms < 60_000 ? Math.round(ms / 1000) + ' s' : Math.floor(ms / 60_000) + ' min ' + Math.floor(ms / 1000 % 60) + ' s';
 const deadlineLabels: Record<DeadlineKind, string> = {
   sessao: 'Sessão', esclarecimento: 'Prazo de esclarecimento',
   decisao_humana: 'Prazo de decisão', desconhecido: 'Prazo',
@@ -32,7 +35,10 @@ function deadlineLabel(value: string | null, kind: DeadlineKind = 'desconhecido'
 
 const itemPath = (tender: string, item: string) => 'itens/' + encodeURIComponent(tender) + '/' + encodeURIComponent(item);
 const dossierPath = (tender: string) => 'dossies/' + encodeURIComponent(tender);
-const nav = [['turnos', 'Acompanhamento'], ['escaladas', 'Aprovações'], ['historico', 'Histórico']] as const;
+const nav = [
+  ['turnos', 'Acompanhamento'], ['hoje', 'Hoje'], ['pauta', 'Pauta'], ['fila', 'Fila'],
+  ['escaladas', 'Aprovações'], ['historico', 'Histórico'], ['prova', 'Prova'],
+] as const;
 
 class ApiError extends Error {
   constructor(readonly status: number, message: string) { super(message); }
@@ -120,6 +126,19 @@ function Evidence({ source, quote = false }: { source: Source; quote?: boolean }
     {quote && source.citacao && <blockquote>{source.citacao}</blockquote>}
     {safe && <a href={source.url} target="_blank" rel="noreferrer">Ver fonte: {source.nome}</a>}
   </>;
+}
+
+function Trail({ entries }: { entries: Trace[] }) {
+  if (!entries.length) return <p>Rastro ainda indisponível.</p>;
+  return <details className="trace"><summary>Ver rastro ({entries.length})</summary>
+    <ul>{entries.map((entry, index) => <li key={index}>
+      <strong>{entry.ferramenta}</strong>
+      {entry.entrada && <div>Entrada · {entry.entrada}</div>}
+      {entry.saida && <div>Saída · {entry.saida}</div>}
+      {entry.ms !== undefined && <small>{duration(entry.ms)} </small>}
+      {entry.custoUsd !== undefined && <small>{money(entry.custoUsd, 'USD')}</small>}
+    </li>)}</ul>
+  </details>;
 }
 
 function Metrics({ items }: { items: [string, string | number][] }) {
@@ -237,6 +256,147 @@ function Historico({ rows }: { rows: HistoricoPregao[] }) {
   </>;
 }
 
+const papelLabels: Record<Papel, string> = { analista: 'Analista', juridico: 'Jurídico', financeiro: 'Financeiro', lance: 'Lance' };
+const origemLabels: Record<Origem, string> = {
+  publicado: 'Publicado no PNCP', calculado: 'Calculado pela regra', aguardando: 'Aguardando a fonte', informado_cliente: 'Informado pela empresa',
+};
+const urgenciaLabels: Record<Urgencia, string> = { vencido: 'Vencido', hoje: 'Vence hoje', proximos_3_dias: 'Próximos 3 dias', depois: 'Mais adiante' };
+const dayOf = (value: string) => day.format(new Date(value + 'T12:00:00-03:00'));
+
+function CofreAlerts({ alerts }: { alerts: CofreAlert[] }) {
+  return <section className="panel cofre" aria-labelledby="cofre-title">
+    <h2 id="cofre-title">Calendário do cofre</h2>
+    <ul className="cofre-alerts">{alerts.map(alert => <li key={alert.documento ?? alert.exigencia}>
+      <p>{alert.resumo}</p>
+      <ul>{alert.pregoes.map(pregao => <li key={pregao.tenderId}>
+        {pregao.dossie
+          ? <Internal path={dossierPath(pregao.tenderId)}>Dossiê do pregão {pregao.tenderId}</Internal>
+          : <span>Pregão {pregao.tenderId}</span>}
+        {' · '}<time dateTime={pregao.sessao}>Sessão em {day.format(new Date(pregao.sessao + 'T12:00:00-03:00'))}</time>
+      </li>)}</ul>
+    </li>)}</ul>
+  </section>;
+}
+
+function TodayScreen({ data }: { data: Today }) {
+  const eventos = data.eventos.filter(event => event.tipo !== 'turno_progresso');
+  return <>
+    <Heading title="Hoje" detail={day.format(new Date(data.data + 'T12:00:00-03:00'))} />
+    <Metrics items={[
+      ['Pregões', data.pregoes], ['Itens', data.itens], ['Disputar', data.disputar],
+      ['Pendências', data.pendencias], ['Escaladas abertas', data.escaladasAbertas], ['Custo', money(data.custoUsd, 'USD')],
+    ]} />
+    {data.cofre?.length ? <CofreAlerts alerts={data.cofre} /> : null}
+    <section className="journal">
+      <div className="section-title"><h2>Linha do tempo</h2><span>Horário de Fortaleza</span></div>
+      {eventos.length === 0 && <p>Nenhum evento registrado neste dia.</p>}
+      <ol>{eventos.map(event => <li key={event.id}>
+        <time dateTime={event.horario}>{time.format(new Date(event.horario))}</time>
+        <div className="event"><small>{['decisao-humana', 'escalada_decidida'].includes(event.tipo) ? 'Revisão humana' : event.tipo}</small>
+          <h3>{event.resumo}</h3>{event.detalhe && <p>{event.detalhe}</p>}
+          {event.rastro?.length ? <Trail entries={event.rastro} /> : null}
+        </div>
+        <div className="evidence-links">
+          {event.tender && event.item && event.itemDisponivel !== false && <Internal path={itemPath(event.tender, event.item)}>Abrir item {event.item}</Internal>}
+          {event.tender && event.dossie && <Internal path={dossierPath(event.tender)}>Abrir dossiê</Internal>}
+          {['Escalada', 'escalada_aberta'].includes(event.tipo) && <Internal path="escaladas">Ver aprovações</Internal>}
+        </div>
+      </li>)}</ol>
+    </section>
+    <section className="panel"><h2>Relatório do dia</h2>
+      <Metrics items={[[ 'Envios registrados', data.envios ]]} />
+      <ul>{data.porDecisao.map(row => <li key={row.estado}>{row.estado}: {row.quantidade}</li>)}</ul>
+    </section>
+  </>;
+}
+
+function AgendaLine({ line }: { line: LinhaPauta }) {
+  return <li className={'agenda-line' + (line.urgencia ? ' agenda-' + line.urgencia : '')}>
+    <div className="agenda-meta">
+      <span className="agenda-role">{papelLabels[line.papel]}</span>
+      {line.ate && <time dateTime={line.ate}>Até {dayOf(line.ate)}</time>}
+      {line.urgencia && line.acionavel && <span>{urgenciaLabels[line.urgencia]}</span>}
+      <span>{origemLabels[line.origem]}</span>
+      {line.sintetico && <span className="agenda-synthetic">Errata sintética de teste</span>}
+    </div>
+    <h3>{line.acao}</h3>
+    <p>{line.oQueMudou}</p>
+    {line.prazo?.artigo && <small>Base: {line.prazo.artigo} da Lei 14.133
+      {line.prazo.divergencia && ` · lei: ${dayOf(line.prazo.divergencia.lei)}, edital: ${dayOf(line.prazo.divergencia.edital)}`}
+    </small>}
+    <div className="evidence-links">
+      {line.fonte && <Evidence source={line.fonte} quote />}
+      {line.tenderId && line.item !== undefined && line.itemDisponivel && <Internal path={itemPath(line.tenderId, String(line.item))}>Abrir item {line.item}</Internal>}
+      {line.tenderId && line.dossie && <Internal path={dossierPath(line.tenderId)}>Abrir dossiê</Internal>}
+      {line.pregoes?.map(id => <span key={id}>Pregão {id}</span>)}
+    </div>
+  </li>;
+}
+
+function AgendaScreen({ data }: { data: Pauta }) {
+  const now = data.linhas.filter(line => line.acionavel);
+  const info = data.linhas.filter(line => !line.acionavel);
+  return <>
+    <Heading title="Pauta" detail={dayOf(data.data) + ' · o que mudou desde ontem e quem precisa agir'} />
+    <Metrics items={[['Para agir', data.contagem.acionaveis], ['Informativas', data.contagem.informativas]]} />
+    <section className="panel agenda" aria-labelledby="agenda-now">
+      <h2 id="agenda-now">Para agir</h2>
+      {now.length ? <ol className="agenda-lines">{now.map(line => <AgendaLine key={line.id} line={line} />)}</ol> : <p>Nada pede ação hoje.</p>}
+    </section>
+    {info.length > 0 && <section className="panel" aria-labelledby="agenda-info">
+      <h2 id="agenda-info">Informativas</h2>
+      <ol className="agenda-lines">{info.map(line => <AgendaLine key={line.id} line={line} />)}</ol>
+    </section>}
+  </>;
+}
+
+function QueueScreen({ rows }: { rows: QueueItem[] }) {
+  const [tender, setTender] = useState('');
+  const [agency, setAgency] = useState('');
+  const [deadline, setDeadline] = useState('');
+  const tenders = new Map(rows.map(row => [row.tender, row.pregao]));
+  const agencies = [...new Set(rows.map(row => row.orgao))];
+  const deadlineLimit = deadline ? Date.parse(deadline + 'T23:59:59.999-03:00') : Infinity;
+  const visible = rows.filter(row => (!tender || row.tender === tender) &&
+    (!agency || row.orgao === agency) && (!deadline || deadlineTime(row.prazo) <= deadlineLimit));
+  return <>
+    <Heading title="Fila de decisões" detail="Acompanhe o estado e o motivo de cada item." />
+    <div className="filters">
+      <div className="filter"><label htmlFor="pregao">Pregão</label><select id="pregao" value={tender} onChange={event => setTender(event.target.value)}>
+        <option value="">Todos</option>{[...tenders].map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+      </select></div>
+      <div className="filter"><label htmlFor="orgao">Órgão</label><select id="orgao" value={agency} onChange={event => setAgency(event.target.value)}>
+        <option value="">Todos</option>{agencies.map(name => <option key={name}>{name}</option>)}
+      </select></div>
+      <label>Prazo até<input type="date" value={deadline} onChange={event => setDeadline(event.target.value)} /></label>
+    </div>
+    <div className="rows">{visible.map(row => <article className="panel" key={row.tender + ':' + row.item}>
+      <small>{row.pregao} / item {row.item}</small>
+      <h2><Internal path={itemPath(row.tender, row.item)}>{row.descricao}</Internal></h2>
+      <p><strong>{row.estado}.</strong> {row.motivo}</p>
+      <small>{row.orgao} • {deadlineLabel(row.prazo, row.prazoTipo)}</small>
+    </article>)}</div>
+    {!visible.length && <p>Nenhum item encontrado. Confira os filtros da fila.</p>}
+  </>;
+}
+
+function ProofScreen({ data }: { data: Proof }) {
+  return <>
+    <Heading title="Prova" detail={data.fonte} />
+    <Metrics items={[
+      ['Concordância', data.concordancia === null ? 'Sem medição' : data.concordancia + '%'],
+      ['Custo do turno', money(data.custoUsd, 'USD')],
+      ['Tempo do turno', data.duracaoMs === null ? 'Sem medição' : duration(data.duracaoMs)],
+    ]} />
+    <section className="panel"><h2>Avaliações</h2>
+      {data.avaliacoes.length ? <ul>{data.avaliacoes.map(row => <li key={row.nome}>{row.nome}: <strong>{row.valor}</strong></li>)}</ul> : <p>Sem medição.</p>}
+    </section>
+    <section className="panel"><h2>Cenários de exceção</h2>
+      {data.cenarios.length ? <ul>{data.cenarios.map(row => <li key={row.nome}>{row.nome}: {row.resultado}</li>)}</ul> : <p>Sem medição.</p>}
+    </section>
+  </>;
+}
+
 const regularizacaoAnvisa = {
   vigente: 'Vigente', vencido: 'Vencida', nao_encontrado: 'Registro não encontrado',
   nao_verificado: 'Não verificada',
@@ -247,11 +407,20 @@ const coberturaAnvisa = {
 
 function ItemScreen({ item }: { item: Item }) {
   return <>
-    <Internal path="historico">Ver histórico</Internal>
+    <Internal path="fila">Ver fila</Internal>
     <Heading title={item.descricao} detail={item.pregao + ' / item ' + item.item + ' / ' + deadlineLabel(item.prazo, item.prazoTipo)} />
     <div className="notice"><span><strong>{item.estado}.</strong> {item.motivo}</span>
       {item.dossie && <Internal path={dossierPath(item.tender)}>Abrir dossiê</Internal>}</div>
     <section className="panel"><h2>Encaixe técnico</h2>
+      <dl className="metrics">
+        <div><dt>Citações</dt><dd>{item.validacao?.citacoes === 'conferidas' ? 'Trechos conferidos' : 'Não verificadas'}</dd></div>
+        <div><dt>Cobertura dos campos</dt><dd>{item.validacao?.cobertura === 'conferida' ? 'Conferida' : 'Não verificada'}</dd></div>
+        <div><dt>Conclusão técnica</dt><dd>{item.validacao?.semantica === 'julgamento_modelo' ? 'Julgamento do modelo' : 'Não verificada'}</dd></div>
+      </dl>
+      {item.validacao?.lacunas.length ? <details className="trace">
+        <summary>Campos sem citação própria ({item.validacao.lacunas.length})</summary>
+        <ul>{item.validacao.lacunas.map((clause, index) => <li key={index}>{clause}</li>)}</ul>
+      </details> : null}
       {item.encaixe.length ? <div className="scroll-table" role="region" aria-label="Tabela de encaixe" tabIndex={0}><table>
         <thead><tr>{['Atributo', 'Exigido', 'Ofertado', 'Resultado e evidência'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead>
         <tbody>{item.encaixe.map((row, index) => <tr key={index}><th scope="row">{row.atributo}</th><td>{row.exigido}</td>
@@ -267,8 +436,9 @@ function ItemScreen({ item }: { item: Item }) {
         <dt>Cobertura do produto ofertado</dt>
         <dd>{item.cobertura ? coberturaAnvisa[item.cobertura] : 'Não comprovada'}</dd>
       </dl>
-      <p>{item.anvisa}</p>
+      {!item.regularizacao && !item.cobertura && <p>{item.anvisa}</p>}
       <ul>{item.fontes.map(source => <li key={source.url}><Evidence source={source} /></li>)}</ul>
+      <Trail entries={item.rastro} />
     </section>
   </>;
 }
@@ -279,6 +449,24 @@ function DossierScreen({ data }: { data: Dossier }) {
     {data.pendencias.length > 0 && <div className="notice">
       <ul>{data.pendencias.map(text => <li key={text}>{text}</li>)}</ul><Internal path="escaladas">Ver aprovações</Internal>
     </div>}
+    {data.retificacao && <section className="panel"><h2>Retificação {data.retificacao.versao}</h2>
+      {data.retificacao.aviso && <p>{data.retificacao.aviso}</p>}
+      <p>Abertura {data.retificacao.abertura}. Publicada antes: {data.retificacao.aberturaPublicadaAntes ?? 'sem data'}. Publicada depois: {data.retificacao.aberturaPublicadaDepois ?? 'sem data'}. Itens com evidência reaproveitada: {data.retificacao.itensSemReleitura}.
+        {' Economia de chamadas e custo sem medição.'}</p>
+      <ul>{data.retificacao.linhas.map((linha, index) => <li key={index}>Item {linha.item}: {linha.estado}. {linha.motivo}
+        {linha.quantidadeNova != null && <> Quantidade {linha.quantidadeAnterior} para {linha.quantidadeNova}.</>}
+        {linha.precoUnitario !== undefined && <> Preço unitário {money(linha.precoUnitario, 'BRL')}. Total {money(linha.valorTotal ?? null, 'BRL')}.</>}
+        {linha.escalarLimite ? ' Não libera decisão automática.' : ''}
+        {linha.chamarAgente ? ' O agente relê este item.' : ''}{linha.discordancia ? ' ' + linha.discordancia : ''}</li>)}</ul>
+      {data.reavaliar && <p role="status">Envio bloqueado: reavaliação pendente. Os dados da análise anterior permanecem no dossiê para auditoria.</p>}
+      <ol className="agenda-lines">{data.retificacao.pauta.map(linha => <AgendaLine key={linha.id} line={linha} />)}</ol>
+      {!!data.retificacoes?.length && <details><summary>Histórico de retificações ({data.retificacoes.length})</summary>
+        {data.retificacoes.map(v => <div key={v.versao}><h3>Retificação {v.versao}</h3>
+          <p>{v.sintetica ? 'Caso sintético. ' : ''}Abertura: {v.aberturaPublicadaDepois ?? 'desconhecida'}.</p>
+          <ul>{v.linhas.map((l, i) => <li key={i}>Item {l.item}: {l.estado}. {l.motivo} {l.discordancia}</li>)}</ul>
+        </div>)}
+      </details>}
+    </section>}
     <section className="panel"><h2>Checklist</h2>
       <ul className="checklist">{data.checklist.map((row, index) => <li key={index}>
         <strong>{row.exigencia}</strong><span>{row.documento ?? 'Documento indisponível'}</span><span>{row.status}</span>
@@ -334,7 +522,9 @@ function EscalationCard({ row, onResolved }: { row: Escalation; onResolved: (mes
       <summary><FileText size={16} /> Consultar evidências <ChevronDown size={16} /></summary>
       <div className="actions">
         {row.dossie && <Internal path={dossierPath(row.tender)}>Abrir dossiê</Internal>}
-        {row.item && <Internal path={itemPath(row.tender, row.item)}>Abrir item {row.item}</Internal>}
+        {row.item && (row.itemDisponivel === false
+          ? <span>Item {row.item}</span>
+          : <Internal path={itemPath(row.tender, row.item)}>Abrir item {row.item}</Internal>)}
       </div>
     </details>}
     <form className="decision-form" onSubmit={event => {
@@ -378,11 +568,7 @@ function EscalationScreen({ rows, refresh }: { rows: Escalation[]; refresh: () =
   </>;
 }
 
-const aliases = new Map([['hoje', 'turnos'], ['fila', 'historico']]);
-function currentPath() {
-  const path = window.location.hash.replace(/^#\/?/, '') || 'turnos';
-  return aliases.get(path) ?? path;
-}
+const currentPath = () => window.location.hash.replace(/^#\/?/, '') || 'turnos';
 
 function App() {
   const [path, setPath] = useState(currentPath);
@@ -431,7 +617,11 @@ function App() {
       : <Acompanhamento data={data} lastRead={lastRead} />}</View>;
   }
   else if (path === 'historico') view = <View<HistoricoPregao[]> path={path}>{rows => <Historico rows={rows} />}</View>;
+  else if (path === 'hoje') view = <View<Today> path={path}>{data => <TodayScreen data={data} />}</View>;
+  else if (path === 'pauta') view = <View<Pauta> path={path}>{data => <AgendaScreen data={data} />}</View>;
+  else if (path === 'fila') view = <View<QueueItem[]> path={path}>{rows => <QueueScreen rows={rows} />}</View>;
   else if (path === 'escaladas') view = <ApiView resource={approvals}>{(rows, refresh) => <EscalationScreen rows={rows} refresh={refresh} />}</ApiView>;
+  else if (path === 'prova') view = <View<Proof> path={path} poll={false}>{data => <ProofScreen data={data} />}</View>;
   else if (/^itens\/[^/]+\/[^/]+$/.test(path)) view = <View<Item> path={path}>{item => <ItemScreen item={item} />}</View>;
   else if (/^dossies\/[^/]+$/.test(path)) view = <View<Dossier> path={path}>{data => <DossierScreen data={data} />}</View>;
   else view = <><Heading title="Página indisponível" /><Internal path="turnos">Voltar ao acompanhamento</Internal></>;

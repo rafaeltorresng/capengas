@@ -14,7 +14,7 @@ Requer Node 24+. O destino deve ser um arquivo novo:
 node scripts/banco-demo.ts importar data/validacao-dev3.db fixtures/execucoes/analise-2026-11-07.json
 ```
 
-Na branch do PR #3, execute o modo integrado usando `LANCE_DB=data/validacao-dev3.db`. Em PowerShell:
+O modo integrado está na `main` (PR #3). Execute com `LANCE_DB=data/validacao-dev3.db`. Em PowerShell:
 
 ```powershell
 $env:LANCE_DB="data/validacao-dev3.db"

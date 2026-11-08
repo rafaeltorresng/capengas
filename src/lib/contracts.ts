@@ -131,6 +131,8 @@ export type DecisionResult =
 
 export type TenderRow = {
   id: string; orgao: string; uf: string; abertura: string | null; situacao: string;
+  /** Abertura da foto analisada. Só snapshotTender renova; monitor atualiza apenas a publicada. */
+  aberturaAnalise?: string | null;
   plataforma: string; arquivosHash: string | null; ultimoCheck: string | null;
   /** true quando o monitor viu mudança desde a análise; a foto (arquivosHash) só muda na reanálise. */
   reavaliar?: boolean;
@@ -154,7 +156,7 @@ export interface Store {
   /** Idempotência: a mesma key devolve a ação existente em vez de criar outra. */
   recordIntent(a: Pick<Action, 'key' | 'tipo' | 'tenderId' | 'item' | 'payload'>): { status: 'nova' | 'existente'; action: Action };
   updateAction(key: string, patch: Partial<Pick<Action, 'status' | 'protocolo' | 'verificado'>>): Action;
-  openEscalation(e: Omit<Escalation, 'id' | 'status'>): Escalation;
+  openEscalation(e: Omit<Escalation, 'id' | 'status'>, options?: { reuseOpen?: boolean }): Escalation;
   /** Grava a decisão humana e o evento escalada_decidida na mesma transação. */
   resolveEscalation(id: string, d: Decision): DecisionResult;
   logEvent(e: Omit<Event, 'id' | 'horario'>): Event;
@@ -164,7 +166,11 @@ export interface Store {
   getTenders(o?: { reavaliar?: boolean }): TenderRow[];
   setReavaliar(tenderId: string, flag: boolean): void;
   getItems(tenderId: string): ItemRow[];
+  /** Exigências do edital gravadas na análise (base do calendário do cofre). */
+  getRequirements(tenderId: string): RequirementRow[];
   getDecisions(tenderId?: string): DecisionRow[];
+  /** Encaixes gravados na análise. O envio lê a evidência daqui e não a regrava. */
+  getFits(tenderId: string): FitRow[];
   /** Ações para contar envios confirmados e deduplicar por key (pedido do Dev 2, #2). */
   getActions(o?: { tenderId?: string; desde?: string; status?: ActionStatus }): Action[];
   getDossie(tenderId: string): unknown | undefined;

@@ -1,0 +1,40 @@
+{
+ "medicao": "Sanções no CEIS contra distribuidoras ativas de material médico (CNAE 4645-1/01)",
+ "coletadoEm": "2026-11-07",
+ "fonte": "CEIS (Portal da Transparência), arquivo de 06/11/2026 × Compras.gov.br modulo-fornecedor (CNAE 4645101, ativo=true)",
+ "script": "scripts/pesquisa/sancoes.ts",
+ "denominadores": {
+  "distribuidoras": 5513
+ },
+ "resultado": {
+  "sancoes": 258,
+  "empresasDistintas": 149,
+  "sancoesVigentes": 253,
+  "empresasComSancaoVigente": 145,
+  "porCategoria": {
+   "Suspensão": 47,
+   "Impedimento/proibição de contratar com prazo determinado": 206,
+   "Declaração de Inidoneidade sem prazo determinado": 3,
+   "Declaração de Inidoneidade com prazo determinado": 2
+  },
+  "porAnoDeInicio": {
+   "2018": 3,
+   "2019": 1,
+   "2020": 1,
+   "2021": 1,
+   "2022": 1,
+   "2023": 4,
+   "2024": 14,
+   "2025": 75,
+   "2026": 158
+  },
+  "citamExecucaoOuEntrega": 112
+ },
+ "ressalvas": [
+  "o CEIS guarda sobretudo sanções ativas: a série por ano não é tendência",
+  "multas não entram no CEIS",
+  "classificação por motivo é heurística sobre o texto da fundamentação",
+  "sanção por entrega não mede impacto do produto na preparação de propostas"
+ ],
+ "privacidade": "arquivo agregado; não lista empresas"
+}

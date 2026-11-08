@@ -19,7 +19,12 @@ describe('projeção com SQLite do Dev 1', () => {
       store.upsertTender({ id: TID, orgao: 'Município de Francisco Beltrão', uf: 'PR', abertura: '2026-11-23T09:00', situacao: 'Divulgada', plataforma: 'Compras.gov.br', arquivosHash: null, ultimoCheck: null });
       store.upsertItems(TID, sample.dossies[0].itens.map((i: any) => ({ tenderId: TID, numero: i.item, descricao: i.descricao, quantidade: i.quantidade, estimativa: i.estimativa, catalogCode: null, sigiloso: false })));
       store.upsertDecision({ tenderId: TID, item: 40, produto: 'P2', estado: 'nao_disputar', motivos: ['Haste incompatível'], precoProposto: null });
-      store.upsertDossie(TID, sample.dossies[0]);
+      const dossier = sample.dossies[0];
+      const evidence = dossier.itens.find((item: { item: number }) => item.item === 40);
+      evidence.validacao = { citacoes: 'conferidas', cobertura: 'nao_verificada',
+        semantica: 'julgamento_modelo', lacunas: ['material: aço inoxidável'] };
+      evidence.anvisa = { regularizacao: 'vigente', cobertura: 'nao_comprovada' };
+      store.upsertDossie(TID, dossier);
       store.logEvent({ tipo: 'decisao', resumo: 'Decisão de teste', tender: TID, item: '40' });
       store.recordIntent({ key: 'action-test', tipo: 'esclarecimento', tenderId: TID, payload: { teste: true } });
       store.updateAction('action-test', { status: 'confirmada', verificado: true, protocolo: 'SBX-TESTE' });
@@ -27,7 +32,12 @@ describe('projeção com SQLite do Dev 1', () => {
       const model = createReadModel(store, { actions: () => store.getActions(), now: () => NOW });
       assert.equal(model.hoje().itens, 1);
       assert.equal(model.hoje().envios, 1);
-      assert.equal(model.item(TID, '40')!.encaixe[0].fonte!.citacao, 'haste: haste reta');
+      const item = model.item(TID, '40')!;
+      assert.equal(item.encaixe[0].fonte!.citacao, 'haste: haste reta');
+      assert.deepEqual(item.validacao, { citacoes: 'conferidas', cobertura: 'nao_verificada',
+        semantica: 'julgamento_modelo', lacunas: ['material: aço inoxidável'] });
+      assert.equal(item.regularizacao, 'vigente');
+      assert.equal(item.cobertura, 'nao_comprovada');
       assert.equal(model.dossie(TID)!.tender, TID);
     } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
   });
@@ -38,6 +48,8 @@ describe('projeção com SQLite do Dev 1', () => {
     try {
       const escalation = store.openEscalation({ tender: TID, item: '4', motivo: 'Ficha incompleta', recomendacao: 'Conferir ficha', prazo: '2026-11-23T09:00:00-03:00' });
       const model = createReadModel(store, { actions: () => store.getActions(), now: () => NOW });
+      assert.equal(model.escaladas()[0].itemDisponivel, false);
+      assert.equal(model.hoje().eventos[0].itemDisponivel, false);
       assert.equal(model.decidir(escalation.id, { decisao: 'ajustar', ajuste: 'Solicitar ficha' }).status, 'salva');
       store.close(); store = openStore(path, { now: () => NOW });
       assert.equal(store.openEscalations().length, 0);

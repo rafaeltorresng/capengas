@@ -18,6 +18,8 @@ test('projeta turnos concorrentes, recupera a atualização e só publica result
   const log = (event: TurnoEvent) => store.logEvent(eventoTurno(event));
   const model = createReadModel(store, { now, actions: () => store.getActions() });
   log({ turno: 'a', tipo: 'inicio', pregoes: [tender] });
+  assert.equal(eventoTurno({ turno: 'a', tipo: 'inicio', pregoes: [tender] }).tipo, 'turno_progresso');
+  assert.equal(eventoTurno({ turno: 'a', tipo: 'fim', status: 'concluido', resultados: [] }).tipo, 'turno_progresso');
   log({ turno: 'a', tipo: 'atividade', atividade: 'Lendo o edital' });
   clock += 30_000;
   log({ turno: 'b', tipo: 'inicio', pregoes: [tender] });

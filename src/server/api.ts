@@ -83,6 +83,7 @@ export function createServer(store: DemoStore, webRoot?: string) {
           if (route === 'fila') dados = store.fila();
           if (route === 'escaladas') dados = store.escaladas();
           if (route === 'prova') dados = store.prova();
+          if (route === 'pauta') dados = store.pauta();
           if (route === 'turnos') dados = store.turnos();
           if (route === 'historico') dados = store.historico();
         } else {

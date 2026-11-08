@@ -8,6 +8,7 @@ import { featherless } from '../src/lib/llm.ts';
 import { runAgent } from '../src/lib/agent.ts';
 import { tools, newState } from '../src/lib/tools.ts';
 import { startSandbox } from '../src/lib/sandbox.ts';
+import { openStore } from '../src/lib/store.ts';
 
 const mode = process.argv[2] ?? 'focado';
 const model = process.argv[3] ?? 'moonshotai/Kimi-K2.6';
@@ -16,7 +17,9 @@ const cov = JSON.parse(readFileSync('fixtures/coverage.json', 'utf8'));
 const tag = `${mode}-${model.replace('/', '_')}-${Date.now()}`;
 const traceFile = `out/turno-${tag}.jsonl`;
 const sbx = await startSandbox(0);
+const store = openStore();
 const st = newState(company, sbx.url, new Date());
+st.store = store;
 if (mode === 'focado') for (const c of cov) st.tenders[`${c.cnpj}/${c.ano}/${c.seq}`] = c;
 const llm = featherless(model);
 const onEvent = (e: any) => { appendFileSync(traceFile, JSON.stringify(e) + '\n'); if (e.type === 'tool') console.log(`  [${(e.t / 1000).toFixed(0)}s] ${e.error ? '✗' : '✓'} ${e.name} ${JSON.stringify(e.args).slice(0, 110)}`); };
@@ -31,6 +34,7 @@ Regras:
 - Leia o edital (read_edital) e registre exigências relevantes com citação: registro_anvisa, afe, amostra, marca_referencia e prazo_esclarecimento.
 - Se o texto do item ou do edital indicar marca de referência, ou o histórico mostrar uma marca dominante, use flag_restrictive e redija um esclarecimento (draft_esclarecimento) respeitando o prazo.
 - Exceções: se uma ferramenta falhar, tente de novo uma vez e siga em frente registrando a pendência. Não analise itens sem produto compatível no catálogo.
+- Resultados antigos de ferramenta são resumidos no histórico. Se faltar uma citação, chame a ferramenta de novo.
 - Ao terminar, chame request_approval com um resumo curto (itens, decisão, preço, pendências, esclarecimentos) e ENCERRE.`;
 
 const USER = mode === 'focado'
@@ -46,7 +50,7 @@ console.log(p1.final?.slice(0, 1500));
 let p2: any = null;
 if (approvalId) {
   appendFileSync(traceFile, JSON.stringify({ type: 'human', text: `aprovação ${approvalId} concedida pelo script de teste (papel do humano)` }) + '\n');
-  const history = [...p1.messages, { role: 'user', content: `Aprovado (${approvalId}). Envie as propostas aprovadas (submit_proposal, um por pregão), envie os esclarecimentos redigidos (send_esclarecimento) e confira cada envio (verify_submission). Depois resuma o que foi feito.` }];
+  const history = [...p1.messages, { role: 'user', content: `A política decide o envio; approval_id não autoriza. Para cada pregão, chame submit_proposal com tender_id e os números dos itens já decididos. Para cada rascunho, chame send_esclarecimento com tender_id, item e motivo (nao_informado, variante_nao_coberta ou marca_referencia). Depois confira com verify_submission e resuma.` }];
   p2 = await runAgent({ llm, tools, system: SYSTEM, user: '', history, maxSteps: 15, state: st as any, approvals: new Set([approvalId]), onEvent });
   console.log('\n# Fase 2:', p2.stopped, `${(p2.ms / 1000).toFixed(0)}s`, p2.usage);
   console.log(p2.final?.slice(0, 1200));
@@ -64,4 +68,5 @@ const summary = {
 };
 writeFileSync(`out/turno-${tag}.summary.json`, JSON.stringify(summary, null, 1));
 console.log('\n# RESUMO', JSON.stringify(summary, null, 1).slice(0, 4000));
+store.close();
 sbx.close();
