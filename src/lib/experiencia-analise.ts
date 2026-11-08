@@ -26,10 +26,13 @@ function faseDaEtapa(etapa: Turno['etapas'][number]): Fase | undefined {
 }
 export function resumirProgresso(turno: Turno) {
   const atual = turno.etapas.at(-1);
-  const ultimaFase = [...turno.etapas].reverse().map(faseDaEtapa).find(Boolean) ?? 'fontes';
+  const fasesVisitadas = turno.etapas.map(faseDaEtapa).filter(fase => fase !== undefined);
+  const ultimaFase = fasesVisitadas.at(-1) ?? 'fontes';
+  const indiceAtual = fases.findIndex(fase => fase.id === ultimaFase);
   const ativo = turno.status === 'ativo';
   return {
     atividade: atual?.atividade ?? 'Preparando a análise do edital',
+    retomando: ativo && fasesVisitadas.some(id => fases.findIndex(fase => fase.id === id) > indiceAtual),
     fases: fases.map(fase => {
       const etapas = turno.etapas.filter(e => faseDaEtapa(e) === fase.id);
       const pendente = etapas.at(-1)?.estado === 'pendente';

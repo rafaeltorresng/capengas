@@ -38,6 +38,7 @@ const permitidas = new Set(['list_catalog', 'get_product_sheet', 'get_tender_ite
 export async function runOnboardingAnalysis(o: AnalysisStarted & {
   company: DemoCompany; demo: PreparedDemo; store: LanceStore;
   llm?: () => LLM; ferramentas?: Tool[]; snapshot?: (id: string, store: LanceStore) => Promise<unknown>; now?: () => Date;
+  maxSteps?: number;
 }) {
   if (!o.demo.pregoes.some(p => p.id === o.tenderId)) throw new OnboardingError(400, 'Escolha um edital da lista preparada.');
   const state = newState(o.company, 'http://127.0.0.1:9', (o.now ?? (() => new Date()))());
@@ -51,7 +52,7 @@ export async function runOnboardingAnalysis(o: AnalysisStarted & {
     snapshot: o.snapshot ?? snapshotTender,
     run: () => {
       const llm = (o.llm ?? featherless)();
-      return runAgent({ llm, tools: (o.ferramentas ?? tools).filter(t => permitidas.has(t.name)), state, maxSteps: 30, maxTokens: 250_000,
+      return runAgent({ llm, tools: (o.ferramentas ?? tools).filter(t => permitidas.has(t.name)), state, maxSteps: o.maxSteps ?? Infinity, maxTokens: 2_000_000,
         system: 'Você é o Lance. Analise somente o pregão solicitado. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Se houver marca de referência, use flag_restrictive; para dúvida técnica sustentada, prepare draft_esclarecimento. Somente depois de decide_item resultar em disputar ou disputar_com_pendencia: use read_proposal_docs para ler os documentos; registre as regras com record_proposal_rule, cada documento exigido com record_document_requirement (fase, condição e prazo citados), prepare draft_proposal_document e draft_document_plan. Campos ausentes continuam pendências; não invente dados cadastrais ou declarações de conformidade. Não gere proposta para item escalado ou incompatível. Não envie nada. Empresa, catálogo, fichas, custos, cofre e política são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. O pré-filtro aponta candidatos, não comprova encaixe. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.',
         user: `Analise o pregão ${o.tenderId} e termine com um resumo do que ficou pronto e das pendências.${candidatos}`,
         onToolStart: name => acompanhamentoDe(state)?.atividade(atividadeDaFerramenta(name), name),

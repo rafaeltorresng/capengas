@@ -13,7 +13,7 @@ import { concluirAnalise } from '../src/lib/experiencia-analise.ts';
 import { runOnboardingAnalysis } from '../src/server/onboarding.ts';
 import { prepararDocumento } from '../src/server/documentos.ts';
 import { passosDoTurno, eficiencia, consistencia } from '../src/lib/auditoria.ts';
-import type { LLM, Tool } from '../src/lib/agent.ts';
+import type { LLM } from '../src/lib/agent.ts';
 
 const T = '77816510000166/2026/348';
 // Descrição real do item 4 (PNCP); ficha do P1 SINTÉTICA, escrita para cada cenário.
@@ -49,8 +49,7 @@ async function rodar(store: LanceStore, company: unknown, etapas: Chamada[][], o
     return { message: chamadas ? { content: null, tool_calls: chamadas.map(([name, args], n) => ({ id: `${i}-${n}`, function: { name, arguments: JSON.stringify(args) } })) }
       : { content: 'Resumo do roteiro.' }, usage: { prompt_tokens: 10, completion_tokens: 5, cost: 0.001 }, ms: 1 };
   } };
-  const ferramentas: Tool[] = o.maxSteps ? tools.map(t => t) : tools;
-  await runOnboardingAnalysis({ company: company as any, demo, store, tenderId: T, turno: 'cenario', now, llm: () => llm, ferramentas,
+  await runOnboardingAnalysis({ company: company as any, demo, store, tenderId: T, turno: 'cenario', now, llm: () => llm, ferramentas: tools, maxSteps: o.maxSteps,
     snapshot: (id, s) => snapshotTender(id, s, { now }) });
   return createReadModel(store, { now, actions: () => store.getActions() });
 }
@@ -172,7 +171,7 @@ test('aviso de escopo continua quando a publicação não foi conferida ou o edi
 test('interrupção pelo limite de passos: o turno diz por que não concluiu', async t => {
   const { company, store } = preparar(t);
   const muitas = Array.from({ length: 40 }, () => [['list_catalog', {}]] as Chamada[]);
-  const model = await rodar(store, company, muitas);
+  const model = await rodar(store, company, muitas, { maxSteps: 30 });
   const turno = model.turnos().turnos[0];
   assert.equal(turno.status, 'incompleto');
   assert.match(turno.motivo ?? '', /limite de passos/);
