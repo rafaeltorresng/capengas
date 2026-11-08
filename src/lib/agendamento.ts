@@ -10,7 +10,9 @@ import type { Tender } from './data.ts';
 import type { LanceStore } from './store.ts';
 import type { TurnContext } from './scheduler.ts';
 
-export type PregaoDemo = { id: string; orgao?: string; uf?: string; municipio?: string; abertura?: string | null; plataforma?: string; url?: string };
+export type PregaoDemo = { id: string; orgao?: string; uf?: string; municipio?: string; abertura?: string | null; plataforma?: string; url?: string;
+  /** Itens que o pré-filtro do catálogo marcou: o escopo prometido, para avisar o que não foi analisado. */
+  matches?: { item: number }[] };
 /** Subconjunto de fixtures/demo.json usado aqui. */
 export type DemoSelecao = { pregoes: PregaoDemo[]; evento?: PregaoDemo | null; editalIlegivel?: PregaoDemo | null };
 
@@ -30,6 +32,7 @@ function tenderRef(id: string, base: PregaoDemo | TenderRow | undefined) {
     cnpj: p.cnpj, ano: p.ano, seq: p.seq, orgao: base?.orgao ?? '', uf: base?.uf ?? '',
     municipio: base && 'municipio' in base ? base.municipio : undefined, abertura: base?.abertura ?? null,
     sistema: base?.plataforma ?? '', url: (base && 'url' in base ? base.url : undefined) ?? `https://pncp.gov.br/app/editais/${id}`,
+    ...(base && 'matches' in base && Array.isArray(base.matches) ? { candidatos: [...new Set(base.matches.map(m => m.item))].sort((a, b) => a - b) } : {}),
   };
 }
 

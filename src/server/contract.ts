@@ -39,6 +39,8 @@ export type Dossier = {
   planoDocumentos?: import('../lib/plano-documentos.ts').PlanoDocumentos;
   proposta?: import('../lib/documento-proposta.ts').DocumentoProposta;
   analiseId?: string; geradoEm?: string; empresa?: string; orgao?: string; sessao?: string | null;
+  /** Candidatos do pré-filtro do catálogo × itens analisados nesta execução. */
+  escopo?: { candidatos: number[]; analisados: number[]; naoAnalisados: number[] };
   itens?: import('../lib/dossie.ts').DossierItem[];
   reavaliar?: boolean;
   desatualizado?: boolean;
@@ -72,6 +74,8 @@ export type Turno = {
   id: string; inicio: string; atualizadoEm: string; status: TurnoStatus;
   pregoes: string[]; etapas: { horario: string; atividade: string; ferramenta?: string; estado?: 'em_andamento' | 'concluida' | 'pendente' }[]; legado?: boolean;
   resultados?: ResultadoPregao[];
+  /** Por que o turno não concluiu: fonte indisponível, limite de passos ou de tokens, agente sem decisão, falha. */
+  motivo?: string;
 };
 export type Turnos = { turnos: Turno[]; aprovacoes: number };
 export type HistoricoItem = Pick<QueueItem, 'item' | 'descricao' | 'estado' | 'estadoCodigo' | 'motivo'>;

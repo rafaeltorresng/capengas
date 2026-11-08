@@ -41,6 +41,11 @@ export async function runOnboardingAnalysis(o: AnalysisStarted & {
 }) {
   if (!o.demo.pregoes.some(p => p.id === o.tenderId)) throw new OnboardingError(400, 'Escolha um edital da lista preparada.');
   const state = newState(o.company, 'http://127.0.0.1:9', (o.now ?? (() => new Date()))());
+  // Sem a lista, o modelo procura às cegas: na execução real depois-2941 foram 26 chamadas em 235 itens sem nenhum encaixe.
+  const matches = o.demo.pregoes.find(p => p.id === o.tenderId)?.matches ?? [];
+  const candidatos = matches.length
+    ? ` Candidatos do pré-filtro por termos do catálogo, que não comprova encaixe: itens ${matches.map(m => `${m.item} (${m.produto})`).join(', ')}. Comece por eles. Para cada candidato que analisar, registre o encaixe com record_fit (também quando não atende, com as citações da divergência) e calcule decide_item: descarte só no resumo não vale como decisão. Não procure indefinidamente outros itens.`
+    : '';
   state.tenders = resolverPregoesSolicitados([o.tenderId], [], o.demo);
   return runAnalysisTurn({ store: o.store, state, origem: 'direto', acompanhar: true, turnoId: o.turno,
     snapshot: o.snapshot ?? snapshotTender,
@@ -48,7 +53,7 @@ export async function runOnboardingAnalysis(o: AnalysisStarted & {
       const llm = (o.llm ?? featherless)();
       return runAgent({ llm, tools: (o.ferramentas ?? tools).filter(t => permitidas.has(t.name)), state, maxSteps: 30, maxTokens: 250_000,
         system: 'Você é o Lance. Analise somente o pregão solicitado. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Se houver marca de referência, use flag_restrictive; para dúvida técnica sustentada, prepare draft_esclarecimento. Somente depois de decide_item resultar em disputar ou disputar_com_pendencia: use read_proposal_docs para ler os documentos; registre as regras com record_proposal_rule, cada documento exigido com record_document_requirement (fase, condição e prazo citados), prepare draft_proposal_document e draft_document_plan. Campos ausentes continuam pendências; não invente dados cadastrais ou declarações de conformidade. Não gere proposta para item escalado ou incompatível. Não envie nada. Empresa, catálogo, fichas, custos, cofre e política são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. O pré-filtro aponta candidatos, não comprova encaixe. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.',
-        user: `Analise o pregão ${o.tenderId} e termine com um resumo do que ficou pronto e das pendências.`,
+        user: `Analise o pregão ${o.tenderId} e termine com um resumo do que ficou pronto e das pendências.${candidatos}`,
         onToolStart: name => acompanhamentoDe(state)?.atividade(atividadeDaFerramenta(name), name),
         onEvent: e => {
           if (e.type === 'tool') {

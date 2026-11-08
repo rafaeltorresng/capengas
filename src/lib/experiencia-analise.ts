@@ -43,20 +43,23 @@ export function resumirProgresso(turno: Turno) {
 }
 
 /** Não interpreta rótulos da tela nem aceita o resumo livre do modelo como decisão. */
-export function concluirAnalise(itens: { estadoCodigo?: string; estado?: string }[], reavaliar = false, desatualizado = false, publicacaoNaoConferida = false) {
+export function concluirAnalise(itens: { estadoCodigo?: string; estado?: string }[], reavaliar = false, desatualizado = false, publicacaoNaoConferida = false, naoAnalisados = 0) {
   const liberados = itens.filter(i => i.estadoCodigo === 'disputar').length;
   const condicionados = itens.filter(i => i.estadoCodigo === 'disputar_com_pendencia').length;
   const recusados = itens.filter(i => i.estadoCodigo === 'nao_disputar').length;
   const revisar = itens.length - liberados - condicionados - recusados;
-  if (reavaliar) return { estado: 'revisao_necessaria' as const, titulo: 'O edital mudou. É preciso reavaliar.', detalhe: 'A análise anterior permanece para consulta. A proposta está bloqueada até a revisão.', liberados, condicionados, recusados, revisar };
-  if (desatualizado) return { estado: 'revisao_necessaria' as const, titulo: 'A análise precisa ser atualizada.', detalhe: 'Os dados ou as decisões mudaram desde esta execução. A proposta anterior está bloqueada.', liberados, condicionados, recusados, revisar };
-  if (publicacaoNaoConferida) return { estado: 'revisao_necessaria' as const, titulo: 'Confira a publicação antes de avançar.', detalhe: 'A análise dos itens está registrada, mas a atualidade da publicação não foi confirmada. Os documentos são minutas para revisão.', liberados, condicionados, recusados, revisar };
+  // O aviso de escopo vale em qualquer conclusão: o que não foi analisado não pode sumir atrás de outro alerta.
+  const escopo = naoAnalisados > 0 ? ` ${naoAnalisados} ${naoAnalisados === 1 ? 'item candidato do catálogo não foi analisado' : 'itens candidatos do catálogo não foram analisados'}.` : '';
+  if (reavaliar) return { estado: 'revisao_necessaria' as const, titulo: 'O edital mudou. É preciso reavaliar.', detalhe: 'A análise anterior permanece para consulta. A proposta está bloqueada até a revisão.' + escopo, liberados, condicionados, recusados, revisar };
+  if (desatualizado) return { estado: 'revisao_necessaria' as const, titulo: 'A análise precisa ser atualizada.', detalhe: 'Os dados ou as decisões mudaram desde esta execução. A proposta anterior está bloqueada.' + escopo, liberados, condicionados, recusados, revisar };
+  if (publicacaoNaoConferida) return { estado: 'revisao_necessaria' as const, titulo: 'Confira a publicação antes de avançar.', detalhe: 'A análise dos itens está registrada, mas a atualidade da publicação não foi confirmada. Os documentos são minutas para revisão.' + escopo, liberados, condicionados, recusados, revisar };
   const estado = !itens.length || (!liberados && !condicionados && revisar) ? 'revisao_necessaria'
     : liberados && !condicionados && !revisar ? 'recomendada'
     : liberados || condicionados ? 'com_pendencias' : 'nao_recomendada';
   const titulo = { recomendada: 'Há itens para disputar.', com_pendencias: 'Há oportunidade, com pendências.',
     revisao_necessaria: 'A participação precisa de revisão.', nao_recomendada: 'Não recomendamos os itens analisados.' }[estado];
   const detalhe = !itens.length ? 'Não há decisão suficiente para concluir a análise.'
-    : `${itens.length} ${itens.length === 1 ? 'item analisado' : 'itens analisados'}. ${liberados} para disputar, ${condicionados} com pendências, ${revisar} para revisão e ${recusados} fora da proposta.`;
+    : `${itens.length} ${itens.length === 1 ? 'item analisado' : 'itens analisados'}. ${liberados} para disputar, ${condicionados} com pendências, ${revisar} para revisão e ${recusados} fora da proposta.`
+      + escopo;
   return { estado, titulo, detalhe, liberados, condicionados, recusados, revisar };
 }

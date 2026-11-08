@@ -85,6 +85,9 @@ async function enviarPelaPorta(st: LanceState, pedido: PedidoAcao) {
   return resultado;
 }
 
+// Condição necessária, não suficiente: "informar a marca" também passa; o julgamento de restrição continua do modelo.
+const MARCA_REFERENCIA = /\bmarca\b|\breferencia\b|\bsimilar\b|\bequivalente\b|ou superior/;
+
 // Somente medidas exatas e isoladas. Faixas, tolerâncias e descrições compostas
 // continuam como julgamento do modelo; este bloqueio não é um validador semântico geral.
 const exactLength = (text: string) => {
@@ -256,7 +259,8 @@ export const tools: Tool[] = [
       const validacao = { citacoes: 'conferidas', cobertura: inventario.cobertura, semantica: 'julgamento_modelo', lacunas: inventario.lacunas };
       st.fits[key(a.tender_id, a.item)] = { product_id: a.product_id, overall, attributes: a.attributes, varianteNaoCoberta, validacao };
       return { aceito: true, resultado: overall, validacao, lacunas: inventario.lacunas,
-        instrucao: inventario.cobertura === 'conferida' ? 'todos os campos nomeados do item foram citados' : 'cada campo "nome: valor" do item precisa da própria citação literal; o que faltar continua não verificado' };
+        instrucao: inventario.cobertura === 'conferida' ? 'todos os campos nomeados do item foram citados'
+          : 'cada exigência em lacunas precisa de um atributo próprio com o trecho literal (o texto livre do órgão também conta); sem isso o item escala para revisão humana' };
     },
   },
   {
@@ -266,11 +270,18 @@ export const tools: Tool[] = [
       const st = S(ctx); const it = await tenderItem(st, a.tender_id, a.item);
       if (a.evidence === 'marca_referencia') {
         if (!verifyQuote(a.quote ?? '', it.descricao + ' ' + (st.editais[a.tender_id] ?? ''), 10).found) return { aceito: false, motivo: 'citação da marca de referência não encontrada' };
+        // O trecho existir não basta: ele precisa falar de marca (na execução real depois-348, um trecho sem marca foi aceito).
+        if (!MARCA_REFERENCIA.test(norm(a.quote))) return { aceito: false, motivo: 'citação não fala de marca: cite o trecho que indica marca, referência, similar ou equivalente' };
       } else {
         const b = brandConcentration(await compras.priceHistory(a.catalog_code ?? it.catalogCode));
         if (!b.flag) return { aceito: false, motivo: `concentração insuficiente (${b.topBrand} ${(b.share * 100).toFixed(0)}% de ${b.n})` };
       }
       st.restrictive[key(a.tender_id, a.item)] = { evidence: a.evidence, quote: a.quote };
+      // Decisão calculada antes da sinalização não a considerou: descarta para não persistir decisão incoerente.
+      if (st.decisions[key(a.tender_id, a.item)]) {
+        delete st.decisions[key(a.tender_id, a.item)];
+        return { aceito: true, instrucao: 'decisão anterior do item descartada: chame decide_item de novo para considerar a sinalização' };
+      }
       return { aceito: true };
     },
   },
@@ -305,6 +316,10 @@ export const tools: Tool[] = [
       const d = decideItem({ fit: fit.validacao?.cobertura === 'conferida' ? fit.overall : 'desconhecido', regularizacao: an.regularizacao,
         cobertura: an.cobertura, preco: price, docs, restritivo: !!st.restrictive[k], varianteNaoCoberta,
         prazoEsclarecimentoAberto: prazo.prazo ? prazo.aberto : null, venceAntesEntrega: 'venceAntesEntrega' in an && an.venceAntesEntrega === true });
+      // "Encaixe desconhecido" sozinho não diz ao humano o que conferir: nomeia a exigência sem citação própria.
+      const lacunas: string[] = fit.validacao?.cobertura === 'conferida' ? [] : fit.validacao?.lacunas ?? [];
+      if (lacunas.length) d.motivos = d.motivos.map(m => m === 'encaixe técnico desconhecido'
+        ? `cobertura técnica não verificada: sem citação própria para ${lacunas.map(l => `"${l}"`).join(', ')}` : m);
       // Ofertar exige que o registro seja da marca declarada; esclarecer não oferta produto e segue.
       if (conferencia?.status === 'marca_divergente' && (d.estado === 'disputar' || d.estado === 'disputar_com_pendencia')) {
         d.estado = 'escalar'; d.motivos = [...d.motivos, conferencia.motivo];

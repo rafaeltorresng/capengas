@@ -17,7 +17,24 @@ export function acompanhamentoDe(state: object) {
 }
 
 export type AnalysisOrigin = 'direto' | 'agendador';
-export type AnalysisExecution = { stopped: string; final?: string | null; ms?: number; usage?: unknown };
+export type AnalysisExecution = { stopped: string; final?: string | null; ms?: number; usage?: unknown;
+  trace?: { type: string; name?: string; error?: boolean; result?: unknown }[] };
+
+/** Explica um turno sem conclusão completa. Distingue fonte indisponível de limite do agente e de agente sem decisão. */
+export function motivoIncompleto(r: AnalysisExecution, decisoes: number): string {
+  const falhas = (r.trace ?? []).filter(e => e.type === 'tool' && e.error && /falha na ferramenta/.test(String((e.result as { error?: unknown })?.error ?? '')))
+    .map(e => `${e.name}: ${String((e.result as { error?: unknown }).error).replace(/^falha na ferramenta: /, '').slice(0, 120)}`);
+  // Só rede, HTTP ou tempo esgotado é fonte indisponível; o resto (produto ou item inexistente) é uso errado da ferramenta.
+  // Formatos de http.ts: "HTTP 503 …", "timeout após N tentativas", códigos de rede e modo offline sem cache.
+  const deFonte = (f: string) => /HTTP\s*\d{3}|timeout|tentativas|ECONN|ENOTFOUND|EAI_AGAIN|fetch failed|socket|offline|indispon|PNCP\s*5\d\d/i.test(f);
+  const partes = [];
+  if (falhas.some(deFonte)) partes.push(`fonte indisponível (${[...new Set(falhas.filter(deFonte))].slice(0, 3).join('; ')})`);
+  if (falhas.some(f => !deFonte(f))) partes.push(`erro de uso de ferramenta (${[...new Set(falhas.filter(f => !deFonte(f)))].slice(0, 3).join('; ')})`);
+  if (r.stopped === 'max_steps') partes.push('limite de passos do agente atingido antes de concluir');
+  else if (r.stopped === 'budget') partes.push('limite de tokens do agente atingido antes de concluir');
+  else if (!decisoes) partes.push('o agente encerrou sem nenhuma decisão persistida');
+  return partes.join('; ') || 'análise sem conclusão completa';
+}
 export type AnalysisResult = { resumo: string; decisoes: number; stopped: string; ms?: number; usage?: unknown };
 
 export async function runAnalysisTurn(o: {
@@ -86,12 +103,13 @@ export async function runAnalysisTurn(o: {
         ? agruparResultados(model.fila().filter(row => keys.has(`${row.tender}#${row.item}`)), model.dossie)
         : [];
       const concluido = result.stopped === 'final' && resultados.length > 0;
-      registrar({ tipo: 'fim', status: concluido ? 'concluido' : 'incompleto', resultados: concluido ? resultados : [] });
+      registrar({ tipo: 'fim', status: concluido ? 'concluido' : 'incompleto', resultados: concluido ? resultados : [],
+        ...(concluido ? {} : { motivo: motivoIncompleto(result, saved.decisoes) }) });
     }
     if (direto) o.store.logEvent({ tipo: 'turno_fim', resumo });
     return { resumo, decisoes: saved.decisoes, stopped: result.stopped, ms: result.ms, usage: result.usage };
   } catch (error: any) {
-    registrar({ tipo: 'fim', status: 'falhou', resultados: [] });
+    registrar({ tipo: 'fim', status: 'falhou', resultados: [], motivo: String(error?.message ?? error).slice(0, 200) });
     if (direto) o.store.logEvent({ tipo: 'turno_fim', resumo: `turno falhou: ${String(error?.message ?? error).slice(0, 200)}` });
     throw error;
   } finally {

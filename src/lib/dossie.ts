@@ -70,6 +70,12 @@ export function buildDossie(st: LanceState, tenderId: string, options: { documen
     };
   }).sort((a, b) => a.item - b.item);
   if (!itens.length) pendencias.add('Nenhum item analisado neste pregão.');
+  // Escopo: o pré-filtro do catálogo promete candidatos; o que não foi analisado precisa ficar à vista.
+  const candidatos: number[] | undefined = Array.isArray(tender.candidatos) ? tender.candidatos : undefined;
+  // Analisado = teve encaixe ou decisão nesta execução (sem decisão, o item já escala para o humano).
+  const analisados = itens.map(i => i.item);
+  const escopo = candidatos ? { candidatos, analisados, naoAnalisados: candidatos.filter(n => !analisados.includes(n)) } : undefined;
+  if (escopo?.naoAnalisados.length) pendencias.add(`Itens marcados pelo catálogo e não analisados nesta execução: ${escopo.naoAnalisados.join(', ')}. A conclusão vale só para os itens analisados.`);
   const documents: DossierSource[] = [];
   for (const source of [...requirements.map(r => r.fonte), ...checks.map(d => d.fonte)].filter(Boolean) as DossierSource[]) {
     if (!documents.some(d => d.url === source.url && d.citacao === source.citacao)) documents.push({ ...source });
@@ -79,7 +85,7 @@ export function buildDossie(st: LanceState, tenderId: string, options: { documen
     geradoEm: st.now.toISOString(), orgao: tender.orgao ?? '', sessao: tender.abertura ?? null,
     analiseId: options.analiseId, proposta: st.proposals?.[tenderId] ? structuredClone(st.proposals[tenderId]) : undefined,
     empresa: st.company.empresa?.nome ?? '', checklist, pendencias: [...pendencias], documentos: documents,
-    exigencias: requirements.map(r => ({ ...r })), itens,
+    exigencias: requirements.map(r => ({ ...r })), itens, ...(escopo ? { escopo } : {}),
     planoDocumentos: planoDoEstado(st, tenderId) ?? undefined,
     // Uma apresentação de dossiê nunca substitui evaluate/recheck no caminho de envio.
     envioAutomaticoLiberado: false,

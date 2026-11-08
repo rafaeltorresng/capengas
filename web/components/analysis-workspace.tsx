@@ -49,7 +49,7 @@ function AgentProgress({ turno }: { turno: Turno }) {
             : turno.status === 'sem_atualizacao' ? 'Aguardando uma atualização do servidor'
             : turno.status === 'falhou' ? 'A análise foi interrompida' : 'A análise terminou sem uma conclusão completa'}</p>
           <p className="text-sm text-muted-foreground">{ativa ? 'O tempo varia com o edital e as fontes. Nenhuma proposta será enviada.'
-            : 'O progresso registrado está preservado. Confira os detalhes antes de iniciar outra análise.'}</p>
+            : `${turno.motivo ? `Motivo: ${turno.motivo}. ` : ''}O progresso registrado está preservado. Confira os detalhes antes de iniciar outra análise.`}</p>
         </div>
       </div>
       <ol className="agent-stages" aria-label="Etapas da análise">
@@ -112,7 +112,7 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
   const recurso = useApi<Dossier>('dossies/' + encodeURIComponent(resultado.tender));
   const dossier = recurso.data?.dados;
   const atual = dossier?.analiseId === turno.id;
-  const veredito = concluirAnalise(resultado.itens, atual && dossier?.reavaliar, atual && dossier?.desatualizado, atual && dossier?.publicacao?.conferida === false);
+  const veredito = concluirAnalise(resultado.itens, atual && dossier?.reavaliar, atual && dossier?.desatualizado, atual && dossier?.publicacao?.conferida === false, atual ? dossier?.escopo?.naoAnalisados.length : 0);
   const proposta = atual ? dossier?.proposta : undefined;
   const revisao = veredito.estado === 'revisao_necessaria' || veredito.estado === 'com_pendencias';
   if (!recurso.data && !recurso.error) return <p role="status" className="text-sm text-muted-foreground">Conferindo a versão da análise e os documentos…</p>;

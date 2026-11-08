@@ -39,6 +39,18 @@ export function persistAnalysis(state: LanceState, store: Store, options: { anal
           prazo: /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(tender.abertura) ? tender.abertura + ':00-03:00' : tender.abertura });
       }
     }
+    // Encaixe gravado sem decisão (limite do agente, interrupção): o item não pode sumir; vai para o humano.
+    for (const key of Object.keys(state.fits)) {
+      if (!key.startsWith(id + '#') || state.decisions[key]?.estado) continue;
+      const item = key.split('#')[1];
+      if (store.openEscalations().some(e => e.tender === id && e.item === item)) continue;
+      const fit = state.fits[key];
+      const lacunas: string[] = fit?.validacao?.cobertura === 'conferida' ? [] : fit?.validacao?.lacunas ?? [];
+      store.openEscalation({ tender: id, item, motivo: 'análise encerrada sem decisão calculada para o item: o encaixe foi registrado, mas decide_item não concluiu'
+        + (lacunas.length ? `; sem citação própria para ${lacunas.map(l => `"${l}"`).join(', ')}` : ''),
+        recomendacao: 'Reanalisar o item ou decidir manualmente com as evidências gravadas.',
+        prazo: tender.abertura && /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(tender.abertura) ? tender.abertura + ':00-03:00' : tender.abertura ?? new Date(state.now.getTime() + 864e5).toISOString() });
+    }
   }
   return { decisoes: decisions, items };
 }
