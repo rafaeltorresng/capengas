@@ -24,6 +24,7 @@ Projeto da equipe Capengas para o Converge Challenge 2026 (Recife, 7–8/11/2026
 | [docs/lance-execucao.md](docs/lance-execucao.md) | Plano de execução para 3 devs: contratos, tarefas, cronograma e portões |
 | [docs/dev2-analise-produto.md](docs/dev2-analise-produto.md) | Revisão de produto, concorrência, limites das evidências e prioridades do agente |
 | [docs/dev2-retificacao-persistida.md](docs/dev2-retificacao-persistida.md) | Monitor → diff único → histórico do dossiê → Pauta, migração e reprodução sintética |
+| [docs/dev2-catalogos-feed.md](docs/dev2-catalogos-feed.md) | Catálogos combináveis, feed público atualizado e seleção preservada na análise |
 | [docs/dev2-onboarding-demo.md](docs/dev2-onboarding-demo.md) | Entrada Empresa → Produtos → Edital, análise real e limites da demonstração |
 | [docs/dev2-experiencia-analise.md](docs/dev2-experiencia-analise.md) | Editais e Pendências, acompanhamento agrupado, veredito por item e documentos em PDF |
 | [docs/dev2-viabilidade-operacional.md](docs/dev2-viabilidade-operacional.md) | Condições para fornecer: entrega, fornecimento, amostra, validade e pagamento, com citações e ressalvas |
@@ -72,9 +73,9 @@ npm run build
 npm run integrado
 ```
 
-Abra a raiz do servidor para confirmar a empresa simulada, conferir o catálogo já anexado e escolher um dos editais preparados. O botão inicia uma análise real no banco configurado por `LANCE_DB` (padrão `data/lance.db`); o modo integrado carrega `.env`. Sem chave do modelo, a análise fica indisponível. A escolha não executa envio ao portal.
+Abra a raiz do servidor para confirmar a empresa simulada, combinar os arquivos de catálogo e escolher uma oportunidade pública relacionada aos produtos selecionados. O botão inicia uma análise real no banco configurado por `LANCE_DB` (padrão `data/lance.db`); o modo integrado carrega `.env`. Sem chave do modelo, a análise fica indisponível. A escolha não executa envio ao portal.
 
-`npm run demo` permite percorrer os mesmos três passos sem modelo; o painel de amostra continua identificado. Não há upload de planilha. Detalhes e verificação em [docs/dev2-onboarding-demo.md](docs/dev2-onboarding-demo.md).
+`npm run demo` permite percorrer os mesmos três passos sem modelo; o painel de amostra continua identificado. Não há upload de planilha. O feed compartilha consultas periódicas ao PNCP; em falhas, preserva as datas da última consulta e identifica a atualização parcial. Detalhes em [docs/dev2-catalogos-feed.md](docs/dev2-catalogos-feed.md).
 
 ## Segredos
 

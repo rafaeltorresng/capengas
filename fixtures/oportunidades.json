@@ -1,0 +1,566 @@
+{
+  "versao": 1,
+  "status": "parcial",
+  "ultimaTentativa": "2026-11-08T13:01:16.743Z",
+  "ultimaSincronizacao": null,
+  "avisos": [
+    "Não foi possível concluir a busca por instrumental cirurgico (página 1).",
+    "Não foi possível concluir a busca por mascara (página 1).",
+    "Não foi possível concluir a busca por seringa (página 1).",
+    "Não foi possível concluir a busca por andador (página 1).",
+    "Não foi possível concluir a busca por instrumental cirurgico (página 2).",
+    "Não foi possível concluir a busca por mascara (página 2).",
+    "Não foi possível concluir a busca por andador (página 2).",
+    "Não foi possível verificar os dados de 60448040000122/2026/720 (Fonte retornou HTTP 429.); consulta anterior preservada, se existente.",
+    "Não foi possível verificar os dados de 77816510000166/2026/348 (Fonte retornou HTTP 429.); consulta anterior preservada, se existente.",
+    "Não foi possível verificar os dados de 96291141000180/2026/7487 (Fonte retornou HTTP 429.); consulta anterior preservada, se existente.",
+    "Não foi possível verificar os dados de 46377800000127/2026/4871 (Fonte retornou HTTP 429.); consulta anterior preservada, se existente.",
+    "Não foi possível verificar os dados de 76950096000110/2026/206 (Fonte retornou HTTP 429.); consulta anterior preservada, se existente.",
+    "Não foi possível verificar os dados de 46374500000194/2026/9328 (Fonte retornou HTTP 429.); consulta anterior preservada, se existente.",
+    "Não foi possível verificar os dados de 46374500000194/2026/9336 (Fonte retornou HTTP 429.); consulta anterior preservada, se existente.",
+    "Não foi possível verificar os dados de 95422986000102/2026/310 (Fonte retornou HTTP 429.); consulta anterior preservada, se existente.",
+    "Não foi possível verificar os dados de 00394452000103/2027/1126 (Fonte retornou HTTP 429.); consulta anterior preservada, se existente.",
+    "8 oportunidades anteriores não foram reconferidas nesta coleta."
+  ],
+  "pregoes": [
+    {
+      "id": "05012896000142/2026/1298",
+      "orgao": "UNIVERSIDADE ESTADUAL DO PARANA",
+      "uf": "PR",
+      "municipio": "Paranavaí",
+      "objeto": "A presente licitação tem por objeto a aquisição de equipamentos, materiais laboratoriais, insumos, vidrarias e demais itens necessários à implantação dos laboratórios do Curso de Medicina da Universidade Estadual do Paraná – UNESPAR, Campus de Apucarana, conforme especificações, quantitativos e condições estabelecidos neste Edital e em seus anexos.",
+      "abertura": "2026-11-19T15:00:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/05012896000142/2026/1298",
+      "publicadoEm": "2026-11-06T18:58:34",
+      "atualizadoNaFonteEm": "2026-11-06T18:58:34",
+      "consultadoEm": "2026-11-08T13:01:23.442Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/05012896000142/compras/2026/1298",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/05012896000142/compras/2026/1298/itens?pagina=1&tamanhoPagina=100",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/05012896000142/compras/2026/1298/itens?pagina=2&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 5,
+          "descricao": "Seringa adicional: graduada, numerada, apresentação: embalagem individual, capacidade: 10, esterilidade: estéril, descartável, material: polipropileno, tipo bico: bico central luer lock ou slip, tipo vedação: êmbolo de borracha Seringa descartável estéril de 10 ml, fabricada em polipropileno, com bico Luer Lock rosqueável, sem agulha, embalada individualmente. Unidade de fornecimento: caixa com 100 seringas. Demais características conforme Termo de Referência.",
+          "quantidade": 2,
+          "unidade": "Unidade",
+          "valorEstimado": 69
+        },
+        {
+          "numero": 11,
+          "descricao": "Seringa material: polipropileno, capacidade: 5, tipo bico: bico central luer lock ou slip, tipo vedação: êmbolo de borracha, adicional: graduada, numerada, tipo agulha: c/ agulha 21 g x 1\", esterilidade: estéril, descartável, apresentação: embalagem individual Seringa plástica descartável para uso médico-hospitalar, com capacidade nominal de 5 ml (com graduação volumétrica nítida em alto contraste). ",
+          "quantidade": 2,
+          "unidade": "Embalagem UN",
+          "valorEstimado": 53
+        },
+        {
+          "numero": 105,
+          "descricao": "Cabo Bisturi Cabo Bisturi, Material:Aço Inoxidável, Tamanho:Nº 3 Item 105 — Cabo para Bisturi em Aço Inox nº 3. Especificações, apresentação e fornecimento conforme Termo de Referência.",
+          "quantidade": 29,
+          "unidade": "Unidade",
+          "valorEstimado": 11.49
+        },
+        {
+          "numero": 106,
+          "descricao": "Cabo Bisturi Cabo Bisturi, Material:Aço Inoxidável, Tamanho:Nº 4, Aplicação:Cirurgia Item 106 — Cabo para Bisturi em Aço Inox nº 4. Especificações, apresentação e fornecimento conforme Termo de Referência.",
+          "quantidade": 34,
+          "unidade": "Unidade",
+          "valorEstimado": 10.44
+        }
+      ]
+    },
+    {
+      "id": "76205699000198/2026/113",
+      "orgao": "MUNICIPIO DE SALGADO FILHO",
+      "uf": "PR",
+      "municipio": "Salgado Filho",
+      "objeto": "O REGISTRO DE PREÇOS para futura e eventual contratação de empresa para aquisição de materiais esportivos necessários para o desenvolvimento das atividades desportivas, culturais, pedagógicas e premiações (troféus e medalhas)",
+      "abertura": "2026-12-03T08:30:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/76205699000198/2026/113",
+      "publicadoEm": "2026-11-06T16:44:40",
+      "atualizadoNaFonteEm": "2026-11-06T16:54:51",
+      "consultadoEm": "2026-11-08T13:01:22.253Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/76205699000198/compras/2026/113",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/76205699000198/compras/2026/113/itens?pagina=1&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 65,
+          "descricao": "Brinquedo Em Geral Brinquedo Em Geral, Material:Madeira E Arame, Tipo:Kit Coordenação Motora, Cor:Multicolor Kit Coordenação Motora - 4 Pinças, 1 Tesoura e 1 Conta Gotas: Características: 1 pinça jacaré com 10 cm, 1 pinça simples com 10,5 cm, 1 pinça reta com 11 cm, 1 pinça sapo com 10 cm, 1 tesoura bola, 1 conta gotas com 11 cm. NECESSÁRIO CATÁLAGO.",
+          "quantidade": 30,
+          "unidade": "Unidade",
+          "valorEstimado": 57.67
+        }
+      ]
+    },
+    {
+      "id": "04132090000125/2026/22",
+      "orgao": "MUNICIPIO DE MESQUITA",
+      "uf": "RJ",
+      "municipio": "Mesquita",
+      "objeto": "Registro de Preços para aquisição de medicamentos, insumos médico-hospitalares, fraldas descartáveis, suplementos alimentares e produtos para saúde, destinados ao cumprimento de decisões judiciais que determinam ao Município de Mesquita o fornecimento individualizado desses itens a pacientes atendidos no âmbito do Sistema Único de Saúde – SUS, visando assegurar a continuidade do atendimento das demandas judiciais, ",
+      "abertura": "2026-11-23T09:59:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/04132090000125/2026/22",
+      "publicadoEm": "2026-11-06T16:19:31",
+      "atualizadoNaFonteEm": "2026-11-06T16:19:31",
+      "consultadoEm": "2026-11-08T13:01:26.997Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/04132090000125/compras/2026/22",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/04132090000125/compras/2026/22/itens?pagina=1&tamanhoPagina=100",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/04132090000125/compras/2026/22/itens?pagina=2&tamanhoPagina=100",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/04132090000125/compras/2026/22/itens?pagina=3&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 206,
+          "descricao": "Material P/ Vni - Cpap / Bipap tipo 1: máscara facial total, material*: polímero, tipo borda: coxim silicone, característica adicional: sem fenda exalatória, tamanho*: infantil m, tipo conector: conector padrão, tipo fixação: fixador ajustável, apresentação: conjunto completo Aparelho CPAP Airsense 10 Autoset com Umidificador – (ResMed) (ENTREGA ÚNICA)",
+          "quantidade": 1,
+          "unidade": "Unidade",
+          "valorEstimado": 5665.22
+        },
+        {
+          "numero": 213,
+          "descricao": "Material P/ Vni - Cpap / Bipap tipo 1: fixador cefálico ajustável, tipo 2: tipo touca, material*: tecido sintético, característica adicional: c/ velcro, tamanho*: adulto Filtro Nacional para CPAP e VPAP S9 E S10",
+          "quantidade": 12,
+          "unidade": "Unidade",
+          "valorEstimado": 53
+        }
+      ]
+    },
+    {
+      "id": "03648344000108/2026/14",
+      "orgao": "SERVICO NACIONAL DE APRENDIZAGEM COMERCIAL - SENAC",
+      "uf": "CE",
+      "municipio": "Fortaleza",
+      "objeto": "REGISTRO DE PREÇOS PARA CONTRATAÇÃO DE PESSOA JURÍDICA PARA O FORNECIMENTO FUTURO E EVENTUAL DE EQUIPAMENTOS DE SAÚDE (ENFERMAGEM).",
+      "abertura": "2026-11-19T08:30:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/03648344000108/2026/14",
+      "publicadoEm": "2026-11-06T15:45:35",
+      "atualizadoNaFonteEm": "2026-11-06T15:45:35",
+      "consultadoEm": "2026-11-08T13:01:27.256Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/03648344000108/compras/2026/14",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/03648344000108/compras/2026/14/itens?pagina=1&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 18,
+          "descricao": "Escova Degermação antisséptico degermante: clorexidina 2%, embalagem: embalagem individual, esterilidade: uso único, modelo: dupla face c/ cerdas e esponja ESCOVA PARA LIMPEZA COM CLOREXIDINA 2% - ESCOVA PARA DEGERMAÇÃO DAS MÃOS COM CLOREXIDINA 2% – ESCOVA DESCARTÁVEL PARA ANTISSEPSIA PRÉ-CIRÚRGICA DAS MÃOS E ANTEBRAÇOS, COM CERDAS MACIAS, ESPONJA IMPREGNADA COM SOLUÇÃO DE CLOREXIDINA 2% E LIMPA UNHAS I",
+          "quantidade": 40,
+          "unidade": "Unidade",
+          "valorEstimado": null
+        },
+        {
+          "numero": 30,
+          "descricao": "Nebulizador tipo*: ultrassônico, modelo: de mesa, ajuste: com interruptor liga/desliga, material: compressor c/ gabinete plástico, componentes: c/ no mínimo: máscara, traqueia NEBULIZADOR - COM MÁSCARA ADULTO E INFANTIL, FREQUÊNCIA: 50/60HZ; MOTOR: 1/40HP; TAXA DE NEBULIZAÇÃO: 0,15-0,25ML/MIN, BIVOLT! - SEM MARCA DE REFERENCIA\n",
+          "quantidade": 8,
+          "unidade": "Unidade",
+          "valorEstimado": null
+        },
+        {
+          "numero": 54,
+          "descricao": "Cadeira De Rodas Manual Para Locomoção modelo construtivo: dobrável, c/ desengate rápido de roda, material da estrutura: liga de alumínio c/ revestimento, rodas dianteiras: rodízios, pneu maciço, rodas traseiras: rodas, pneu inflável, freios: c/ travas, assento: impermeável, almofadado, encosto dorsal: fixo, apoio de braços: móvel, apoio de pés: móvel, capacidade: de 100 a 130, tamanho: adulto CADEIRA DE RODAS - CONSTRUÍDA COM TUBOS DE ALUMÍNIO AERONÁUTICO DOBRÁVEL EM DUPLO X DE ALTA RESISTÊNCIA, BRAÇOS BILATERAIS ESCAMOTEÁVEIS, FREIOS BILATERAIS AJUSTÁVEIS, PEDAIS REMOVÍVEIS EM 90°, COM APOIO DE PÉ REBATÍVEL E AJUSTÁVEL NA ALTURA, RODAS T",
+          "quantidade": 6,
+          "unidade": "Unidade",
+          "valorEstimado": null
+        }
+      ]
+    },
+    {
+      "id": "77816510000166/2026/348",
+      "orgao": "MUNICIPIO DE FRANCISCO BELTRAO",
+      "uf": "PR",
+      "municipio": "Francisco Beltrão",
+      "objeto": "REGISTRO DE PREÇOS para futura e eventual aquisição de instrumentais cirúrgicos para Rede Municipal de Saúde de Francisco Beltrão/PR.",
+      "abertura": "2026-11-23T09:00:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/77816510000166/2026/348",
+      "publicadoEm": "2026-11-06T15:08:34",
+      "atualizadoNaFonteEm": "2026-11-06T15:08:34",
+      "consultadoEm": "2026-11-08T12:58:34.109Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/77816510000166/compras/2026/348",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/77816510000166/compras/2026/348/itens?pagina=1&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 3,
+          "descricao": "Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 3 CABO DE BISTURI Nº3 13 CM AÇO INOX AUTOCLAVÁVEL -  CONFORME DESCRIÇÃO DO EDITAL ",
+          "quantidade": 20,
+          "unidade": "Unidade",
+          "valorEstimado": 126.97
+        },
+        {
+          "numero": 4,
+          "descricao": "Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4 CABO DE BISTURI Nº4 13 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+          "quantidade": 20,
+          "unidade": "Unidade",
+          "valorEstimado": 126.97
+        },
+        {
+          "numero": 38,
+          "descricao": "Tesoura Instrumental característica ponta: fina c/ vídea, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: íris, tipo ponta: ponta curva TESOURA ÍRIS 11,5 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+          "quantidade": 200,
+          "unidade": "Unidade",
+          "valorEstimado": 153.41
+        },
+        {
+          "numero": 39,
+          "descricao": "Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, tipo ponta: ponta curva TESOURA METZENBAUM CURVA 20CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+          "quantidade": 20,
+          "unidade": "Unidade",
+          "valorEstimado": 428.26
+        },
+        {
+          "numero": 40,
+          "descricao": "Tesoura Instrumental comprimento total: cerca de 20, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: metzenbaum - nelson, tipo ponta: ponta reta TESOURA METZENBAUM RETA 20CM - AÇO INOX – AUTOCLAVÁVEL  - CONFORME DESCRIÇÃO DO EDITAL ",
+          "quantidade": 25,
+          "unidade": "Unidade",
+          "valorEstimado": 424.47
+        },
+        {
+          "numero": 41,
+          "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta curva TESOURA PONTA FINA CURVA 12 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+          "quantidade": 200,
+          "unidade": "Unidade",
+          "valorEstimado": 236.74
+        },
+        {
+          "numero": 42,
+          "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta curva TESOURA PONTA FINA CURVA 14 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+          "quantidade": 200,
+          "unidade": "Unidade",
+          "valorEstimado": 236.74
+        },
+        {
+          "numero": 43,
+          "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA FINA RETA 12 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL ",
+          "quantidade": 200,
+          "unidade": "Unidade",
+          "valorEstimado": 234.85
+        },
+        {
+          "numero": 44,
+          "descricao": "Tesoura Instrumental característica ponta: fina fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA FINA RETA 14 CM - AÇO INOX – AUTOCLAVÁVEL  - CONFORME DESCRIÇÃO DO EDITAL  ",
+          "quantidade": 200,
+          "unidade": "Unidade",
+          "valorEstimado": 234.85
+        },
+        {
+          "numero": 45,
+          "descricao": "Tesoura Instrumental característica ponta: romba fina, comprimento total: cerca de 12, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA ROMBA DE 12 CM - AÇO INOX – AUTOCLAVÁVEL  - CONFORME DESCRIÇÃO DO EDITAL  ",
+          "quantidade": 200,
+          "unidade": "Unidade",
+          "valorEstimado": 210.15
+        },
+        {
+          "numero": 46,
+          "descricao": "Tesoura Instrumental característica ponta: romba fina, comprimento total: cerca de 14, esterilidade: esterilizável, haste: haste reta, material: aço inoxidável, modelo 1: padrão, tipo ponta: ponta reta TESOURA PONTA ROMBA DE 14 CM - AÇO INOX – AUTOCLAVÁVEL - CONFORME DESCRIÇÃO DO EDITAL   ",
+          "quantidade": 200,
+          "unidade": "Unidade",
+          "valorEstimado": 218.13
+        }
+      ]
+    },
+    {
+      "id": "95422986000102/2026/310",
+      "orgao": "MUNICIPIO DE FAZENDA RIO GRANDE",
+      "uf": "PR",
+      "municipio": "Fazenda Rio Grande",
+      "objeto": "Aquisição de Equipamentos e Materiais Permanentes para Atenção Primária à Saúde APS.",
+      "abertura": "2026-11-19T09:00:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/95422986000102/2026/310",
+      "publicadoEm": "2026-11-06T12:11:04",
+      "atualizadoNaFonteEm": "2026-11-06T12:11:04",
+      "consultadoEm": "2026-11-08T12:58:35.260Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/95422986000102/compras/2026/310",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/95422986000102/compras/2026/310/itens?pagina=1&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 7,
+          "descricao": "Cadeira De Rodas Manual Para Locomoção apoio de braços: móvel, apoio de pés: móvel, assento: impermeável, capacidade: de 171 a 200, encosto dorsal: fixo, freios: c/ travas, material da estrutura: aço carbono c/ revestimento, modelo construtivo: dobrável, rodas dianteiras: rodízios, pneu maciço, rodas traseiras: rodas, pneu maciço, tamanho: adulto",
+          "quantidade": 30,
+          "unidade": "Unidade",
+          "valorEstimado": 2248.4
+        },
+        {
+          "numero": 8,
+          "descricao": "Cadeira De Rodas Manual Para Locomoção apoio de braços: móvel, apoio de pés: móvel, assento: impermeável, almofadado, capacidade: de 131  a 170, encosto dorsal: móvel, freios: c/ travas, item de segurança: c/ cinto, material da estrutura: liga de alumínio c/ revestimento, modelo construtivo: dobrável, rodas dianteiras: rodízios, pneu maciço, rodas traseiras: rodas triplas rotacionais, tamanho: adulto, tipo: escaladora de degraus",
+          "quantidade": 15,
+          "unidade": "Unidade",
+          "valorEstimado": 1485.15
+        }
+      ]
+    },
+    {
+      "id": "26981455000129/2026/144",
+      "orgao": "AGENCIA MUNICIPAL DE REGULACAO DE SERVICOS DELEGADOS- ARSER",
+      "uf": "AL",
+      "municipio": "Maceió",
+      "objeto": "Registro de Preços para futura e eventual contratação de empresa especializada no fornecimento de instrumentais odontológicos (cirurgia 2)",
+      "abertura": "2026-11-26T09:00:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/26981455000129/2026/144",
+      "publicadoEm": "2026-11-06T10:19:29",
+      "atualizadoNaFonteEm": "2026-11-06T10:27:26",
+      "consultadoEm": "2026-11-08T12:51:53.032Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/26981455000129/compras/2026/144",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/26981455000129/compras/2026/144/itens?pagina=1&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 19,
+          "descricao": "Tesoura Instrumental modelo 1: goldman fox, tipo ponta: ponta curva, haste: haste reta, comprimento total: cerca de 14, material: aço inoxidável, esterilidade: esterilizável Demais informações do descritivo constam no Anexo I do edital.",
+          "quantidade": 200,
+          "unidade": "Unidade",
+          "valorEstimado": null
+        },
+        {
+          "numero": 20,
+          "descricao": "Tesoura Instrumental modelo 1: íris, tipo ponta: ponta curva, característica ponta: romba, haste: haste reta, comprimento total: cerca de 12, material: aço inoxidável, esterilidade: esterilizável Demais informações do descritivo constam no Anexo I do edital.",
+          "quantidade": 200,
+          "unidade": "Unidade",
+          "valorEstimado": null
+        },
+        {
+          "numero": 21,
+          "descricao": "Tesoura Instrumental modelo 1: íris, tipo ponta: ponta reta, característica ponta: romba, haste: haste reta, comprimento total: cerca de 12, material: aço inoxidável, esterilidade: esterilizável Demais informações do descritivo constam no Anexo I do edital.",
+          "quantidade": 200,
+          "unidade": "Unidade",
+          "valorEstimado": null
+        },
+        {
+          "numero": 22,
+          "descricao": "Tesoura Instrumental modelo 1: spencer / buck, tipo ponta: ponta reta, haste: haste reta, comprimento total: cerca de 12, material: aço inoxidável, esterilidade: esterilizável Demais informações do descritivo constam no Anexo I do edital.",
+          "quantidade": 100,
+          "unidade": "Unidade",
+          "valorEstimado": null
+        }
+      ]
+    },
+    {
+      "id": "00394452000103/2026/23822",
+      "orgao": "COMANDO DO EXERCITO",
+      "uf": "AM",
+      "municipio": "Manaus",
+      "objeto": "Equipamentos para modernização e manutenção da capacidade operacional do hospital.",
+      "abertura": "2026-11-23T08:00:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/00394452000103/2026/23822",
+      "publicadoEm": "2026-11-06T04:03:01",
+      "atualizadoNaFonteEm": "2026-11-06T04:03:01",
+      "consultadoEm": "2026-11-08T12:51:56.325Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/00394452000103/compras/2026/23822",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/00394452000103/compras/2026/23822/itens?pagina=1&tamanhoPagina=100",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/00394452000103/compras/2026/23822/itens?pagina=2&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 104,
+          "descricao": "Ventilador Artificial Eletrônico modelo: neonatal/pediátrico/adulto, modos ventilação: vcv, simv, cpap, a/c, vni, bilevel, parâmetros ventilatórios: parâmetros vc, fr, fio2, peep, características adicionais 01: bateria interna, c/ cinta torácica, características adicionais 02: tela monitorização gráfica, características adicionais 3: tomografia de impedância elétrica torácica tie, alarmes: alarmes audiovisuais, circuitos: com circuitos e filtros",
+          "quantidade": 2,
+          "unidade": "Unidade",
+          "valorEstimado": 113789
+        },
+        {
+          "numero": 108,
+          "descricao": "Ventilador Artificial Eletrônico modelo: neonatal/pediátrico/adulto, modos ventilação: vcv, simv, cpap, a/c, vni, bilevel, parâmetros ventilatórios: parâmetros vc, fr, fio2, peep, características adicionais 01: bateria interna, c/ cinta torácica, características adicionais 02: tela monitorização gráfica, características adicionais 3: tomografia de impedância elétrica torácica tie, alarmes: alarmes audiovisuais, circuitos: com circuitos e filtros",
+          "quantidade": 2,
+          "unidade": "Unidade",
+          "valorEstimado": 52500
+        }
+      ]
+    },
+    {
+      "id": "00394452000103/2026/23168",
+      "orgao": "COMANDO DO EXERCITO",
+      "uf": "RS",
+      "municipio": "Santa Maria",
+      "objeto": "Registro de preços para aquisição de materiais e equipamentos médico-hospitalares - PAASSEx",
+      "abertura": "2026-11-12T09:00:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/00394452000103/2026/23168",
+      "publicadoEm": "2026-10-29T04:00:17",
+      "atualizadoNaFonteEm": "2026-10-29T04:00:17",
+      "consultadoEm": "2026-11-08T12:58:34.796Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/00394452000103/compras/2026/23168",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/00394452000103/compras/2026/23168/itens?pagina=1&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 31,
+          "descricao": "Conjunto Procedimento Médico aplicação: p/ sutura, composição básica: c/ no mínimo, componentes: 1 pinça, 1 tesoura, 1 porta agulha, outros componentes: 1 campo fenestrado, 1 fio de sutura, componentes adicionais: compressa de gaze, esterilidade: estéril, uso único",
+          "quantidade": 3,
+          "unidade": "Unidade",
+          "valorEstimado": 309.48
+        },
+        {
+          "numero": 46,
+          "descricao": "Andador Ortopédico adicional: tornozelo, apoio antebraço, assento, aplicação: infantil, características adicionais: suporte abdominal, tronco, quadril, sacro, material: aço inoxidável, modelo: treinador de marcha anterior e posterior, tipo construtivo: dobrável, tipo pés: 4 rodízios c/ freio e trava",
+          "quantidade": 1,
+          "unidade": "Unidade",
+          "valorEstimado": 2567.25
+        },
+        {
+          "numero": 55,
+          "descricao": "Pinça P/ Videocirurgia aplicação: dissecção, modelo 1: maryland, haste: haste isolada, dimensão: cerca de 5 mm x 30 cm, componente: manopla s/ cremalheira, outros componentes: c/ conexão p/ bisturi bipolar, características adicionais: giratória, esterilidade: esterilizável",
+          "quantidade": 3,
+          "unidade": "Unidade",
+          "valorEstimado": 2990
+        },
+        {
+          "numero": 57,
+          "descricao": "Tesoura P/ Videocirurgia aplicação: p/ videocirurgia, tipo*: monopolar, modelo: metzenbaum, ponta: ponta curva, material*: aço inoxidável, diâmetro: cerca de 5 mm x 35 cm, adicional: rotatória, esterilidade: esterilizável",
+          "quantidade": 3,
+          "unidade": "Unidade",
+          "valorEstimado": 2990.9
+        }
+      ]
+    },
+    {
+      "id": "47018676000176/2026/462",
+      "orgao": "REDE MUNICIPAL DR. MARIO GATTI DE URGENCIA, EMERGENCIA E HOSPITALAR",
+      "uf": "SP",
+      "municipio": "Campinas",
+      "objeto": "Aquisição de itens para a fisioterapia (Hand Helper e outros).",
+      "abertura": "2026-11-16T09:00:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/47018676000176/2026/462",
+      "publicadoEm": "2026-10-28T08:39:02",
+      "atualizadoNaFonteEm": "2026-10-28T08:39:02",
+      "consultadoEm": "2026-11-08T12:58:34.802Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/47018676000176/compras/2026/462",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/47018676000176/compras/2026/462/itens?pagina=1&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 8,
+          "descricao": "Andador Ortopédico material: alumínio anodizado, tipo construtivo: dupla barra sustentação, tipo pés: pés com ponteiras polipropileno, altura: altura regulável, aplicação: adulto, características adicionais: 2 rodízios dianteiros",
+          "quantidade": 6,
+          "unidade": "Unidade",
+          "valorEstimado": null
+        },
+        {
+          "numero": 9,
+          "descricao": "Andador Ortopédico material: alumínio anodizado, tipo construtivo: dupla barra sustentação, tipo pés: pés com ponteiras polipropileno, altura: altura regulável, aplicação: infantil, características adicionais: 2 rodízios dianteiros",
+          "quantidade": 2,
+          "unidade": "Unidade",
+          "valorEstimado": null
+        },
+        {
+          "numero": 10,
+          "descricao": "Muleta modelo: axilar, tipo: apoio de braço, apoio mão: apoio de mão, materia prima: em polímero, haste: haste regulável na altura, material haste: em alumínio, pés: c/ ponteira de borracha, tamanho*: tamanho adulto extra grande",
+          "quantidade": 6,
+          "unidade": "Par",
+          "valorEstimado": null
+        },
+        {
+          "numero": 11,
+          "descricao": "Muleta modelo: axilar, tipo: apoio de braço, apoio mão: apoio de mão, materia prima: em polímero, haste: haste regulável na altura, material haste: em alumínio, pés: c/ ponteira de borracha, tamanho*: tamanho adulto",
+          "quantidade": 6,
+          "unidade": "Par",
+          "valorEstimado": null
+        }
+      ]
+    },
+    {
+      "id": "07438591000122/2026/40",
+      "orgao": "MUNICIPIO DE GENERAL SAMPAIO",
+      "uf": "CE",
+      "municipio": "General Sampaio",
+      "objeto": "AQUISIÇÃO DE EQUIPAMENTOS E MATERIAIS PERMANENTES DESTINADOS AO HOSPITAL MUNICIPAL, PARA ATENDER ÀS NECESSIDADES DA SECRETARIA MUNICIPAL DE SAÚDE DO MUNICÍPIO DE GENERAL SAMPAIO-CE.",
+      "abertura": "2026-11-12T09:00:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/07438591000122/2026/40",
+      "publicadoEm": "2026-10-27T11:54:49",
+      "atualizadoNaFonteEm": "2026-10-27T11:54:49",
+      "consultadoEm": "2026-11-08T12:58:35.289Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/07438591000122/compras/2026/40",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/07438591000122/compras/2026/40/itens?pagina=1&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 1,
+          "descricao": "Andador Ortopédico adicional: tornozelo, apoio antebraço, assento, aplicação: infantil, características adicionais: suporte abdominal, tronco, quadril, sacro, material: aço inoxidável, modelo: treinador de marcha anterior e posterior, tipo construtivo: dobrável, tipo pés: 4 rodízios c/ freio e trava ANDADOR - MATERIAL DE CONFECÇÃO: ALUMÍNIO | COM RODÍZIOS DIANTEIROS.",
+          "quantidade": 2,
+          "unidade": "Unidade",
+          "valorEstimado": 200
+        },
+        {
+          "numero": 33,
+          "descricao": "Exercitador alimentação: sistema motorizado de movimentação contínua e cont, aplicação: treinar, reabilitar e manter a forma física de cav, características adicionais: sistema de inversão de giro, temporizador e painel, material estrutura: metálica, modelo: circular com divisórias móveis para condução indiv, tipo: andador",
+          "quantidade": 4,
+          "unidade": "Unidade",
+          "valorEstimado": 58
+        }
+      ]
+    },
+    {
+      "id": "00394452000103/2027/1126",
+      "orgao": "COMANDO DO EXERCITO",
+      "uf": "PE",
+      "municipio": "Recife",
+      "objeto": "Registro de preços para aquisição de material permanente (equipamentos médico-hospitalares) aprovados no Plano Anual das Atividades do Sistema de Saúde do Exército - PAASSEx 2027 (GCALC), para atender as necessidades do Hospital Militar de Área de Recife (HMAR) e órgãos participantes.",
+      "abertura": "2026-11-19T09:00:00",
+      "situacao": "Divulgada no PNCP",
+      "plataforma": "Compras.gov.br",
+      "url": "https://pncp.gov.br/app/editais/00394452000103/2027/1126",
+      "publicadoEm": "2026-10-22T04:00:33",
+      "atualizadoNaFonteEm": "2026-11-06T09:52:45",
+      "consultadoEm": "2026-11-08T12:58:35.432Z",
+      "fontes": [
+        "https://pncp.gov.br/api/consulta/v1/orgaos/00394452000103/compras/2027/1126",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/00394452000103/compras/2027/1126/itens?pagina=1&tamanhoPagina=100",
+        "https://pncp.gov.br/api/pncp/v1/orgaos/00394452000103/compras/2027/1126/itens?pagina=2&tamanhoPagina=100"
+      ],
+      "itens": [
+        {
+          "numero": 82,
+          "descricao": "Ventilador Artificial Eletrônico tipo 01: transporte, modelo: pediátrico/adulto, modos ventilação: vcv, simv,cpap,ps, a/c, parâmetros ventilatórios: parâmetros vc, fr, fio2, peep, componentes: válvulas reguladoras de pressão, alarmes: alarmes audiovisuais",
+          "quantidade": 2,
+          "unidade": "Unidade",
+          "valorEstimado": 46620.67
+        },
+        {
+          "numero": 94,
+          "descricao": "Cadeira De Rodas Manual Para Locomoção modelo construtivo: dobrável, material da estrutura: aço carbono c/ revestimento, rodas dianteiras: rodízios, pneu maciço, rodas traseiras: rodas, pneu maciço, freios: c/ travas, assento: impermeável, encosto dorsal: fixo, apoio de braços: móvel, apoio de pés: móvel, capacidade: de 100 a 130, tamanho: adulto",
+          "quantidade": 3,
+          "unidade": "Unidade",
+          "valorEstimado": 2393.88
+        },
+        {
+          "numero": 102,
+          "descricao": "Cadeira De Rodas Manual Para Locomoção modelo construtivo: dobrável, material da estrutura: aço carbono c/ revestimento, rodas dianteiras: rodízios, pneu maciço, rodas traseiras: rodas, pneu maciço, freios: c/ travas, assento: impermeável, encosto dorsal: fixo, apoio de braços: móvel, apoio de pés: móvel, capacidade: de 100 a 130, tamanho: adulto",
+          "quantidade": 8,
+          "unidade": "Unidade",
+          "valorEstimado": 805.17
+        }
+      ]
+    }
+  ]
+}

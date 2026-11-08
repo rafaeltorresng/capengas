@@ -63,7 +63,7 @@ export async function runAnalysisTurn(o: {
       const edital = o.state.tenders[id] as { objeto?: string; orgao?: string } | undefined;
       return [id, (edital?.objeto ?? edital?.orgao ?? '').trim()];
     }));
-    registrar({ tipo: 'inicio', pregoes, nomesEditais });
+    registrar({ tipo: 'inicio', pregoes, nomesEditais, ...(o.state.catalogSelection ? { catalogos: structuredClone(o.state.catalogSelection) } : {}) });
     registrar({ tipo: 'atividade', atividade: 'Preparando a análise dos pregões' });
     aoVivo.set(o.state, {
       atividade: (nome, ferramenta) => registrar({ tipo: 'atividade', atividade: nome, ferramenta }),

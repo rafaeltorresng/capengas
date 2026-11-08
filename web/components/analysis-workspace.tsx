@@ -109,6 +109,7 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
       </div>
       {atual && recurso.data?.origem === 'integrado' && <PdfButton tender={resultado.tender} analise={turno.id} tipo="relatorio" rotulo="Baixar análise em PDF" />}
     </section>
+    {turno.catalogos && <p className="text-sm text-muted-foreground">Catálogos desta análise: {turno.catalogos.arquivos.map(a => a.titulo).join(' · ')}.</p>}
     {recurso.error && <Alert><AlertDescription>Não foi possível atualizar os documentos. {recurso.error}</AlertDescription></Alert>}
     {dossier?.analiseId && !atual && <Alert><AlertDescription>Uma análise mais recente substituiu o dossiê. Este resultado é o histórico desta execução; os documentos atuais estão na análise mais recente. <AppLink href="#/turnos">Ver editais</AppLink></AlertDescription></Alert>}
     <Tabs value={aba} onValueChange={setAba}>

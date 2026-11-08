@@ -10,6 +10,8 @@ import { relatorioProva } from '../lib/cenarios.ts';
 import { sancoesDoArquivo } from '../lib/carteira.ts';
 import { DATA } from '../lib/data.ts';
 import { join } from 'node:path';
+import { criarBiblioteca } from '../lib/catalogos-demo.ts';
+import { feedDoServidor } from './feed.ts';
 import { createOnboarding } from './onboarding.ts';
 
 async function loadSample(): Promise<SampleState | undefined> {
@@ -38,15 +40,19 @@ if (mode === 'amostra' || mode === 'integrado') {
         proof: () => buildProof(prova!, store.events()),
       }))
       : createSampleStore(await loadSample());
-    const onboarding = createOnboarding({ company, demo, store,
+    const manifesto = JSON.parse(await readFile(new URL('../../fixtures/catalogos.json', import.meta.url), 'utf8'));
+    const biblioteca = criarBiblioteca(company.catalogo, manifesto);
+    const feed = feedDoServidor(biblioteca, demo);
+    const onboarding = createOnboarding({ company, demo, store, biblioteca, feed,
       disponivel: !!(process.env.AI_API_KEY || process.env.FEATHERLESS_API_KEY || process.env.Api_key) });
     const server = createServer(state, webRoot, onboarding);
+    server.on('close', () => feed.parar());
     server.on('error', (error: NodeJS.ErrnoException) => {
       console.error(`Não foi possível iniciar o Lance em 127.0.0.1:${port} (${error.code}).`);
       store?.close();
       process.exitCode = 1;
     });
-    server.listen(port, '127.0.0.1', () => console.log(`Lance • ${mode} • http://127.0.0.1:${port}`));
+    server.listen(port, '127.0.0.1', () => { feed.iniciar(); console.log(`Lance • ${mode} • http://127.0.0.1:${port}`); });
   } catch (error) {
     console.error('Falha ao iniciar o Lance. Confira o build e a fonte de dados selecionada.',
       error instanceof Error ? error.message : '');
