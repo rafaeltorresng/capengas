@@ -6,7 +6,7 @@ import { runAgent } from '../src/lib/agent.ts';
 import { tools, newState } from '../src/lib/tools.ts';
 import { pncp } from '../src/lib/data.ts';
 
-const model = process.argv[2] ?? 'moonshotai/Kimi-K2.6';
+const model = process.argv[2] ?? 'deepseek-ai/DeepSeek-V4.1-Flash';
 const reps = Number(process.argv[3] ?? 3);
 const gold = JSON.parse(readFileSync('fixtures/gold.json', 'utf8'));
 const company = JSON.parse(readFileSync('fixtures/company.json', 'utf8'));

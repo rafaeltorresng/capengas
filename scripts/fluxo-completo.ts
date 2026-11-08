@@ -28,7 +28,7 @@ const args = process.argv.slice(2);
 const opt = (nome: string) => { const i = args.indexOf(nome); return i < 0 ? undefined : args[i + 1]; };
 const tenderId = args.find(a => /^\d{14}\/\d{4}\/\d+$/.test(a)) ?? '80257355000108/2026/493';
 const candidatos = opt('--itens')?.split(',').map(Number).filter(Number.isInteger) ?? [];
-const model = opt('--modelo') ?? 'moonshotai/Kimi-K2.6';
+const model = opt('--modelo') ?? 'deepseek-ai/DeepSeek-V4.1-Flash';
 const tag = `${tenderId.replaceAll('/', '-')}-${Date.now()}`;
 const dir = `out/fluxo-completo/${tag}`;
 mkdirSync(dir, { recursive: true });

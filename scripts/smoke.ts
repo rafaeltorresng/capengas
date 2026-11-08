@@ -1,7 +1,7 @@
 import './_out.ts';
 // Smoke test: autenticação, latência, tool calling.
 import { featherless } from '../src/lib/llm.ts';
-for (const model of (process.argv[2] ?? 'moonshotai/Kimi-K2.6').split(',')) {
+for (const model of (process.argv[2] ?? 'deepseek-ai/DeepSeek-V4.1-Flash').split(',')) {
   const llm = featherless(model);
   const t0 = performance.now();
   try {

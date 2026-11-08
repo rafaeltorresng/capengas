@@ -13,7 +13,7 @@ import { startSandbox } from '../src/lib/sandbox.ts';
 import { openStore } from '../src/lib/store.ts';
 
 const mode = process.argv[2] ?? 'focado';
-const model = process.argv[3] ?? 'moonshotai/Kimi-K2.6';
+const model = process.argv[3] ?? 'deepseek-ai/DeepSeek-V4.1-Flash';
 const company = JSON.parse(readFileSync('fixtures/company.json', 'utf8'));
 const cov = JSON.parse(readFileSync('fixtures/coverage.json', 'utf8'));
 const tag = `${mode}-${model.replace('/', '_')}-${Date.now()}`;
