@@ -22,7 +22,7 @@ const LIVRE = 'CABO DE BISTURI Nº4 13 CM AÇO INOX AUTOCLAVÁVEL - CONFORME DES
 const VALIDADE = 'A validade da proposta será de 90 (noventa) dias a contar da data de abertura.';
 const EDITAL = `Edital sintético de teste. Os licitantes deverão apresentar Autorização de Funcionamento de Empresa (AFE) expedida pela ANVISA. ${VALIDADE}`;
 const now = () => new Date('2026-11-08T12:00:00-03:00');
-const baseCompany = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const baseCompany = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const demo = JSON.parse(readFileSync(new URL('../fixtures/demo.json', import.meta.url), 'utf8'));
 
 function preparar(t: TestContext, o: { ficha?: string; itens?: () => Promise<unknown> } = {}) {

@@ -7,7 +7,7 @@ import { montarPauta, type PregaoPauta } from '../src/lib/pauta.ts';
 import { diffErrata } from '../src/lib/errata.ts';
 import type { Politica, TenderRow } from '../src/lib/contracts.ts';
 
-const politica: Politica = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8')).politica;
+const politica: Politica = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8')).politica;
 const T = '77816510000166/2026/348';
 const DESC = 'Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4';
 const tender: TenderRow = { id: T, orgao: 'Município de Francisco Beltrão', uf: 'PR', abertura: '2026-11-23T09:00', situacao: 'Divulgada no PNCP',

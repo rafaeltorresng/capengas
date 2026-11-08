@@ -15,7 +15,7 @@ import { executarAcao } from '../src/lib/act.ts';
 import { pncp, pdf } from '../src/lib/data.ts';
 import { runOnboardingAnalysis } from '../src/server/onboarding.ts';
 import type { LLM, Tool } from '../src/lib/agent.ts';
-const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const tid = '77816510000166/2026/348';
 const quote = 'A entrega será realizada em 15 dias corridos após o recebimento da ordem de fornecimento.';
 const fonte = { nome: 'TR sintético de teste', url: 'https://example.org/tr', texto: quote };

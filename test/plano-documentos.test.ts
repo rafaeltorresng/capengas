@@ -75,7 +75,7 @@ test('exigências do record_requirement viram documentos: certidões abrem em tr
   assert.ok(ex.every(e => e.fase === 'habilitacao' && e.origem === 'exigencia_edital'));
 });
 
-const company = () => JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const company = () => JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const P1 = { id: 'P1', nome: 'Cabo de bisturi nº 4', marca: 'Straumed', registroAnvisa: '82936150004' };
 const produtos: ProdutoViavel[] = [{ item: 1, produto: P1, regularizacao: 'vigente' }, { item: 2, produto: { ...P1, id: 'P2', marca: 'Golgran' }, regularizacao: 'vigente' }];
 

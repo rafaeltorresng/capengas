@@ -53,7 +53,7 @@ describe('projeção do Store para a tela', () => {
   });
   test('Hoje lista o documento do cofre que derruba pregão com sessão futura', () => {
     const s = setup();
-    const cofre: CofreDoc[] = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8')).cofre;
+    const cofre: CofreDoc[] = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8')).cofre;
     const store = {
       events: () => [], openEscalations: () => [], getTender: () => undefined, getItems: () => [], getDecisions: () => [],
       getDossie: () => undefined, resolveEscalation: () => ({ status: 'ausente' as const }),

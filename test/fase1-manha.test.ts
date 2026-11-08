@@ -12,7 +12,7 @@ import { createIntegratedStore } from '../src/server/integrated.ts';
 import { createSampleStore } from '../src/server/sample.ts';
 import { createServer } from '../src/server/api.ts';
 
-const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const custos = Object.fromEntries(company.catalogo.map((p: any) => [p.id, p.custo]));
 const T = '77816510000166/2026/348';
 const DESC = 'Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4';

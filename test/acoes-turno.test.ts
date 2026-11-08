@@ -7,7 +7,7 @@ import { newState } from '../src/lib/tools.ts';
 import { executarAcoesDoTurno, createAnalysisTurn, textoAcoes, type DemoSelecao } from '../src/lib/agendamento.ts';
 import type { Recheque } from '../src/lib/contracts.ts';
 
-const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const T = '77816510000166/2026/348';
 const agora = new Date('2026-11-07T18:00:00-03:00');
 const ok: Recheque = { status: 'ok', situacao: 'Divulgada no PNCP', arquivosHash: 'h', em: agora.toISOString() };

@@ -1,13 +1,33 @@
 {
   "origemDados": "sinteticos",
-  "_nota": "Empresa FICTÍCIA. Números de registro ANVISA são reais (base aberta TA_PRODUTO_SAUDE_SITE); custos, fichas técnicas, documentos do cofre e política são sintéticos. validade null = documento sem vencimento (AFE). termos = palavras que um item precisa conter para ser candidato ao produto (pré-filtro; o encaixe técnico é do agente).",
+  "_nota": "Empresa FICTÍCIA. Números de registro ANVISA são reais (base aberta TA_PRODUTO_SAUDE_SITE); custos, fichas técnicas, documentos do cofre e política são sintéticos. validade null = documento sem vencimento (AFE). termos = palavras que um item precisa conter para ser candidato ao produto (pré-filtro; o encaixe técnico é do agente). Para a demo, cadastro, cofre, cobertura ANVISA declarada e a ficha do P1 foram ajustados de propósito para fechar com um edital aberto (dados sintéticos, não de uma empresa real).",
   "empresa": {
     "nome": "Distribuidora Modelo Ltda (fictícia)",
     "porte": "EPP",
     "atuacao": "distribuidora",
     "uf": "PR",
     "margemMinima": 0.15,
-    "prazoEntregaDias": 60
+    "prazoEntregaDias": 60,
+    "cnpj": "12.345.678/0001-90",
+    "inscricaoEstadual": "901.23456-78",
+    "endereco": "Rua das Flores, 1000, Centro, Curitiba/PR, CEP 80010-000",
+    "municipio": "Curitiba/PR",
+    "telefone": "(41) 3000-0000",
+    "email": "licitacoes@distribuidoramodelo.test",
+    "representante": {
+      "nome": "Ana Souza",
+      "cargo": "Sócia-administradora",
+      "cpf": "123.456.789-00",
+      "rg": "1.234.567-8 SSP/PR",
+      "endereco": "Rua das Flores, 1000, Curitiba/PR",
+      "telefone": "(41) 99999-0000",
+      "email": "ana.souza@distribuidoramodelo.test"
+    },
+    "banco": {
+      "banco": "Banco do Brasil (001)",
+      "agencia": "1234-5",
+      "conta": "12345-6"
+    }
   },
   "cofre": [
     {
@@ -17,7 +37,7 @@
     },
     {
       "doc": "CND Federal (Receita/PGFN)",
-      "validade": "2026-11-15",
+      "validade": "2027-03-15",
       "tipo": "cnd_federal"
     },
     {
@@ -29,6 +49,41 @@
       "doc": "CNDT Trabalhista",
       "validade": "2027-02-10",
       "tipo": "cndt"
+    },
+    {
+      "doc": "Certidão negativa de débitos estaduais (SEFA/PR)",
+      "validade": "2027-01-30",
+      "tipo": "certidao_estadual"
+    },
+    {
+      "doc": "Certidão negativa de débitos municipais (Curitiba)",
+      "validade": "2027-01-30",
+      "tipo": "certidao_municipal"
+    },
+    {
+      "doc": "Certidão negativa de falência e recuperação judicial",
+      "validade": "2026-12-30",
+      "tipo": "certidao_falencia"
+    },
+    {
+      "doc": "Licença sanitária (Vigilância Sanitária de Curitiba)",
+      "validade": "2027-06-30",
+      "tipo": "licenca_sanitaria"
+    },
+    {
+      "doc": "Contrato social consolidado",
+      "validade": null,
+      "tipo": "contrato_social"
+    },
+    {
+      "doc": "Balanço patrimonial 2025",
+      "validade": "2027-05-31",
+      "tipo": "balanco"
+    },
+    {
+      "doc": "Atestado de capacidade técnica (Hospital Municipal, fornecimento de instrumental)",
+      "validade": null,
+      "tipo": "atestado"
     }
   ],
   "catalogo": [
@@ -37,18 +92,19 @@
       "nome": "Cabo de bisturi nº 4",
       "marca": "Straumed",
       "registroAnvisa": "82936150004",
-      "custo": 6.0,
-      "ficha": "Cabo de bisturi nº 4. Comprimento total 13 cm. Material: aço inoxidável AISI 420. Reutilizável e autoclavável. Encaixe para lâminas nº 18 a 36. Embalagem individual.",
+      "custo": 6,
+      "ficha": "Cabo de bisturi nº 4. Comprimento total 13,5 cm (135 mm). Material: aço inoxidável AISI 420. Aplicação: cirurgia. Reutilizável e autoclavável. Encaixe para lâminas nº 18 a 36. Corpo plano ligeiramente mais largo com ranhuras transversais antiderrapantes. Embalagem individual.",
       "termos": [
         "cabo de bisturi|cabo bisturi|cabo para bisturi"
-      ]
+      ],
+      "coberturaDeclarada": true
     },
     {
       "id": "P2",
       "nome": "Tesoura Metzenbaum curva 20 cm",
       "marca": "Professional",
       "registroAnvisa": "10150470165",
-      "custo": 22.0,
+      "custo": 22,
       "ficha": "Tesoura cirúrgica Metzenbaum. Comprimento total 20 cm. Haste curva, ponta romba. Material: aço inoxidável. Esterilizável em autoclave.",
       "termos": [
         "tesoura"
@@ -59,7 +115,7 @@
       "nome": "Cadeira de rodas manual dobrável",
       "marca": "Jumper",
       "registroAnvisa": "82052410001",
-      "custo": 780.0,
+      "custo": 780,
       "ficha": "Cadeira de rodas manual adulto, dobrável em X, com desengate rápido das rodas. Estrutura em liga de alumínio com pintura epóxi. Rodas dianteiras: rodízios com pneu maciço. Rodas traseiras: pneu maciço. Freios bilaterais com trava. Assento e encosto em nylon impermeável almofadado; encosto fixo. Apoio de braços fixo. Apoio de pés removível. Capacidade 120 kg.",
       "termos": [
         "cadeira",
@@ -83,18 +139,19 @@
       "nome": "Kit CPAP nasal com pronga neonatal",
       "marca": "Solumed",
       "registroAnvisa": "80019169010",
-      "custo": 38.0,
+      "custo": 38,
       "ficha": "Conjunto completo para CPAP nasal neonatal: pronga nasal em silicone (tamanhos 0 a 5, incluindo nº 4), traqueias corrugadas, linha de pressão, conectores padrão 15/22 mm e fixador tipo touca. Embalagem individual, estéril.",
       "termos": [
         "cpap|pronga"
-      ]
+      ],
+      "coberturaDeclarada": true
     },
     {
       "id": "P7",
       "nome": "Pinça tripolar para eletrocirurgia",
       "marca": "Taimin",
       "registroAnvisa": "80082910158",
-      "custo": 900.0,
+      "custo": 900,
       "ficha": "Pinça tripolar para alta frequência, reutilizável, comprimento 20 cm, cabo de conexão incluso.",
       "termos": [
         "pinca",

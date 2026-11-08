@@ -2,11 +2,12 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { openStore, type LanceStore } from '../src/lib/store.ts';
 import { executarAcao, type ActDeps, type PedidoAcao } from '../src/lib/act.ts';
 import type { Politica, Recheque } from '../src/lib/contracts.ts';
 
-const politica: Politica = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8')).politica;
+const politica: Politica = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8')).politica;
 const TENDER = '77816510000166/2026/348';
 const ok: Recheque = { status: 'ok', situacao: 'Divulgada no PNCP', arquivosHash: 'abc', em: '2026-11-07T18:00:00.000Z' };
 const catalogo = [{ id: 'TES-01', marca: 'Norte', registroAnvisa: '80123456789' }];
@@ -53,6 +54,28 @@ describe('envio permitido', () => {
     assert.equal(action.status, 'confirmada');
     assert.equal(action.verificado, true);
     assert.equal(store.events().filter(event => event.tipo === 'proposta_enviada').length, 1);
+    store.close();
+  });
+
+  test('proposta leva os PDFs anexos com o hash do conteúdo', async () => {
+    const { store, posts, deps } = harness();
+    const pdf = new Uint8Array(Buffer.from('%PDF-1.7\nproposta'));
+    const result = await executarAcao({ ...proposta(), anexos: [{ nome: 'proposta.pdf', pdf }] } as PedidoAcao, deps);
+    assert.equal(result.resultado, 'confirmada');
+    assert.deepEqual(posts[0].anexos, [{ nome: 'proposta.pdf', conteudo: Buffer.from(pdf).toString('base64'),
+      sha256: createHash('sha256').update(pdf).digest('hex') }]);
+    store.close();
+  });
+
+  test('item com pendência só sai com as pendências gravadas aprovadas pelo humano', async () => {
+    const { store, posts, deps } = harness({ seed: { estado: 'disputar_com_pendencia' } });
+    assert.equal((await executarAcao(proposta(), deps)).resultado, 'escalada');
+    assert.equal((await executarAcao({ ...proposta(), pendenciasAprovadas: ['outra coisa'] } as PedidoAcao, deps)).resultado, 'escalada');
+    assert.equal(posts.length, 0);
+    const r = await executarAcao({ ...proposta(), pendenciasAprovadas: ['atributos conferidos'] } as PedidoAcao, deps);
+    assert.equal(r.resultado, 'confirmada');
+    assert.equal(posts.length, 1);
+    assert.ok(store.events().some(e => e.tipo === 'escalada_decidida' && /atributos conferidos/.test(e.resumo)));
     store.close();
   });
 

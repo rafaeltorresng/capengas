@@ -9,7 +9,11 @@ import { conferirRegistro } from './catalogo.ts';
 import type { AcaoContexto, ItemDecision, Politica, Recheque } from './contracts.ts';
 import type { LanceStore } from './store.ts';
 
-export type PedidoProposta = { tipo: 'enviar_proposta'; tenderId: string; itens: number[] };
+export type PedidoProposta = {
+  tipo: 'enviar_proposta'; tenderId: string; itens: number[]; anexos?: { nome: string; pdf: Uint8Array }[];
+  /** Texto exato das pendências gravadas que o humano aprovou; pendência nova ou alterada continua escalando. */
+  pendenciasAprovadas?: string[];
+};
 export type PedidoEsclarecimento = {
   tipo: 'enviar_esclarecimento'; tenderId: string; item: number; texto: string;
   motivo: 'nao_informado' | 'variante_nao_coberta' | 'marca_referencia';
@@ -155,6 +159,7 @@ export async function executarAcao(pedido: PedidoAcao, deps: ActDeps): Promise<R
   const contexto: AcaoContexto = {
     tenderId: pedido.tenderId, valor: montado.valor, decisoes: montado.decisoes, recheque,
     ...(pedido.tipo === 'enviar_esclarecimento' ? { esclarecimento: { motivo: pedido.motivo, prazoAberto: montado.prazoAberto === true } } : {}),
+    ...(pedido.tipo === 'enviar_proposta' && pedido.pendenciasAprovadas?.length ? { pendenciasAprovadas: pedido.pendenciasAprovadas } : {}),
   };
   const avaliacao = evaluate(pedido.tipo, contexto, deps.politica);
   if (!avaliacao.permitido) {
@@ -174,6 +179,10 @@ export async function executarAcao(pedido: PedidoAcao, deps: ActDeps): Promise<R
     return { resultado: 'escalada', motivo: avaliacao.motivo };
   }
 
+  if (contexto.pendenciasAprovadas && montado.decisoes.some(d => d.estado === 'disputar_com_pendencia')) {
+    deps.store.logEvent({ tipo: 'escalada_decidida', tender: pedido.tenderId, detalhe: montado.key,
+      resumo: `envio aprovado pelo humano com as pendências: ${montado.decisoes.flatMap(d => d.estado === 'disputar_com_pendencia' ? d.motivos : []).join('; ')}` });
+  }
   const intent = deps.store.recordIntent({ key: montado.key, tipo: montado.tipo, tenderId: pedido.tenderId, item: montado.item, payload: montado.payload });
   if (intent.status === 'existente') {
     if (intent.action.status === 'intencao') return { resultado: 'reconciliar', key: montado.key, motivo: 'intenção já aberta; não repito o POST' };
@@ -182,7 +191,8 @@ export async function executarAcao(pedido: PedidoAcao, deps: ActDeps): Promise<R
   deps.store.updateAction(montado.key, { status: 'enviada' });
   const rota = portalTipo(pedido.tipo) === 'proposta' ? 'propostas' : 'esclarecimentos';
   const body = pedido.tipo === 'enviar_proposta'
-    ? { tender: pedido.tenderId, empresa: deps.empresa, itens: montado.linhas }
+    ? { tender: pedido.tenderId, empresa: deps.empresa, itens: montado.linhas, ...(pedido.anexos?.length ? { anexos: pedido.anexos.map(a => ({
+      nome: a.nome, conteudo: Buffer.from(a.pdf).toString('base64'), sha256: createHash('sha256').update(a.pdf).digest('hex') })) } : {}) }
     : { tender: pedido.tenderId, item: pedido.item, texto: pedido.texto };
   const envio = await enviar(`${deps.sandboxUrl}/api/${rota}`, body);
   if ('erro' in envio) {

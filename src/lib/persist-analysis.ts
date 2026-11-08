@@ -4,6 +4,8 @@ import { buildDossie } from './dossie.ts';
 import { checkDocs } from './rules.ts';
 import { aplicarOperacao } from './operacao.ts';
 import type { QueueItem } from '../server/contract.ts';
+import type { LanceStore } from './store.ts';
+import { jaDecidida } from './decisao-humana.ts';
 
 // Persiste somente o resultado da análise; não autoriza ou executa ações no portal.
 export function persistAnalysis(state: LanceState, store: Store, options: { analiseId?: string } = {}) {
@@ -42,8 +44,9 @@ export function persistAnalysis(state: LanceState, store: Store, options: { anal
         const motivo = operacional
           ? [...d.motivos.filter((m: string) => !m.startsWith('Operação: ')), 'Operação: conferir condições para fornecer antes de participar.'].join('; ')
           : d.motivos.join('; ');
-        const exists = store.openEscalations().some(e => e.tender === id && e.item === String(item) && (!operacional || e.motivo === motivo));
-        if (!exists) store.openEscalation({ tender: id, item: String(item), motivo, recomendacao: operacional ? 'Conferir as cláusulas e a capacidade de fornecimento antes de participar. Aprovar esta pendência não altera os dados nem libera o envio.' : 'Revisar as evidências e recalcular a decisão antes de agir.',
+        const exists = store.openEscalations().some(e => e.tender === id && e.item === String(item) && (!operacional || e.motivo === motivo))
+          || jaDecidida(store as LanceStore, id, String(item), motivo);
+        if (!exists) store.openEscalation({ tender: id, item: String(item), motivo, recomendacao: operacional ? 'Conferir as cláusulas e a capacidade de fornecimento antes de participar. Aprovar libera o envio com estas pendências; recusar descarta o item; solicitar ajuste faz o agente reanalisar com o seu texto.' : 'Revisar as evidências. Aprovar libera o envio com estas pendências; recusar descarta o item; solicitar ajuste faz o agente reanalisar com o seu texto.',
           prazo: /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(tender.abertura) ? tender.abertura + ':00-03:00' : tender.abertura });
       }
     }

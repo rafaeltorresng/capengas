@@ -81,6 +81,8 @@ export type AcaoContexto = {
   decisoes: ItemDecision[];
   recheque: Recheque;
   esclarecimento?: { motivo: 'nao_informado' | 'variante_nao_coberta' | 'marca_referencia'; prazoAberto: boolean };
+  /** Pendências que o humano aprovou, com o texto exato gravado na decisão. */
+  pendenciasAprovadas?: string[];
 };
 /** Falha segura: política ausente/inválida, recheque não ok ou qualquer desconhecido → permitido = false. */
 export type AvaliacaoPolitica = { permitido: boolean; escalar: boolean; motivo: string };

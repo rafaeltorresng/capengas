@@ -16,7 +16,7 @@ import { executarAcao } from '../src/lib/act.ts';
 
 const T = '77816510000166/2026/348';
 const desc = 'Cabo material: aço inoxidável, tamanho: nº 4';
-const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const now = () => new Date('2026-11-07T10:00:00-03:00');
 async function setup(path = ':memory:') {
   const store = openStore(path, { now });

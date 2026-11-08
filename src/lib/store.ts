@@ -23,6 +23,8 @@ export type LanceStore = Store & {
   saveErrataDiff(d: DiffErrata): void;
   getErrataDiff(tenderId: string): DiffErrata | undefined;
   getRetificacoes(tenderId: string): VersaoRetificacao[];
+  /** Escaladas decididas pelo humano no pregão, com a decisão e o texto do ajuste. */
+  decidedEscalations?(tenderId: string): (Escalation & Decision)[];
   close(): void;
   /** Auxiliares de teste e diagnóstico. */
   _count(table: string): number;
@@ -251,6 +253,10 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
     },
     openEscalations() {
       return db.prepare(`SELECT * FROM escalations WHERE status = 'aberta' ORDER BY seq`).all().map(toEscalation);
+    },
+    decidedEscalations(tenderId: string) {
+      return db.prepare(`SELECT * FROM escalations WHERE status = 'decidida' AND tender = ? ORDER BY seq`).all(tenderId)
+        .map((r: any) => ({ ...toEscalation(r), ...(JSON.parse(r.decisao) as Decision) }));
     },
 
     logEvent(e) { return insertEvent(e); },

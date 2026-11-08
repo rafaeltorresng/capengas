@@ -5,6 +5,7 @@ import { newState, motivosDaEvidencia, type LanceState } from './tools.ts';
 import { runAnalysisTurn, type AnalysisExecution } from './turn.ts';
 import { parseId } from './recheck.ts';
 import { executarAcao, type ActDeps, type ResultadoAcao } from './act.ts';
+import { itensRecusados, pendenciasAprovadas } from './decisao-humana.ts';
 import type { Recheque, TenderRow } from './contracts.ts';
 import type { Tender } from './data.ts';
 import type { LanceStore } from './store.ts';
@@ -83,10 +84,15 @@ export async function executarAcoesDoTurno(d: {
       conta(r.esclarecimentos, (await executarAcao({ tipo: 'enviar_esclarecimento', tenderId: id, item, texto: draft.texto, motivo }, deps)).resultado);
     }
     // Só decisões calculadas nesta análise: uma decisão antiga no store não ganha autorização nova.
-    const disputar = [...new Set(d.store.getDecisions(id)
-      .filter(x => x.estado === 'disputar' && d.state.decisions[`${id}#${x.item}`]?.estado === 'disputar').map(x => x.item))];
+    // Item com pendência entra só se o humano aprovou todas as pendências; item recusado pelo humano não entra.
+    const recusados = itensRecusados(d.store, id);
+    const atuais = d.store.getDecisions(id).filter(x => d.state.decisions[`${id}#${x.item}`]?.estado === x.estado && !recusados.includes(x.item));
+    const aprovadas = atuais.filter(x => x.estado === 'disputar_com_pendencia')
+      .map(x => ({ item: x.item, motivos: x.motivos, ok: pendenciasAprovadas(d.store, id, x.item, x.motivos) }))
+      .filter(x => x.ok.length === x.motivos.length);
+    const disputar = [...new Set([...atuais.filter(x => x.estado === 'disputar').map(x => x.item), ...aprovadas.map(x => x.item)])];
     if (disputar.length) {
-      const res = await executarAcao({ tipo: 'enviar_proposta', tenderId: id, itens: disputar }, deps);
+      const res = await executarAcao({ tipo: 'enviar_proposta', tenderId: id, itens: disputar, pendenciasAprovadas: aprovadas.flatMap(x => x.ok) }, deps);
       if (res.resultado === 'bloqueada') d.store.logEvent({ tipo: 'bloqueio', resumo: `proposta não enviada: ${res.motivo}`, tender: id });
       conta(r.propostas, res.resultado);
     }

@@ -12,7 +12,7 @@ import { createReadModel } from '../src/lib/read-model.ts';
 import { prepararDocumento } from '../src/server/documentos.ts';
 import type { LanceState } from '../src/lib/tools.ts';
 import type { LLM, Tool } from '../src/lib/agent.ts';
-const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const demo = JSON.parse(readFileSync(new URL('../fixtures/demo.json', import.meta.url), 'utf8'));
 const now = () => new Date('2026-11-08T12:00:00Z');
 const tid = '12345678000199/2026/1';

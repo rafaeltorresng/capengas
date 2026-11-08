@@ -11,7 +11,7 @@ import { filesHash, recheckTender } from '../src/lib/recheck.ts';
 import { startSandbox } from '../src/lib/sandbox.ts';
 import type { Recheque } from '../src/lib/contracts.ts';
 
-const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const TENDER = '77816510000166/2026/348';
 const ok: Recheque = { status: 'ok', situacao: 'Divulgada no PNCP', arquivosHash: 'abc', em: '2026-11-07T18:00:00.000Z' };
 const tool = (name: string) => tools.find(t => t.name === name)!;

@@ -6,7 +6,7 @@ import { openStore } from '../src/lib/store.ts';
 import { calendarioCofre, calendarioDoStore } from '../src/lib/cofre.ts';
 import type { CofreDoc } from '../src/lib/contracts.ts';
 
-const cofre: CofreDoc[] = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8')).cofre;
+const cofre: CofreDoc[] = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8')).cofre;
 const cert = { tipo: 'certidoes', citacao: 'Certidão de regularidade fiscal' };
 const afe = { tipo: 'afe', citacao: 'Autorização de Funcionamento de Empresa' };
 const p = (tenderId: string, sessao: string, exigencias = [cert]) => ({ tenderId, sessao, exigencias });

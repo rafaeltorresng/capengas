@@ -19,6 +19,7 @@ import { runMonitor } from '../src/lib/monitor.ts';
 import { createAnalysisTurn, executarAcoesDoTurno } from '../src/lib/agendamento.ts';
 import { startSandbox } from '../src/lib/sandbox.ts';
 import { anvisa } from '../src/lib/data.ts';
+import { instrucaoHumana } from '../src/lib/decisao-humana.ts';
 
 const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
 const demo = JSON.parse(readFileSync(new URL('../fixtures/demo.json', import.meta.url), 'utf8'));
@@ -41,7 +42,7 @@ const runTurn = createAnalysisTurn({
   analisar: (state, ids) => runAgent({ llm, operationalLLM: featherless(undefined, { maxTokens: 8192 }), tools: tools.filter(t => allowed.has(t.name)), state,
     maxSteps: 30, maxTokens: 250_000,
     system: 'Você é o Lance. Analise somente os pregões solicitados. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Se o edital exige marca de referência, use flag_restrictive. Para atributo nao_informado, variante não coberta ou marca de referência, rascunhe o pedido de esclarecimento com draft_esclarecimento (texto objetivo citando o item). Não envie nada: o envio é feito pelo código, conforme a política. Catálogo e cofre são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.' + ' ' + INSTRUCAO_OPERACIONAL,
-    user: `Analise os pregões ${ids.join(', ')} e termine com um resumo do que ficou pronto e das pendências.`,
+    user: `Analise os pregões ${ids.join(', ')} e termine com um resumo do que ficou pronto e das pendências.${ids.map(id => instrucaoHumana(store, id)).join('')}`,
     onToolStart: name => acompanhamentoDe(state)?.atividade(atividadeDaFerramenta(name), name),
     onEvent: e => {
       if (e.type === 'tool') {

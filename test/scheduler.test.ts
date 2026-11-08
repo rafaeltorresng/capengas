@@ -6,7 +6,7 @@ import { openStore } from '../src/lib/store.ts';
 import { createScheduler } from '../src/lib/scheduler.ts';
 import type { Politica } from '../src/lib/contracts.ts';
 
-const politica: Politica = { ...JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8')).politica, turnos: ['07:00', '11:00', '15:00'], monitorMinutos: 30 };
+const politica: Politica = { ...JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8')).politica, turnos: ['07:00', '11:00', '15:00'], monitorMinutos: 30 };
 const clock = (iso: string) => { let t = new Date(iso).getTime(); return { now: () => new Date(t), set: (s: string) => { t = new Date(s).getTime(); }, advance: (min: number) => { t += min * 60e3; } }; };
 const deferred = () => { let resolve!: () => void, reject!: (e: Error) => void; const p = new Promise<void>((a, b) => { resolve = a; reject = b; }); return { p, resolve, reject }; };
 

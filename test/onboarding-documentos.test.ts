@@ -11,7 +11,7 @@ import type { Tool, LLM } from '../src/lib/agent.ts';
 
 test('onboarding liga ferramentas documentais e persiste proposta/plano no resultado da própria execução', async t => {
   // Teste de integração com modelo controlado e fontes sintéticas, sem produzir resultado de demonstração.
-  const company = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8'));
+  const company = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8'));
   const demo = JSON.parse(readFileSync(new URL('../fixtures/demo.json', import.meta.url), 'utf8'));
   const tender = demo.pregoes[0].id;
   const now = () => new Date('2026-11-08T12:00:00Z');

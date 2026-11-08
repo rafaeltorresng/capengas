@@ -9,7 +9,7 @@ import { decideItem, checkDocs } from './rules.ts';
 import { motivosDaEvidencia, newState, tools } from './tools.ts';
 import { leituraDoEdital } from './edital.ts';
 
-const company = JSON.parse(readFileSync(new URL('../../fixtures/company.json', import.meta.url), 'utf8'));
+const company = JSON.parse(readFileSync(new URL('../../fixtures/company-testes.json', import.meta.url), 'utf8'));
 const TID = '77816510000166/2026/348';
 const NOW = new Date('2026-11-07T15:00:00-03:00');
 const TEXTO = 'Solicitamos esclarecer se a embalagem individual estéril é obrigatória para este item.';

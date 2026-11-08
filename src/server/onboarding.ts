@@ -1,4 +1,5 @@
 // Entrada da demonstração: biblioteca sintética e oportunidades públicas verificadas. A análise usa o agente e store do produto.
+import { instrucaoHumana } from '../lib/decisao-humana.ts';
 import { randomUUID } from 'node:crypto';
 import { criarBiblioteca, selecionarCatalogos, type BibliotecaCatalogos, type SelecaoCatalogos } from '../lib/catalogos-demo.ts';
 import { filtrarOportunidades, type FeedOportunidades } from '../lib/oportunidades.ts';
@@ -60,7 +61,7 @@ export async function runOnboardingAnalysis(o: AnalysisStarted & {
       const llm = (o.llm ?? featherless)();
       return runAgent({ llm, operationalLLM: o.llm ? llm : featherless(undefined, { maxTokens: 8192 }), tools: (o.ferramentas ?? tools).filter(t => permitidas.has(t.name)), state, maxSteps: 30, maxTokens: 250_000,
         system: 'Você é o Lance. Analise somente o pregão solicitado. Use citações literais, nunca invente dados. Liste o catálogo, filtre itens relevantes, siga proxima_pagina e proximo_offset. Leia o edital, registre exigências e compare atributos com as fichas. Use nao_informado para lacunas. Calcule decisões com decide_item. Se houver marca de referência, use flag_restrictive; para dúvida técnica sustentada, prepare draft_esclarecimento. Somente depois de decide_item resultar em disputar ou disputar_com_pendencia: use read_proposal_docs para ler os documentos; registre as regras com record_proposal_rule, cada documento exigido com record_document_requirement (fase, condição e prazo citados), prepare draft_proposal_document e draft_document_plan. Campos ausentes continuam pendências; não invente dados cadastrais ou declarações de conformidade. Não gere proposta para item escalado ou incompatível. Não envie nada. Empresa, catálogo, fichas, custos, cofre e política são sintéticos de demonstração; dados dos pregões são reais. Limite a análise a 3 itens relevantes no total. O pré-filtro aponta candidatos, não comprova encaixe. Resultados antigos de ferramenta são resumidos no histórico; se faltar uma citação, chame a ferramenta de novo.' + ' ' + INSTRUCAO_OPERACIONAL,
-        user: `Analise o pregão ${o.tenderId} e termine com um resumo do que ficou pronto e das pendências.${candidatos}`,
+        user: `Analise o pregão ${o.tenderId} e termine com um resumo do que ficou pronto e das pendências.${candidatos}${instrucaoHumana(o.store, o.tenderId)}`,
         onToolStart: name => acompanhamentoDe(state)?.atividade(atividadeDaFerramenta(name), name),
         onEvent: e => {
           if (e.type === 'tool') {

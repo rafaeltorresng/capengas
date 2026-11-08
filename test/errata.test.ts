@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { diffErrata, type EntradaDiff } from '../src/lib/errata.ts';
 import type { Politica } from '../src/lib/contracts.ts';
 
-const politica: Politica = JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8')).politica;
+const politica: Politica = JSON.parse(readFileSync(new URL('../fixtures/company-testes.json', import.meta.url), 'utf8')).politica;
 const T = '77816510000166/2026/348';
 const DESC = 'Cabo Bisturi características adicionais: longo, material: aço inoxidável, tamanho: nº 4';
 const EDITAL = 'Os licitantes deverão apresentar Autorização de Funcionamento de Empresa (AFE) expedida pela ANVISA, ' +
