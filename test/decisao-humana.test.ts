@@ -31,14 +31,21 @@ test('recusa: item sai da análise e do envio, e a mesma pendência não reabre'
   store.close();
 });
 
-test('aprovação: as pendências da escalada viram pendências aprovadas para o envio', () => {
-  const store = comDecisao('26', 'confirmar que o registro ANVISA cobre o modelo ofertado; Operação: conferir condições para fornecer antes de participar.', 'aprovar');
+test('aprovação vale para os motivos da hora: condição operacional nova reabre a revisão e não é enviada', () => {
+  const store = openStore(':memory:');
   const motivos = ['confirmar que o registro ANVISA cobre o modelo ofertado', 'Operação: Prazo de entrega — Precisa confirmar.'];
+  store.upsertDecision({ tenderId: T, item: 26, produto: 'P1', estado: 'disputar_com_pendencia', motivos, precoProposto: 10 });
+  const resumo = 'confirmar que o registro ANVISA cobre o modelo ofertado; Operação: conferir condições para fornecer antes de participar.';
+  const e = store.openEscalation({ tender: T, item: '26', motivo: resumo, recomendacao: 'r', prazo: '2099-01-01T00:00:00-03:00' });
+  store.resolveEscalation(e.id, { decisao: 'aprovar' });
   assert.deepEqual(pendenciasAprovadas(store, T, 26, motivos), motivos);
-  assert.deepEqual(pendenciasAprovadas(store, T, 26, [...motivos, 'CND Federal: vence antes sessao']), motivos);
+  assert.equal(jaDecidida(store, T, '26', resumo, motivos), true);
+  const novos = [...motivos, 'Operação: Amostra — apresentar em 24 horas.'];
+  assert.deepEqual(pendenciasAprovadas(store, T, 26, novos), motivos);
+  assert.equal(jaDecidida(store, T, '26', resumo, novos), false, 'condição nova reabre a revisão');
   assert.deepEqual(pendenciasAprovadas(store, T, 27, motivos), []);
   // Ajuste não aprova nada: o agente reanalisa antes.
-  const ajuste = comDecisao('26', 'confirmar que o registro ANVISA cobre o modelo ofertado', 'ajustar', 'rever');
+  const ajuste = comDecisao('26', motivos[0], 'ajustar', 'rever');
   assert.deepEqual(pendenciasAprovadas(ajuste, T, 26, motivos), []);
   store.close(); ajuste.close();
 });

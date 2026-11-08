@@ -245,7 +245,11 @@ export function openStore(path: string = process.env.LANCE_DB ?? join(DATA, 'lan
           return { status: 'expirada' };
         }
         const horario = iso();
-        db.prepare(`UPDATE escalations SET status = 'decidida', decisao = ?, decidida_em = ? WHERE id = ?`).run(JSON.stringify(d), horario, id);
+        // A aprovação vale para os motivos que o item tinha na hora: condição nova reabre a revisão.
+        const motivosAprovados = d.decisao === 'aprovar' && r.item != null
+          ? [...new Set(db.prepare('SELECT motivos FROM decisions WHERE tender_id = ? AND item = ?').all(r.tender, Number(r.item)).flatMap((x: any) => JSON.parse(x.motivos) as string[]))]
+          : undefined;
+        db.prepare(`UPDATE escalations SET status = 'decidida', decisao = ?, decidida_em = ? WHERE id = ?`).run(JSON.stringify(motivosAprovados?.length ? { ...d, motivosAprovados } : d), horario, id);
         if (o._failAfterDecision) throw new Error('falha simulada depois da decisão');
         insertEvent({ tipo: 'escalada_decidida', resumo: `${d.decisao}${d.ajuste ? `: ${d.ajuste}` : ''}`, tender: r.tender, ...(r.item != null ? { item: r.item } : {}) });
         return { status: 'salva', registro: { ...d, id, horario } };
