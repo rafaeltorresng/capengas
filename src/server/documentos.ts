@@ -4,6 +4,8 @@ import { Lexer } from 'marked';
 import type { Dossier } from './contract.ts';
 import { concluirAnalise } from '../lib/experiencia-analise.ts';
 import { numerosConferem } from '../lib/regras-proposta.ts';
+import { gerarDocumento, GERAVEIS } from '../lib/documentos-gerados.ts';
+import type { TipoDocumento } from '../lib/plano-documentos.ts';
 
 export class DocumentoError extends Error {
   readonly status: number;
@@ -17,6 +19,30 @@ const faseLabel: Record<string, string> = { proposta_inicial: 'Proposta inicial'
 const encaixeLabel: Record<string, string> = { atende: 'Atende', nao_atende: 'Não atende', nao_informado: 'Não informado' };
 const dataHora = (valor?: string) => valor && Number.isFinite(Date.parse(valor))
   ? new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Recife', dateStyle: 'short', timeStyle: 'short' }).format(new Date(valor)) + ' (Recife)' : 'Não informada';
+
+const origemDe = (origemDados?: string) => origemDados === 'sinteticos'
+  ? 'Cadastro, catálogo, custos e condições comerciais sintéticos de demonstração. Este arquivo não representa uma empresa real.'
+  : 'Dados da proponente conforme cadastro, sem verificação independente de sua autenticidade.';
+
+/** Declaração ou comprovante que o plano desta análise atribui ao Lance. Lê só o dossiê persistido. */
+export function prepararDocumentoGerado(dossie: Dossier, tipo: string): Exportacao {
+  if (!GERAVEIS.includes(tipo as TipoDocumento)) throw new DocumentoError(404, 'O Lance não gera este documento.');
+  if (dossie.reavaliar) throw new DocumentoError(409, 'O edital mudou. Reavalie antes de preparar os documentos.');
+  if (dossie.desatualizado) throw new DocumentoError(409, 'Os dados ou as decisões mudaram. Gere uma nova análise antes de preparar os documentos.');
+  const linha = dossie.planoDocumentos?.linhas.find(l => l.tipo === tipo);
+  const empresa = dossie.proposta?.empresa;
+  if (!linha) throw new DocumentoError(409, 'O plano de documentos desta análise não atribui este documento ao Lance.');
+  if (!empresa) throw new DocumentoError(409, 'A análise não tem os dados da empresa persistidos com a proposta.');
+  let doc;
+  try {
+    doc = gerarDocumento({ tipo: tipo as TipoDocumento, linha, pregao: { id: dossie.tender, orgao: dossie.orgao ?? dossie.pregao }, empresa,
+      itens: (dossie.itens ?? []).filter(i => positivo.has(i.estado)), hoje: new Date(dossie.geradoEm ?? Date.now()) });
+  } catch (e) { throw new DocumentoError(409, e instanceof Error ? e.message : String(e)); }
+  if (linha.status !== 'lance_gera') throw new DocumentoError(409, 'O plano de documentos desta análise não atribui este documento ao Lance.');
+  const pendencias = doc.pendencias.length ? `## Complete antes de utilizar\n\n${doc.pendencias.map(p => '- ' + p).join('\n')}\n\n` : '';
+  return { titulo: `${doc.titulo} - minuta`, nomeArquivo: `lance-${tipo}-${dossie.tender.replace(/[^\w-]/g, '-')}.pdf`, paisagem: tipo === 'registro_anvisa',
+    markdown: `# MINUTA PARA REVISÃO E ASSINATURA\n\n${origemDe(dossie.proposta?.origemDados)}\n\nDocumento não assinado e não enviado. Confira o texto com o modelo do órgão antes de utilizá-lo.\n\nAnálise: ${dossie.analiseId ?? 'legada'} · Dados de ${dataHora(dossie.geradoEm)}.\n\n${pendencias}${doc.markdown}` };
+}
 
 /** Documento é uma leitura do dossiê persistido, nunca uma nova decisão ou autorização de envio. */
 export function prepararDocumento(dossie: Dossier, tipo: 'proposta' | 'relatorio'): Exportacao {
@@ -34,9 +60,7 @@ export function prepararDocumento(dossie: Dossier, tipo: 'proposta' | 'relatorio
         && Number.isFinite(i.precoUnitario) && i.precoUnitario > 0 && Number.isFinite(i.quantidade) && i.quantidade > 0))) {
       throw new DocumentoError(409, 'Não há proposta atual compatível com as decisões desta análise.');
     }
-    const origem = proposta.origemDados === 'sinteticos'
-      ? 'Cadastro, catálogo, custos e condições comerciais sintéticos de demonstração. Este arquivo não representa uma empresa real.'
-      : 'Dados da proponente conforme cadastro, sem verificação independente de sua autenticidade.';
+    const origem = origemDe(proposta.origemDados);
     const corpo = proposta.markdown.split('## Conferência antes do envio')[0];
     const pendencias = proposta.pendencias.length ? `## Complete antes de utilizar\n\n${proposta.pendencias.map(p => '- ' + p).join('\n')}\n\n` : '';
     return { titulo: 'Proposta de preços - minuta', nomeArquivo, paisagem: true,

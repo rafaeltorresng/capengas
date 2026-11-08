@@ -5,6 +5,7 @@ import type { Schema } from './schema.ts';
 import type { CofreDoc } from './contracts.ts';
 import type { Documento, RegraProposta } from './regras-proposta.ts';
 import type { LanceState } from './tools.ts';
+import { impedimento } from './documentos-gerados.ts';
 
 export type Classe = 'gerado' | 'cofre' | 'produto' | 'terceiro' | 'evento' | 'humano';
 export type Fase = 'proposta_inicial' | 'proposta_ajustada' | 'habilitacao' | 'nao_informada';
@@ -191,7 +192,7 @@ const fmt = (xs: string[]) => [...new Set(xs)].join(', ');
 
 export function montarPlano(o: {
   tenderId: string; exigencias: ExigenciaDocumental[]; cofre: CofreDoc[]; sessao: string | null; hoje: string;
-  empresa: { atuacao?: string } | undefined; produtos: ProdutoViavel[]; propostaGerada?: boolean; prazoPropostaAjustada?: string;
+  empresa: { atuacao?: string; porte?: string; programaIntegridade?: boolean } | undefined; produtos: ProdutoViavel[]; propostaGerada?: boolean; prazoPropostaAjustada?: string;
 }): PlanoDocumentos {
   const exigencias = consolidar([...o.exigencias, { tipo: 'proposta_precos', fase: 'proposta_ajustada', condicoes: ['sempre'], origem: 'implicito' }]);
   const atuacao = o.empresa?.atuacao;
@@ -206,7 +207,10 @@ export function montarPlano(o: {
       status = o.propostaGerada ? 'gerado' : 'lance_gera'; responsavel = 'lance'; prazo ??= o.prazoPropostaAjustada;
       acao = 'Atualizar com o preço do último lance e enviar dentro do prazo da convocação.';
     } else if (def.classe === 'gerado') {
-      if (e.noSistema) { status = 'marcar_no_sistema'; acao = 'Marcar a declaração no portal ao cadastrar a proposta.'; }
+      const bloqueio = impedimento(e.tipo, o.empresa);
+      if (bloqueio?.status === 'nao_se_aplica') { status = 'nao_se_aplica'; acao = bloqueio.motivo; }
+      else if (e.noSistema) { status = 'marcar_no_sistema'; acao = 'Marcar a declaração no portal ao cadastrar a proposta.'; }
+      else if (bloqueio) acao = bloqueio.motivo;
       else { status = 'lance_gera'; responsavel = 'lance'; acao = 'O Lance redige a declaração; o representante assina.'; }
     } else if (def.classe === 'cofre') {
       const [r] = checkDocs(o.cofre, [{ tipo: e.tipo, citacao: e.citacao ?? '' }], o.sessao ?? o.hoje);
