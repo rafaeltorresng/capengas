@@ -63,7 +63,7 @@ function App() {
     <AppLink href="#/turnos">Voltar ao acompanhamento</AppLink>
   </Page>;
 
-  return <Shell path={path} pending={pending} amostra={approvals.data?.origem === 'amostra'} mainRef={main}>{view}</Shell>;
+  return <Shell path={path} pending={pending} pendingKnown={approvals.data !== undefined} amostra={approvals.data?.origem === 'amostra'} mainRef={main}>{view}</Shell>;
 }
 
 createRoot(document.getElementById('root')!).render(

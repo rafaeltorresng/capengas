@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { FilesIcon, CircleCheckIcon } from 'lucide-react';
 import type { OnboardingData } from '../src/server/onboarding.ts';
+import { LanceFloat, OnboardingMascote, OnboardingProvider, TurnosProvider, usePresencaPainel } from '@/components/lance-presence';
 import { useApi } from '@/lib/api';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -42,15 +43,16 @@ function crumbs(path: string) {
 }
 
 type ShellProps = {
-  path: string; pending: number; amostra: boolean; mainRef: React.RefObject<HTMLElement | null>; children: ReactNode;
+  path: string; pending: number; pendingKnown: boolean; amostra: boolean; mainRef: React.RefObject<HTMLElement | null>; children: ReactNode;
 };
 
 export function Shell(props: ShellProps) {
-  return <SidebarProvider><ShellContent {...props} /></SidebarProvider>;
+  return <SidebarProvider><TurnosProvider><ShellContent {...props} /></TurnosProvider></SidebarProvider>;
 }
 
-function ShellContent({ path, pending, amostra, mainRef, children }: ShellProps) {
+function ShellContent({ path, pending, pendingKnown, amostra, mainRef, children }: ShellProps) {
   const { setOpenMobile } = useSidebar();
+  const presenca = usePresencaPainel(path, pending, pendingKnown);
   const closeMobile = () => setOpenMobile(false);
   const perfil = useApi<OnboardingData>('onboarding', false);
   const empresa = perfil.data?.dados.empresa.nome;
@@ -147,24 +149,28 @@ function ShellContent({ path, pending, amostra, mainRef, children }: ShellProps)
         </Breadcrumb>
         {amostra && <Badge variant="outline" className="ml-auto">Demonstração</Badge>}
       </header>
-      <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+      <div className="lance-room flex flex-1 flex-col gap-6 p-4 md:p-6" data-lance={presenca.placement === 'float' ? '' : undefined}>
         {children}
       </div>
+      {presenca.placement === 'float' && <LanceFloat state={presenca.state} />}
     </SidebarInset>
   </>;
 }
 
 export function OnboardingFrame({ children, mainRef }: { children: ReactNode; mainRef: React.RefObject<HTMLElement | null> }) {
-  return <div className="min-h-svh bg-background">
-    <header className="mx-auto flex h-14 w-full max-w-2xl items-center justify-between px-4">
+  return <OnboardingProvider><div className="min-h-svh bg-background">
+    <header className="mx-auto flex h-14 w-full max-w-2xl items-center gap-3 px-4">
       <a href="#/onboarding" className="flex items-center gap-2">
         <img src="/mark.png" alt="" className="size-8" />
         <span className="font-heading text-lg font-semibold tracking-tight">Lance</span>
       </a>
-      <a href="#/turnos" className="rounded-sm text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-4">Abrir painel</a>
+      <span className="ml-auto flex items-center gap-3">
+        <OnboardingMascote />
+        <a href="#/turnos" className="rounded-sm text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-4">Abrir painel</a>
+      </span>
     </header>
     <main ref={mainRef} tabIndex={-1} className="mx-auto w-full max-w-2xl px-4 pt-8 pb-16 outline-none">
       {children}
     </main>
-  </div>;
+  </div></OnboardingProvider>;
 }

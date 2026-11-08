@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { ThinkingOrb } from 'thinking-orbs';
+import { useMemo, useState } from 'react';
 import { Lexer } from 'marked';
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, FileTextIcon, InboxIcon, SearchIcon, TriangleAlertIcon } from 'lucide-react';
 import type { Dossier, Escalation, Pauta, ResultadoPregao, Turno, Turnos } from '../../src/server/contract.ts';
@@ -18,6 +17,8 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LanceInline, useRelatarTurnos } from '@/components/lance-presence';
+import { presencaDoMascote, type RelatoTurnos } from '@/lib/mascote';
 import { OperationalConditions } from '@/components/operational-conditions';
 import { PdfButton } from '@/components/pdf-button';
 
@@ -45,12 +46,13 @@ function AgentProgress({ turno }: { turno: Turno }) {
   const detalhe = ativa ? resumo.atividade
     : turno.status === 'sem_atualizacao' ? 'Aguarde uma nova atualização ou consulte a última atividade.'
     : turno.motivo ?? (turno.status === 'concluido' ? undefined : 'Consulte as atividades registradas para verificar onde a execução parou.');
+  const foco = resumo.fases.find(fase => fase.estado === 'em_andamento')
+    ?? resumo.fases.find(fase => fase.estado === 'atencao')
+    ?? [...resumo.fases].reverse().find(fase => fase.estado !== 'aguardando');
   return <Card className="agent-progress">
     <CardContent className="flex flex-col gap-5">
       <div className="agent-status" data-active={ativa}>
-        {ativa && <div className="agent-orb" aria-hidden="true">
-          <ThinkingOrb state="searching" size={64} speed={0.75} theme="light" color="#355d53" />
-        </div>}
+        <LanceInline state={presencaDoMascote({ tela: 'analise', analise: { status: turno.status, mostraResultado: false } }).state} />
         <div className="min-w-0" role="status" aria-live="polite" aria-atomic="true">
           <h2 className="text-xl font-semibold tracking-tight wrap-anywhere">{titulo}</h2>
           {detalhe && <p className="mt-1 text-sm text-muted-foreground wrap-anywhere">
@@ -65,10 +67,14 @@ function AgentProgress({ turno }: { turno: Turno }) {
             {fase.estado === 'concluida' || fase.estado === 'consultada' ? <CheckIcon className="size-3.5" />
               : fase.estado === 'atencao' ? <TriangleAlertIcon className="size-3.5" /> : index + 1}
           </span>
-          <span className="min-w-0 font-medium wrap-anywhere">{fase.titulo}</span>
-          <span className="agent-stage-label text-xs">{!ativa && fase.estado === 'aguardando' ? 'Não iniciada' : estadoFase[fase.estado]}</span>
+          <span className="agent-stage-title">{fase.titulo}</span>
+          <span className="agent-stage-label">
+            {fase.estado === 'em_andamento' && <span className="agent-stage-live" aria-hidden="true" />}
+            {!ativa && fase.estado === 'aguardando' ? 'Não iniciada' : estadoFase[fase.estado]}
+          </span>
         </li>)}
       </ol>
+      {foco && <p key={foco.id} className="agent-stage-note">{foco.descricao}</p>}
       {turno.etapas.length > 0 && <ActivityHistory turno={turno} />}
     </CardContent>
   </Card>;
@@ -189,6 +195,15 @@ function TenderActions({ tender }: { tender: string }) {
 export function Acompanhamento({ data, expandir = false }: { data: Turnos; lastRead?: number; expandir?: boolean }) {
   const [busca, setBusca] = useState('');
   const [date, setDate] = useState('');
+  const relato = useMemo<RelatoTurnos>(() => {
+    const aberto = expandir ? data.turnos[0] : undefined;
+    return {
+      conhecidos: true,
+      turnos: data.turnos.map(turno => ({ status: turno.status, temResultado: (turno.resultados?.length ?? 0) > 0 })),
+      analise: aberto ? { status: aberto.status, mostraResultado: aberto.status === 'concluido' && (aberto.resultados?.length ?? 0) > 0 } : null,
+    };
+  }, [data.turnos, expandir]);
+  useRelatarTurnos(relato);
   if (expandir && data.turnos[0]) {
     const turno = data.turnos[0];
     const nome = turno.pregoes.length === 1 ? turno.nomesEditais?.[turno.pregoes[0]] : 'Análise de editais';

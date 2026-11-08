@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, FileSpreadsheetIcon } from 'lucide-react';
 import type { AnalysisStarted, OnboardingData } from '../../src/server/onboarding.ts';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ import {
   FieldLegend,
   FieldSet,
 } from '@/components/ui/field';
+import { useRelatarOnboarding } from '@/components/lance-presence';
 import { OpportunityFeed } from '@/components/opportunity-feed';
 
 const sessionKey = 'lance-demo-confirmado';
@@ -47,7 +48,9 @@ export function Onboarding({
   iniciar: (id: string, catalogos: string[]) => Promise<AnalysisStarted>;
 }) {
   const [arquivos, setArquivos] = useState(() => escolhaInicial(data));
-  const [passo, setPasso] = useState(escolherEdital && confirmado() && arquivos.length ? 3 : 1);
+  const [passo, setPasso] = useState<1 | 2 | 3>(escolherEdital && confirmado() && arquivos.length ? 3 : 1);
+  const [iniciando, setIniciando] = useState(false);
+  useRelatarOnboarding(useMemo(() => ({ passo, iniciando }), [passo, iniciando]));
   const title = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     title.current?.focus();
@@ -65,6 +68,15 @@ export function Onboarding({
   );
   function marcar(id: string, checked: boolean) {
     setArquivos((xs) => (checked ? [...new Set([...xs, id])] : xs.filter((x) => x !== id)));
+  }
+  async function comecar(id: string) {
+    setIniciando(true);
+    try {
+      return await iniciar(id, arquivos);
+    } catch (error) {
+      setIniciando(false);
+      throw error;
+    }
   }
   return (
     <div className="flex w-full flex-col gap-7">
@@ -202,7 +214,7 @@ export function Onboarding({
             catalogos={arquivos}
             disponivel={data.analise.disponivel}
             motivo={data.analise.motivo}
-            iniciar={(id) => iniciar(id, arquivos)}
+            iniciar={(id) => comecar(id)}
             voltar={() => setPasso(2)}
           />
         )}
