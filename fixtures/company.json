@@ -3,6 +3,7 @@
   "empresa": {
     "nome": "Distribuidora Modelo Ltda (fictícia)",
     "porte": "EPP",
+    "atuacao": "distribuidora",
     "uf": "PR",
     "margemMinima": 0.15,
     "prazoEntregaDias": 60

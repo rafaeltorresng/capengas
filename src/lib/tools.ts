@@ -13,6 +13,7 @@ import type { LanceStore } from './store.ts';
 import { randomUUID } from 'node:crypto';
 import { buscarNosDocumentos, carregarDocumentos, lerTrecho, preLeitura, registrarRegra, PARAMETROS_REGRA, type Documento, type RegraProposta } from './regras-proposta.ts';
 import { gerarDocumentoProposta, type DocumentoProposta, type ItemProposta } from './documento-proposta.ts';
+import { planoDoEstado, registrarExigencia, PARAMETROS_EXIGENCIA, type ExigenciaDocumental, type PlanoDocumentos } from './plano-documentos.ts';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const parseId = (id: string) => { const [cnpj, ano, seq] = id.split('/'); return { cnpj, ano: +ano, seq: +seq }; };
@@ -27,6 +28,8 @@ export type LanceState = {
   proposalDocs?: Record<string, Documento[]>;
   proposalRules?: Record<string, RegraProposta[]>;
   proposals?: Record<string, DocumentoProposta>;
+  documentRequirements?: Record<string, ExigenciaDocumental[]>;
+  documentPlans?: Record<string, PlanoDocumentos>;
   /** Sem store, as ferramentas de envio não chamam o portal. */
   store?: LanceStore;
   analysisStore?: Pick<LanceStore, 'openEscalation'>;
@@ -35,7 +38,7 @@ export type LanceState = {
 };
 export const newState = (company: any, sandboxUrl: string, now = new Date()): LanceState =>
   ({ company, now, sandboxUrl, tenders: {}, items: {}, editais: {}, requirements: [], fits: {}, restrictive: {}, decisions: {}, drafts: {}, approvals: {}, submissions: [], editalSources: {},
-    proposalDocs: {}, proposalRules: {}, proposals: {} });
+    proposalDocs: {}, proposalRules: {}, proposals: {}, documentRequirements: {}, documentPlans: {} });
 
 const VIAVEL = new Set(['disputar', 'disputar_com_pendencia']);
 /** Itens do pregão que o decide_item mandou disputar. Regras e documento da proposta só existem para eles. */
@@ -366,6 +369,27 @@ export const tools: Tool[] = [
       const docs = documentosDaProposta(st, a.tender_id);
       if (!docs) return { erro: 'abra os documentos com read_proposal_docs antes' };
       return registrarRegra(docs, ((st.proposalRules ??= {})[a.tender_id] ??= []), a);
+    },
+  },
+  {
+    name: 'record_document_requirement', description: 'Registra um documento que o edital exige para disputar (declarações, certidões, AFE, licença sanitária, contrato social, balanço, atestado, catálogo, registro ANVISA, carta de solidariedade, comprovante de distribuidor, amostra). Informe a fase, as condições ("caso o TR exija", "se solicitado", "no caso de revendedor") e o prazo escritos no trecho. A citação precisa ser literal e falar do documento; ela é conferida. Uma chamada por documento.',
+    parameters: { type: 'object', required: ['tender_id', 'tipo', 'citacao'], properties: { tender_id: { type: 'string' }, ...PARAMETROS_EXIGENCIA } },
+    async run(a, ctx) {
+      const st = S(ctx); const bloqueio = semViabilidade(st, a.tender_id); if (bloqueio) return bloqueio;
+      const docs = documentosDaProposta(st, a.tender_id);
+      if (!docs) return { erro: 'abra os documentos com read_proposal_docs antes' };
+      return registrarExigencia(docs, ((st.documentRequirements ??= {})[a.tender_id] ??= []), a);
+    },
+  },
+  {
+    name: 'draft_document_plan', description: 'Monta o plano de documentos do pregão: cada documento exigido, a fase, quem providencia (o Lance, um humano ou o fabricante), a situação no cofre e o prazo. Junta as exigências registradas, as regras da proposta e as exigências do edital. Não envia.',
+    parameters: { type: 'object', required: ['tender_id'], properties: { tender_id: { type: 'string' } } },
+    async run(a, ctx) {
+      const st = S(ctx); const bloqueio = semViabilidade(st, a.tender_id); if (bloqueio) return bloqueio;
+      const plano = planoDoEstado(st, a.tender_id)!;
+      (st.documentPlans ??= {})[a.tender_id] = plano;
+      return { resumo: plano.resumo, pendencias: plano.pendencias,
+        documentos: plano.linhas.map(l => ({ tipo: l.tipo, fase: l.fase, status: l.status, responsavel: l.responsavel, condicional: l.condicional, prazo: l.prazo })) };
     },
   },
   {

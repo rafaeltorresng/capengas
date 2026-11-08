@@ -447,6 +447,51 @@ export function ItemScreen({ item }: { item: AnalyzedItem }) {
   </Page>;
 }
 
+type Plan = NonNullable<Dossier['planoDocumentos']>;
+const faseLabel: Record<Plan['linhas'][number]['fase'], string> = {
+  proposta_inicial: 'Proposta inicial (antes da sessão)', proposta_ajustada: 'Proposta ajustada (após o último lance)',
+  habilitacao: 'Habilitação', nao_informada: 'Fase não informada no edital',
+};
+const responsavelLabel = { lance: 'Lance', humano: 'Humano', terceiro: 'Fabricante' } as const;
+const planProblem = new Set(['vence_antes', 'ausente', 'irregular', 'pedir_terceiro', 'conferir']);
+
+function DocumentPlan({ plan }: { plan: Plan }) {
+  const fases = [...new Set(plan.linhas.map(l => l.fase))];
+  return <Card>
+    <CardHeader>
+      <CardTitle><h2>Documentos para disputar</h2></CardTitle>
+      <CardDescription>
+        Itens viáveis: {plan.itens.join(', ')}. {plan.resumo.total} documentos: {plan.resumo.lance} com o Lance, {plan.resumo.humano} com um humano,
+        {' '}{plan.resumo.terceiro} com o fabricante. {plan.resumo.problemas} pendentes, {plan.resumo.condicionais} condicionais.
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="flex flex-col gap-6">
+      {fases.map(fase => <section key={fase} className="flex flex-col gap-2">
+        <h3 className="text-sm font-medium">{faseLabel[fase]}</h3>
+        <ItemGroup>
+          {plan.linhas.filter(l => l.fase === fase).map((linha, index) => <div key={linha.tipo + index}>
+            {index > 0 && <ItemSeparator />}
+            <Item>
+              <ItemContent>
+                <ItemTitle>
+                  {linha.documento}
+                  <Badge variant={planProblem.has(linha.status) ? 'destructive' : linha.status === 'nao_se_aplica' ? 'outline' : 'secondary'}>{linha.rotulo}</Badge>
+                  {linha.status !== 'lance_gera' && linha.status !== 'nao_se_aplica' && <Badge variant="outline">{responsavelLabel[linha.responsavel]}</Badge>}
+                  {linha.condicional && <Badge variant="outline">Condicional</Badge>}
+                </ItemTitle>
+                <ItemDescription>{linha.acao}</ItemDescription>
+                {linha.prazo && <ItemDescription>Prazo: {linha.prazo}</ItemDescription>}
+                {linha.ate && planProblem.has(linha.status) && <ItemDescription>Resolver até a sessão, em {dayOf(linha.ate)}.</ItemDescription>}
+                {linha.fonte && <Evidence source={{ ...linha.fonte, citacao: linha.citacao }} quote />}
+              </ItemContent>
+            </Item>
+          </div>)}
+        </ItemGroup>
+      </section>)}
+    </CardContent>
+  </Card>;
+}
+
 export function DossierScreen({ data }: { data: Dossier }) {
   return <Page>
     <PageHeader title="Dossiê" detail={data.pregao + ' / versão ' + data.versao} />
@@ -490,6 +535,7 @@ export function DossierScreen({ data }: { data: Dossier }) {
         </Accordion>}
       </CardContent>
     </Card>}
+    {data.planoDocumentos && <DocumentPlan plan={data.planoDocumentos} />}
     <Card>
       <CardHeader><CardTitle><h2>Checklist</h2></CardTitle></CardHeader>
       <CardContent>
