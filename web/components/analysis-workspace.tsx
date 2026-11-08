@@ -67,7 +67,7 @@ function AgentProgress({ turno }: { turno: Turno }) {
   </Card>;
 }
 
-function PdfButton({ tender, analise, tipo }: { tender: string; analise: string; tipo: string }) {
+function PdfButton({ tender, analise, tipo }: { tender: string; analise: string; tipo: 'proposta' | 'relatorio' }) {
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState('');
   async function baixar() {
@@ -84,7 +84,7 @@ function PdfButton({ tender, analise, tipo }: { tender: string; analise: string;
   return <div className="flex flex-col items-start gap-2">
     <Button variant={tipo === 'proposta' ? 'default' : 'outline'} disabled={busy} onClick={() => void baixar()}>
       {busy ? <Spinner data-icon="inline-start" /> : <FileDownIcon data-icon="inline-start" />}
-      {busy ? 'Preparando PDF…' : tipo === 'relatorio' ? 'Baixar análise em PDF' : 'Baixar minuta em PDF'}
+      {busy ? 'Preparando PDF…' : tipo === 'proposta' ? 'Baixar minuta em PDF' : 'Baixar análise em PDF'}
     </Button>
     {erro && <p role="alert" className="max-w-sm text-sm text-destructive">{erro}</p>}
   </div>;
@@ -173,8 +173,7 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
             <Accordion><AccordionItem value="previa"><AccordionTrigger>Visualizar documento</AccordionTrigger><AccordionContent><DocumentPreview markdown={proposta.markdown} /></AccordionContent></AccordionItem></Accordion>
           </CardContent>
         </Card> : <EmptyState icon={<FileTextIcon />} title="Proposta ainda não preparada" description={veredito.liberados + veredito.condicionados > 0 ? 'Há itens candidatos, mas esta execução ainda não produziu um documento. Nenhum arquivo será preenchido com dados inventados.' : 'A proposta é preparada quando existe um item viável. Resolva as pendências técnicas antes de avançar.'} />}
-        {atual && dossier?.planoDocumentos && <DocumentPlan plan={dossier.planoDocumentos}
-          download={!dossier.reavaliar && !dossier.desatualizado && proposta ? tipo => <PdfButton tender={resultado.tender} analise={turno.id} tipo={tipo} /> : undefined} />}
+        {atual && dossier?.planoDocumentos && <DocumentPlan plan={dossier.planoDocumentos} />}
       </TabsContent>
       <TabsContent value="evidencias" className="mt-4 flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">Confira as fontes, as citações e o encaixe técnico antes de tomar uma decisão.</p>

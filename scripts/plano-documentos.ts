@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { anvisa } from '../src/lib/data.ts';
 import { checkAnvisa } from '../src/lib/rules.ts';
 import { deRegrasProposta, montarPlano, prazoDe, type ProdutoViavel } from '../src/lib/plano-documentos.ts';
-import type { ResultadoRegras } from '../src/lib/regras-proposta.ts';
+import { carregarDocumentos, type ResultadoRegras } from '../src/lib/regras-proposta.ts';
 
 const company = JSON.parse(readFileSync('fixtures/company.json', 'utf8'));
 const demo = JSON.parse(readFileSync('fixtures/demo.json', 'utf8'));
@@ -24,7 +24,8 @@ for (const p of pregoes) {
     return { item: m.item, produto, regularizacao: produto ? checkAnvisa(anvisa.byRegistro(produto.registroAnvisa), { today: hoje, deliveryBy: entrega }).regularizacao : undefined };
   });
   const plano = montarPlano({ tenderId: p.id, exigencias: deRegrasProposta(r.regras), cofre: company.cofre, sessao: p.abertura?.slice(0, 10) ?? null, hoje: hoje.toISOString().slice(0, 10),
-    empresa: company.empresa, produtos, prazoPropostaAjustada: r.regras.filter(x => x.campo === 'prazo_envio').map(x => prazoDe(x.citacao)).find(Boolean) });
+    empresa: company.empresa, produtos, prazoPropostaAjustada: r.regras.filter(x => x.campo === 'prazo_envio').map(x => prazoDe(x.citacao)).find(Boolean),
+    textos: (await carregarDocumentos(p.id)).map(d => d.texto) });
   const destino = `out/plano-documentos/${p.id.replaceAll('/', '-')}.json`;
   writeFileSync(destino, JSON.stringify(plano, null, 1));
   const { resumo } = plano;

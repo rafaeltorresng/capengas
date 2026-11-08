@@ -1,4 +1,4 @@
-import { type ReactNode, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { CheckIcon, CircleIcon, Clock3Icon, FileTextIcon, InboxIcon, PencilIcon, SearchIcon, XIcon } from 'lucide-react';
 import type { CofreAlert, Decision, Dossier, Escalation, HistoricoPregao, Item as AnalyzedItem, LinhaPauta, Pauta, Proof, QueueItem, SavedDecision, Today, TurnoStatus, Turnos } from '../src/server/contract.ts';
 import { ApiError, request } from '@/lib/api';
@@ -379,7 +379,7 @@ const faseLabel: Record<Plan['linhas'][number]['fase'], string> = {
 const responsavelLabel = { lance: 'Lance', humano: 'Sua equipe', terceiro: 'Fabricante' } as const;
 const planProblem = new Set(['vence_antes', 'ausente', 'irregular', 'pedir_terceiro', 'conferir']);
 
-export function DocumentPlan({ plan, download }: { plan: Plan; download?: (tipo: string) => ReactNode }) {
+export function DocumentPlan({ plan }: { plan: Plan }) {
   const fases = [...new Set(plan.linhas.map(l => l.fase))];
   return <Card>
     <CardHeader>
@@ -405,7 +405,6 @@ export function DocumentPlan({ plan, download }: { plan: Plan; download?: (tipo:
                 </ItemTitle>
                 <ItemDescription>{linha.acao}</ItemDescription>
                 {linha.prazo && <ItemDescription>Prazo: {linha.prazo}</ItemDescription>}
-                {download && linha.status === 'lance_gera' && linha.tipo !== 'proposta_precos' && download(linha.tipo)}
                 {linha.ate && planProblem.has(linha.status) && <ItemDescription>Resolver até a sessão, em {dayOf(linha.ate)}.</ItemDescription>}
                 {linha.fonte && <Accordion><AccordionItem value="fonte"><AccordionTrigger>Conferir exigência no edital</AccordionTrigger><AccordionContent><Evidence source={{ ...linha.fonte, citacao: linha.citacao }} quote /></AccordionContent></AccordionItem></Accordion>}
               </ItemContent>

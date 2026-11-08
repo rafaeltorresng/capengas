@@ -5,7 +5,6 @@ import type { Schema } from './schema.ts';
 import type { CofreDoc } from './contracts.ts';
 import type { Documento, RegraProposta } from './regras-proposta.ts';
 import type { LanceState } from './tools.ts';
-import { impedimento } from './documentos-gerados.ts';
 
 export type Classe = 'gerado' | 'cofre' | 'produto' | 'terceiro' | 'evento' | 'humano';
 export type Fase = 'proposta_inicial' | 'proposta_ajustada' | 'habilitacao' | 'nao_informada';
@@ -54,7 +53,7 @@ const MULTIPLOS = new Set<TipoDocumento>(['declaracao_outra', 'documento_outro']
 export type Origem = 'agente' | 'regra_proposta' | 'exigencia_edital' | 'implicito';
 export type ExigenciaDocumental = {
   tipo: TipoDocumento; fase: Fase; condicoes: Condicao[]; prazo?: string; resumo?: string;
-  citacao?: string; fonte?: { nome: string; url: string }; origem: Origem; noSistema?: boolean;
+  citacao?: string; fonte?: { nome: string; url: string }; origem: Origem; noSistema?: boolean; naProposta?: boolean;
 };
 
 const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ');
@@ -94,16 +93,18 @@ function exigencia(tipo: TipoDocumento, texto: string, base: Pick<ExigenciaDocum
 /** Converte as regras da proposta já extraídas (com citação conferida) em exigências de documento. */
 export function deRegrasProposta(regras: RegraProposta[]): ExigenciaDocumental[] {
   const out: ExigenciaDocumental[] = [];
+  // O documento da proposta escreve as declarações registradas e a coluna do registro ANVISA.
+  const comModelo = regras.some(r => r.campo === 'modelo_proposta');
   for (const r of regras) {
     const base = { citacao: r.citacao, fonte: r.fonte, origem: 'regra_proposta' as const, resumo: r.valor };
     const citado = norm(r.citacao); const ambos = norm(`${r.valor} ${r.citacao}`);
     if (r.campo === 'modelo_proposta') out.push(exigencia('proposta_precos', r.citacao, base));
     // "A apresentação da proposta implicará a aceitação..." é efeito do envio, não documento a produzir.
     else if (r.campo === 'declaracoes' && /implicar[aá]|\bimplica\b/.test(citado)) continue;
-    else if (r.campo === 'declaracoes') out.push(exigencia(primeiro(citado, ORDEM_DECLARACOES) ?? primeiro(ambos, ORDEM_DECLARACOES) ?? 'declaracao_outra', r.citacao, base));
+    else if (r.campo === 'declaracoes') out.push({ ...exigencia(primeiro(citado, ORDEM_DECLARACOES) ?? primeiro(ambos, ORDEM_DECLARACOES) ?? 'declaracao_outra', r.citacao, base), ...(comModelo ? { naProposta: true } : {}) });
     else if (r.campo === 'documentos_anexos') out.push(exigencia(primeiro(citado, ORDEM_ANEXOS) ?? primeiro(ambos, ORDEM_ANEXOS) ?? 'documento_outro', r.citacao, base));
     else if (r.campo === 'registro_anvisa') {
-      out.push(exigencia('registro_anvisa', r.citacao, base));
+      out.push({ ...exigencia('registro_anvisa', r.citacao, base), ...(/n(umero|[ºo°.]) do registro/.test(citado) ? { naProposta: true } : {}) });
       for (const extra of ['afe', 'licenca_sanitaria'] as const) if (TIPOS_DOCUMENTO[extra].assunto.test(citado)) out.push(exigencia(extra, r.citacao, base));
     }
   }
@@ -153,10 +154,10 @@ export function registrarExigencia(docs: Documento[], lista: ExigenciaDocumental
   return { aceito: true, arquivo: doc.nome, tipo, fase: e.fase, condicoes: e.condicoes };
 }
 
-export type Status = 'pronto' | 'gerado' | 'lance_gera' | 'marcar_no_sistema' | 'vence_antes' | 'ausente' | 'irregular'
+export type Status = 'pronto' | 'gerado' | 'lance_gera' | 'na_proposta' | 'marcar_no_sistema' | 'vence_antes' | 'ausente' | 'irregular'
   | 'pedir_terceiro' | 'preparar' | 'conferir' | 'nao_se_aplica';
 export const ROTULOS: Record<Status, string> = {
-  pronto: 'Pronto', gerado: 'Gerado', lance_gera: 'O Lance gera', marcar_no_sistema: 'Marcar no sistema', vence_antes: 'Vence antes da sessão',
+  pronto: 'Pronto', gerado: 'Gerado', lance_gera: 'O Lance gera', na_proposta: 'Na proposta', marcar_no_sistema: 'Marcar no sistema', vence_antes: 'Vence antes da sessão',
   ausente: 'Ausente', irregular: 'Irregular', pedir_terceiro: 'Pedir ao fabricante', preparar: 'Preparar', conferir: 'Conferir', nao_se_aplica: 'Não se aplica',
 };
 const PROBLEMA = new Set<Status>(['vence_antes', 'ausente', 'irregular', 'pedir_terceiro', 'conferir']);
@@ -182,9 +183,18 @@ function consolidar(exigencias: ExigenciaDocumental[]) {
     const chave = MULTIPLOS.has(e.tipo) ? `${e.tipo}:${e.citacao}` : e.tipo;
     const atual = porTipo.get(chave);
     if (!atual) porTipo.set(chave, { ...e });
-    else if (!atual.prazo && e.prazo) atual.prazo = e.prazo;
+    else {
+      if (!atual.prazo && e.prazo) atual.prazo = e.prazo;
+      if (e.noSistema) atual.noSistema = true;
+      if (e.naProposta) atual.naProposta = true;
+    }
   }
   return [...porTipo.values()];
+}
+
+/** O modelo AGU lista as declarações logo após "em campo próprio do sistema"; a janela cobre a lista (5.4.1 a 5.4.4). */
+function clausulaDoSistema(tipo: TipoDocumento, textos: string[]) {
+  return textos.some(t => [...t.matchAll(/campo proprio do sistema/g)].some(m => TIPOS_DOCUMENTO[tipo].assunto.test(t.slice(Math.max(0, m.index - 200), m.index + 1300))));
 }
 
 const ORDEM_FASE: Record<Fase, number> = { proposta_inicial: 0, proposta_ajustada: 1, habilitacao: 2, nao_informada: 3 };
@@ -193,7 +203,10 @@ const fmt = (xs: string[]) => [...new Set(xs)].join(', ');
 export function montarPlano(o: {
   tenderId: string; exigencias: ExigenciaDocumental[]; cofre: CofreDoc[]; sessao: string | null; hoje: string;
   empresa: { atuacao?: string; porte?: string; programaIntegridade?: boolean } | undefined; produtos: ProdutoViavel[]; propostaGerada?: boolean; prazoPropostaAjustada?: string;
+  /** Texto dos documentos do pregão, para achar as declarações feitas em campo próprio do sistema. */
+  textos?: string[];
 }): PlanoDocumentos {
+  const textos = (o.textos ?? []).map(norm);
   const exigencias = consolidar([...o.exigencias, { tipo: 'proposta_precos', fase: 'proposta_ajustada', condicoes: ['sempre'], origem: 'implicito' }]);
   const atuacao = o.empresa?.atuacao;
   const linhas: LinhaPlano[] = exigencias.map(e => {
@@ -207,11 +220,15 @@ export function montarPlano(o: {
       status = o.propostaGerada ? 'gerado' : 'lance_gera'; responsavel = 'lance'; prazo ??= o.prazoPropostaAjustada;
       acao = 'Atualizar com o preço do último lance e enviar dentro do prazo da convocação.';
     } else if (def.classe === 'gerado') {
-      const bloqueio = impedimento(e.tipo, o.empresa);
-      if (bloqueio?.status === 'nao_se_aplica') { status = 'nao_se_aplica'; acao = bloqueio.motivo; }
-      else if (e.noSistema) { status = 'marcar_no_sistema'; acao = 'Marcar a declaração no portal ao cadastrar a proposta.'; }
-      else if (bloqueio) acao = bloqueio.motivo;
-      else { status = 'lance_gera'; responsavel = 'lance'; acao = 'O Lance redige a declaração; o representante assina.'; }
+      const porte = o.empresa?.porte;
+      const ressalva = e.tipo === 'declaracao_me_epp' && !porte ? 'Só marcar se a empresa for ME ou EPP; o cadastro não informa o porte.'
+        : e.tipo === 'declaracao_integridade' && o.empresa?.programaIntegridade !== true ? 'Só marcar se a empresa desenvolve programa de integridade; o cadastro não informa.' : null;
+      if (e.tipo === 'declaracao_me_epp' && porte && !['ME', 'EPP'].includes(porte)) { status = 'nao_se_aplica'; acao = `A empresa tem porte ${porte}; a declaração é só para ME ou EPP.`; }
+      else if (e.noSistema || (e.tipo !== 'declaracao_outra' && clausulaDoSistema(e.tipo, textos))) {
+        status = 'marcar_no_sistema';
+        acao = ressalva ?? `Marcar a declaração no portal ao cadastrar a proposta.${e.naProposta && !e.noSistema ? ' O texto da proposta também a traz, como pede o modelo.' : ''}`;
+      } else if (e.naProposta && !ressalva) { status = 'na_proposta'; responsavel = 'lance'; acao = 'A declaração vai no texto da proposta, como pede o modelo do edital.'; }
+      else acao = ressalva ?? 'O edital pede esta declaração fora do sistema e da proposta; redigir pelo modelo do edital e assinar.';
     } else if (def.classe === 'cofre') {
       const [r] = checkDocs(o.cofre, [{ tipo: e.tipo, citacao: e.citacao ?? '' }], o.sessao ?? o.hoje);
       ate = o.sessao;
@@ -227,7 +244,11 @@ export function montarPlano(o: {
         if (ruins.some(p => p.regularizacao === 'vencido' || p.regularizacao === 'nao_encontrado')) {
           status = 'irregular'; acao = `Registro sem vigência na base da ANVISA: ${fmt(ruins.map(p => `item ${p.item} (${p.produto!.registroAnvisa ?? 'sem registro'})`))}.`;
         } else if (ruins.length) { status = 'conferir'; acao = `Conferir o registro na ANVISA: ${fmt(ruins.map(p => `item ${p.item}`))}.`; }
-        else { status = 'lance_gera'; responsavel = 'lance'; acao = 'O Lance monta o comprovante a partir da consulta à base oficial da ANVISA.'; }
+        else if (e.naProposta) { status = 'na_proposta'; responsavel = 'lance'; acao = 'O número do registro de cada item vai na tabela da proposta.'; }
+        else {
+          status = 'preparar';
+          acao = `Anexar a consulta de cada registro no portal da ANVISA (consultas.anvisa.gov.br, produtos para saúde): ${fmt(comProduto.map(p => `item ${p.item} (${p.produto!.registroAnvisa})`))}.`;
+        }
       } else {
         const faltam = comProduto.filter(p => !p.produto!.arquivos?.[e.tipo]);
         if (faltam.length) { status = 'ausente'; acao = `Subir o arquivo de: ${fmt(faltam.map(p => `${p.produto!.nome} (${p.produto!.marca})`))}.`; }
@@ -245,7 +266,7 @@ export function montarPlano(o: {
       acao = `Separar amostra dos itens ${itens.join(', ') || 'ofertados'} para entregar no prazo.`;
     }
     if (condicional && status !== 'nao_se_aplica') acao = `${condicoes.includes('se_solicitado') ? 'Só se o pregoeiro solicitar' : 'Só se o termo de referência exigir'}; deixar encaminhado. ${acao}`;
-    return { tipo: e.tipo, documento: def.nome, classe: def.classe, fase: e.fase, condicoes, condicional, status, rotulo: ROTULOS[status], responsavel, acao,
+    return { tipo: e.tipo, documento: def.nome, classe: def.classe, fase: status === 'marcar_no_sistema' ? 'proposta_inicial' : e.fase, condicoes, condicional, status, rotulo: ROTULOS[status], responsavel, acao,
       ate, ...(prazo ? { prazo } : {}), ...(itens ? { itens } : {}), ...(e.citacao ? { citacao: e.citacao } : {}), ...(e.fonte ? { fonte: e.fonte } : {}), origem: e.origem };
   }).sort((a, b) => ORDEM_FASE[a.fase] - ORDEM_FASE[b.fase] || TIPOS.indexOf(a.tipo) - TIPOS.indexOf(b.tipo));
   const pendencias = linhas.filter(l => PROBLEMA.has(l.status)).map(l => `${l.condicional ? '(condicional) ' : ''}${l.documento}: ${l.rotulo}. ${l.acao}`);
@@ -276,5 +297,6 @@ export function planoDoEstado(st: LanceState, tenderId: string): PlanoDocumentos
     tenderId, sessao: typeof tender.abertura === 'string' ? tender.abertura.slice(0, 10) : null, hoje: st.now.toISOString().slice(0, 10),
     exigencias: [...(st.documentRequirements?.[tenderId] ?? []), ...deRegrasProposta(regras), ...deRequisitos(requirements)],
     cofre: st.company.cofre ?? [], empresa: st.company.empresa, produtos, propostaGerada: !!st.proposals?.[tenderId], prazoPropostaAjustada: prazoAjustada,
+    textos: (st.proposalDocs?.[tenderId] ?? []).map(d => d.texto),
   });
 }
