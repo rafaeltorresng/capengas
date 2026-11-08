@@ -144,3 +144,35 @@ test('documentos sem texto escalam a montagem da proposta', async () => {
   assert.equal(r.escalar, true);
   assert.equal(aberturas.length, 1);
 });
+
+test('valor global por extenso, como pedem os modelos de proposta', async () => {
+  const { porExtenso } = await import('../src/lib/documento-proposta.ts');
+  assert.equal(porExtenso(40037.5), 'quarenta mil e trinta e sete reais e cinquenta centavos');
+  assert.equal(porExtenso(1), 'um real');
+  assert.equal(porExtenso(0.01), 'um centavo');
+  assert.equal(porExtenso(100), 'cem reais');
+  assert.equal(porExtenso(101), 'cento e um reais');
+  assert.equal(porExtenso(1250), 'mil duzentos e cinquenta reais');
+  assert.equal(porExtenso(5500), 'cinco mil e quinhentos reais');
+  assert.equal(porExtenso(21000), 'vinte e um mil reais');
+  assert.equal(porExtenso(1000000), 'um milhão de reais');
+  assert.equal(porExtenso(2500000), 'dois milhões e quinhentos mil reais');
+  assert.equal(porExtenso(1001250.99), 'um milhão, mil duzentos e cinquenta reais e noventa e nove centavos');
+  const doc = gerarDocumentoProposta({ pregao, empresa, hoje, itens: [item], regras: [] });
+  assert.match(doc.markdown, /Valor global da proposta: R\$ 137,50 \(cento e trinta e sete reais e cinquenta centavos\)/);
+});
+
+test('modelo que pede o responsável pela assinatura do contrato ou da ata ganha o bloco com os dados', () => {
+  const assinatura = regra('assinatura', 'responsável pelo contrato ou Ata de Registro de Preços: nome, CPF, endereço',
+    'Responsável pela assinatura do contrato ou da Ata de Registro de Preços: - Nome: .... - CPF: .... - Endereço: .... - Telefone: .... - e-mail: ....');
+  const doc = gerarDocumentoProposta({ pregao, hoje, itens: [item], regras: [assinatura],
+    empresa: { ...empresa, representante: { nome: 'Ana Souza', cpf: '000.000.000-00', email: 'ana@exemplo.com' } } });
+  assert.match(doc.markdown, /## \d\. Responsável pela assinatura do contrato ou da ata/);
+  assert.match(doc.markdown, /\*\*Nome:\*\* Ana Souza/);
+  assert.match(doc.markdown, /\*\*E-mail:\*\* ana@exemplo\.com/);
+  assert.ok(doc.pendencias.includes('responsável pelo contrato: Endereço'));
+  assert.ok(doc.pendencias.includes('responsável pelo contrato: Telefone'));
+  assert.doesNotMatch(doc.markdown.split('## Conferência')[0], /_Assinatura: responsável pelo contrato/);
+  const sem = gerarDocumentoProposta({ pregao, empresa, hoje, itens: [item], regras: [regra('assinatura', 'Assinatura e carimbo do responsável da empresa')] });
+  assert.doesNotMatch(sem.markdown, /Responsável pela assinatura do contrato/);
+});

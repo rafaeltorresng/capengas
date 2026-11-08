@@ -88,8 +88,8 @@ test('plano cruza com o cofre, o catálogo e a ANVISA, e diz quem providencia ca
   assert.equal(l.crf_fgts.status, 'pronto'); assert.equal(l.afe.status, 'pronto');
   assert.equal(l.licenca_sanitaria.status, 'ausente');
   assert.equal(l.proposta_precos.status, 'lance_gera'); assert.equal(l.proposta_precos.prazo, '2 horas');
-  assert.equal(l.declaracao_me_epp.status, 'marcar_no_sistema'); assert.equal(l.declaracao_pleno_acordo.status, 'lance_gera');
-  assert.equal(l.registro_anvisa.status, 'lance_gera');
+  assert.equal(l.declaracao_me_epp.status, 'marcar_no_sistema'); assert.equal(l.declaracao_pleno_acordo.status, 'na_proposta');
+  assert.equal(l.registro_anvisa.status, 'na_proposta');
   assert.equal(l.catalogo_ficha_tecnica.status, 'ausente'); assert.match(l.catalogo_ficha_tecnica.acao, /Straumed.*Golgran/);
   assert.equal(l.carta_solidariedade.status, 'pedir_terceiro'); assert.equal(l.carta_solidariedade.condicional, true);
   assert.deepEqual(l.carta_solidariedade.condicoes, ['se_exigido']);
@@ -188,4 +188,71 @@ test('com item viável: o agente registra, o plano junta as fontes e vai para o 
   const dossie = buildDossie(ctx.state, tid);
   assert.deepEqual(dossie.planoDocumentos?.itens, [1]);
   assert.equal(dossie.planoDocumentos?.linhas.find(l => l.tipo === 'licenca_sanitaria')?.fonte?.url, 'https://x/edital.pdf');
+});
+
+// Trechos reais: cláusula 5.4 do modelo AGU (2941 e 22617; 3.6 no 348) e 5.10 (integridade).
+const CLAUSULA_SISTEMA = `5.4. No cadastramento da proposta inicial, o licitante declarará, em campo próprio do sistema,
+que: 5.4.1 está ciente e concorda com as condições contidas no edital e seus anexos, bem como de que a proposta apresentada
+compreende a integralidade dos custos para atendimento dos direitos trabalhistas assegurados na Constituição Federal, nas leis
+trabalhistas, nas normas infralegais, nas convenções coletivas de trabalho e nos termos de ajustamento de conduta vigentes na
+data de sua entrega em definitivo e que cumpre plenamente os requisitos de habilitação definidos no instrumento convocatório;
+5.4.2 não emprega menor de 18 anos em trabalho noturno, perigoso ou insalubre e não emprega menor de 16 anos, salvo menor, a
+partir de 14 anos, na condição de aprendiz, nos termos do artigo 7°, XXXIII, da Constituição; 5.4.4 cumpre as exigências de
+reserva de cargos para pessoa com deficiência e para reabilitado da Previdência Social, previstas em lei e em outras normas específicas.
+5.10. O licitante deverá declarar em campo próprio do sistema que desenvolve programa de integridade, conforme Decreto n° 12.304, de 2024.`;
+const MODELO_348 = 'ANEXO – II MODELO DE PROPOSTA A empresa ...';
+const empresaEpp = { atuacao: 'distribuidora', porte: 'EPP' };
+
+test('declaração prevista na cláusula de campo próprio do sistema é marcada no portal, não vira arquivo', () => {
+  const plano = montarPlano({ tenderId: 't', exigencias: deRegrasProposta(EXERCITO_22617), cofre: [], sessao: null, hoje: '2026-11-08',
+    empresa: empresaEpp, produtos, textos: [CLAUSULA_SISTEMA] });
+  const l = Object.fromEntries(plano.linhas.map(x => [x.tipo, x]));
+  for (const tipo of ['declaracao_habilitacao', 'declaracao_custos_trabalhistas', 'declaracao_pcd']) assert.equal(l[tipo].status, 'marcar_no_sistema', tipo);
+  assert.equal(l.declaracao_integridade.status, 'marcar_no_sistema');
+  assert.equal(l.declaracao_integridade.responsavel, 'humano');
+  assert.match(l.declaracao_integridade.acao, /só marcar se.*programa de integridade/i);
+  assert.ok(plano.linhas.every(x => x.status !== 'lance_gera' || x.tipo === 'proposta_precos'));
+});
+
+test('declaração escrita no modelo de proposta vai no texto da proposta', () => {
+  const regras = [regra('modelo_proposta', 'Anexo II', MODELO_348),
+    regra('declaracoes', 'habilitação', 'Declaro que a proponente atende aos requisitos de habilitaçao e o declarante atesta a veracidade das informaçoes prestadas (art. 63, I, da Lei nº 14.133/2021).')];
+  const semClausula = Object.fromEntries(montarPlano({ tenderId: 't', exigencias: deRegrasProposta(regras), cofre: [], sessao: null, hoje: '2026-11-08',
+    empresa: empresaEpp, produtos, textos: [] }).linhas.map(x => [x.tipo, x]));
+  assert.equal(semClausula.declaracao_habilitacao.status, 'na_proposta');
+  assert.equal(semClausula.declaracao_habilitacao.rotulo, 'Na proposta');
+  const comClausula = Object.fromEntries(montarPlano({ tenderId: 't', exigencias: deRegrasProposta(regras), cofre: [], sessao: null, hoje: '2026-11-08',
+    empresa: empresaEpp, produtos, textos: [CLAUSULA_SISTEMA] }).linhas.map(x => [x.tipo, x]));
+  assert.equal(comClausula.declaracao_habilitacao.status, 'marcar_no_sistema');
+  assert.match(comClausula.declaracao_habilitacao.acao, /proposta também/);
+});
+
+test('declaração fora do sistema e da proposta vai para um humano; ME/EPP só se aplica a ME ou EPP', () => {
+  const ex = deRegrasProposta([regra('declaracoes', 'custos', 'O licitante deverá apresentar, sob pena de desclassificação, declaração de que suas propostas econômicas compreendem a integralidade dos custos para atendimento dos direitos trabalhistas'),
+    regra('declaracoes', 'ME/EPP', 'declaração de que é microempresa ou empresa de pequeno porte')]);
+  const base = { tenderId: 't', exigencias: ex, cofre: [], sessao: null, hoje: '2026-11-08', produtos, textos: [] };
+  const exigencias = ex.map(e => ({ ...e, origem: 'agente' as const }));
+  const l = Object.fromEntries(montarPlano({ ...base, exigencias, empresa: empresaEpp }).linhas.map(x => [x.tipo, x]));
+  assert.equal(l.declaracao_custos_trabalhistas.status, 'conferir'); assert.equal(l.declaracao_custos_trabalhistas.responsavel, 'humano');
+  assert.match(l.declaracao_custos_trabalhistas.acao, /modelo do edital/);
+  const grande = Object.fromEntries(montarPlano({ ...base, exigencias, empresa: { atuacao: 'distribuidora', porte: 'Demais' } }).linhas.map(x => [x.tipo, x]));
+  assert.equal(grande.declaracao_me_epp.status, 'nao_se_aplica');
+});
+
+test('registro ANVISA: o número vai na proposta; a comprovação é a consulta oficial, anexada por um humano', () => {
+  const numero = Object.fromEntries(montarPlano({ tenderId: 't', exigencias: deRegrasProposta(EXERCITO_22617), cofre: [], sessao: null, hoje: '2026-11-08',
+    empresa: empresaEpp, produtos, textos: [] }).linhas.map(x => [x.tipo, x]));
+  assert.equal(numero.registro_anvisa.status, 'na_proposta');
+  const comprovar = Object.fromEntries(montarPlano({ tenderId: 't', exigencias: deRegrasProposta(BELTRAO_348), cofre: [], sessao: null, hoje: '2026-11-08',
+    empresa: empresaEpp, produtos, textos: [] }).linhas.map(x => [x.tipo, x]));
+  assert.equal(comprovar.registro_anvisa.status, 'preparar'); assert.equal(comprovar.registro_anvisa.responsavel, 'humano');
+  assert.match(comprovar.registro_anvisa.acao, /consulta.*portal da ANVISA.*82936150004/);
+});
+
+test('declaração marcada no sistema é da proposta inicial; a do sistema não é dita "também na proposta"', () => {
+  const l = Object.fromEntries(montarPlano({ tenderId: 't', exigencias: deRegrasProposta(AERONAUTICA_2941), cofre: [], sessao: null, hoje: '2026-11-08',
+    empresa: empresaEpp, produtos, textos: [CLAUSULA_SISTEMA] }).linhas.map(x => [x.tipo, x]));
+  assert.equal(l.declaracao_pleno_acordo.status, 'marcar_no_sistema'); assert.equal(l.declaracao_pleno_acordo.fase, 'proposta_inicial');
+  assert.match(l.declaracao_pleno_acordo.acao, /proposta também/);
+  assert.doesNotMatch(l.declaracao_me_epp.acao, /proposta também/);
 });
