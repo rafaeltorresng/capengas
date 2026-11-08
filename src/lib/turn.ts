@@ -29,9 +29,11 @@ export async function runAnalysisTurn(o: {
   snapshot?: (tenderId: string, store: LanceStore) => Promise<unknown>;
   /** Grava as etapas para a tela de acompanhamento, sem mexer no par início/fim do turno. */
   acompanhar?: boolean;
+  /** Identidade fornecida pela entrada web para abrir o acompanhamento desta execução. */
+  turnoId?: string;
 }): Promise<AnalysisResult> {
   const direto = o.origem !== 'agendador';
-  const turno = randomUUID();
+  const turno = o.turnoId ?? randomUUID();
   let sinal: ReturnType<typeof setInterval> | undefined;
   const registrar = (evento: TurnoEvento) => {
     if (!o.acompanhar) return;

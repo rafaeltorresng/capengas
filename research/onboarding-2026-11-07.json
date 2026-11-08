@@ -1,0 +1,48 @@
+{
+  "execucao": "onboarding-2026-11-07",
+  "fuso": "America/Recife",
+  "codigoBase": "b1d7706",
+  "branch": "rafa/dev2-onboarding-demo",
+  "entrada": "Navegador → Empresa → Catálogo → Edital → POST /api/onboarding/analisar",
+  "tenderId": "77816510000166/2026/348",
+  "turno": "26efb434-7ace-4ff1-9258-b2b876fee423",
+  "inicio": "2026-11-08T01:31:24.358Z",
+  "fim": "2026-11-08T01:36:00.868Z",
+  "duracaoMs": 276510,
+  "modelo": "moonshotai/Kimi-K2.6",
+  "chamadasModelo": 8,
+  "custoUsd": 0.053452588,
+  "origemCusto": "Soma dos custoUsd informados pela API e gravados no rastro; null se faltar uma chamada.",
+  "status": "concluido",
+  "decisoes": [
+    {
+      "item": 3,
+      "produto": "P1",
+      "estado": "escalar"
+    },
+    {
+      "item": 4,
+      "produto": "P1",
+      "estado": "escalar"
+    },
+    {
+      "item": 39,
+      "produto": "P2",
+      "estado": "escalar"
+    }
+  ],
+  "itensCarregados": 46,
+  "encaixes": 3,
+  "dossies": 1,
+  "escaladasAbertas": 3,
+  "acoes": 0,
+  "concordanciaHumana": null,
+  "ressalvas": [
+    "Empresa, catálogo, fichas, custos, cofre e política sintéticos; pregão e edital públicos reais.",
+    "Executado pelo onboarding em banco temporário novo; não é a execução histórica publicada nas fixtures.",
+    "As três decisões escalaram por cobertura técnica não verificada; não é medição de acurácia.",
+    "Nenhum envio ao sandbox ou ao Compras.gov.br; ferramentas de envio não foram oferecidas.",
+    "Tempo deste turno isolado inclui a foto final; não representa mediana ou promessa de latência.",
+    "Meta de turno em até 3 minutos não cumprida nesta execução."
+  ]
+}

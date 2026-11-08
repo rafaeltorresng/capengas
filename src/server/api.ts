@@ -2,6 +2,7 @@ import { createServer as createHttpServer, type IncomingMessage, type ServerResp
 import { readFile } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import type { Decision, DemoStore } from './contract.ts';
+import { OnboardingError, type Onboarding } from './onboarding.ts';
 
 class RequestError extends Error {
   status: number;
@@ -16,9 +17,9 @@ function json(res: ServerResponse, status: number, data: unknown) {
   res.end(JSON.stringify(data));
 }
 
-async function readDecision(req: IncomingMessage): Promise<Decision> {
+async function readBody(req: IncomingMessage): Promise<unknown> {
   if (req.headers['content-type']?.split(';')[0].trim() !== 'application/json') {
-    throw new RequestError(400, 'Envie a decisão em JSON.');
+    throw new RequestError(400, 'Envie os dados em JSON.');
   }
   // Drain oversized requests without buffering beyond the limit.
   let bytes = 0;
@@ -27,10 +28,15 @@ async function readDecision(req: IncomingMessage): Promise<Decision> {
     bytes += chunk.length;
     if (bytes <= 4096) chunks.push(chunk);
   }
-  if (bytes > 4096) throw new RequestError(400, 'Decisão longa demais.');
+  if (bytes > 4096) throw new RequestError(400, 'Solicitação longa demais.');
   let value: unknown;
   try { value = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
   catch { throw new RequestError(400, 'JSON inválido.'); }
+  return value;
+}
+
+async function readDecision(req: IncomingMessage): Promise<Decision> {
+  const value = await readBody(req);
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new RequestError(400, 'Informe uma decisão.');
   }
@@ -45,11 +51,13 @@ async function readDecision(req: IncomingMessage): Promise<Decision> {
 
 const contentTypes: Record<string, string> = {
   '.pdf': 'application/pdf', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
+  '.woff2': 'font/woff2', '.png': 'image/png',
 };
 
 async function staticFile(root: string, pathname: string, res: ServerResponse) {
-  // The app uses hash navigation. Only the entry point and Vite assets are served.
-  if (pathname !== '/' && pathname !== '/edital-exemplo.pdf' && !/^\/assets\/[\w.-]+$/.test(pathname)) return false;
+  // The app uses hash navigation. Only the entry point, the brand, the interface font and Vite assets are served.
+  const files = new Set(['/edital-exemplo.pdf', '/fonts/halden.woff2', '/logo.png', '/mark.png']);
+  if (pathname !== '/' && !files.has(pathname) && !/^\/assets\/[\w.-]+$/.test(pathname)) return false;
   const path = resolve(root, pathname === '/' ? 'index.html' : '.' + pathname);
   if (!path.startsWith(resolve(root) + sep)) return false;
   const contentType = contentTypes[extname(path)];
@@ -65,7 +73,7 @@ async function staticFile(root: string, pathname: string, res: ServerResponse) {
   }
 }
 
-export function createServer(store: DemoStore, webRoot?: string) {
+export function createServer(store: DemoStore, webRoot?: string, onboarding?: Onboarding) {
   return createHttpServer(async (req, res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     try {
@@ -74,6 +82,17 @@ export function createServer(store: DemoStore, webRoot?: string) {
       if (prefix !== 'api') {
         if (req.method === 'GET' && webRoot && await staticFile(webRoot, pathname, res)) return;
         throw new RequestError(404, 'Página indisponível.');
+      }
+
+      if (onboarding && route === 'onboarding') {
+        if (req.method === 'GET' && !params.length) { json(res, 200, { origem: store.origem, dados: onboarding.dados() }); return; }
+        if (req.method === 'POST' && params.length === 1 && params[0] === 'analisar') {
+          const body = await readBody(req);
+          if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).length !== 1
+            || typeof (body as { tenderId?: unknown }).tenderId !== 'string') throw new RequestError(400, 'Informe somente o edital escolhido.');
+          const started = onboarding.iniciar((body as { tenderId: string }).tenderId);
+          json(res, 202, { origem: store.origem, dados: started }); return;
+        }
       }
 
       let dados: unknown;
@@ -100,7 +119,7 @@ export function createServer(store: DemoStore, webRoot?: string) {
       if (dados === undefined) throw new RequestError(404, 'Registro ou rota indisponível.');
       json(res, 200, { origem: store.origem, dados });
     } catch (error) {
-      if (error instanceof RequestError) json(res, error.status, { erro: error.message });
+      if (error instanceof RequestError || error instanceof OnboardingError) json(res, error.status, { erro: error.message });
       else if (error instanceof URIError) json(res, 400, { erro: 'Endereço inválido.' });
       else json(res, 500, { erro: 'Não foi possível consultar o estado. Tente novamente.' });
     }

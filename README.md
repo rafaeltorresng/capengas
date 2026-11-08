@@ -24,6 +24,7 @@ Projeto da equipe Capengas para o Converge Challenge 2026 (Recife, 7–8/11/2026
 | [docs/lance-execucao.md](docs/lance-execucao.md) | Plano de execução para 3 devs: contratos, tarefas, cronograma e portões |
 | [docs/dev2-analise-produto.md](docs/dev2-analise-produto.md) | Revisão de produto, concorrência, limites das evidências e prioridades do agente |
 | [docs/dev2-retificacao-persistida.md](docs/dev2-retificacao-persistida.md) | Monitor → diff único → histórico do dossiê → Pauta, migração e reprodução sintética |
+| [docs/dev2-onboarding-demo.md](docs/dev2-onboarding-demo.md) | Entrada Empresa → Produtos → Edital, análise real e limites da demonstração |
 | [docs/dev2-integracao.md](docs/dev2-integracao.md) | Contrato do dossiê e da projeção para a tela, amostra e verificação da integração |
 
 ## Números principais
@@ -61,6 +62,17 @@ npm run errata:sintetica  # caso da quantidade com versão persistida (#25) num 
 | `fixtures/` | Empresa fictícia (catálogo, cofre), gabarito dos evals, respostas reais de APIs |
 | `scripts/` | Setup, turno, evals · `scripts/pesquisa/`: scripts que geraram os números da pesquisa |
 | `cache/`, `data/`, `out/` | Gerados localmente; fora do Git |
+
+## Experimentar a demonstração
+
+```bash
+npm run build
+npm run integrado
+```
+
+Abra a raiz do servidor para confirmar a empresa simulada, conferir o catálogo já anexado e escolher um dos editais preparados. O botão inicia uma análise real no banco configurado por `LANCE_DB` (padrão `data/lance.db`); o modo integrado carrega `.env`. Sem chave do modelo, a análise fica indisponível. A escolha não executa envio ao portal.
+
+`npm run demo` permite percorrer os mesmos três passos sem modelo; o painel de amostra continua identificado. Não há upload de planilha. Detalhes e verificação em [docs/dev2-onboarding-demo.md](docs/dev2-onboarding-demo.md).
 
 ## Segredos
 
