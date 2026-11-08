@@ -19,7 +19,9 @@
     "build": "vite build web",
     "demo": "node src/server/main.ts amostra",
     "integrado": "node src/server/main.ts integrado",
-    "catalogo:anvisa": "node --disable-warning=ExperimentalWarning scripts/catalogo-anvisa.ts"
+    "catalogo:anvisa": "node --disable-warning=ExperimentalWarning scripts/catalogo-anvisa.ts",
+    "regras:proposta": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env scripts/regras-proposta.ts",
+    "documento:proposta": "node --disable-warning=ExperimentalWarning scripts/documento-proposta.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",

@@ -16,7 +16,7 @@ const FRESH = { ttlMs: 0, allowStale: false, retries: 3 };
 const http = (url: string, extra: object = {}) => fetchJson(url, { cacheDir: CACHE, retries: 5, baseDelayMs: 800, timeoutMs: 45000, ...extra });
 
 export type Tender = { cnpj: string; ano: number; seq: number; abertura: string; objeto: string; orgao: string; uf: string; municipio: string; modalidade: string; url: string; plataforma: string; situacao: string; valorEstimado: number | null };
-export type TenderItem = { numero: number; descricao: string; quantidade: number; valorEstimado: number | null; catalogCode: number | null; beneficio: string; criterio: string; temResultado: boolean; sigiloso: boolean };
+export type TenderItem = { numero: number; descricao: string; quantidade: number; unidade?: string; valorEstimado: number | null; catalogCode: number | null; beneficio: string; criterio: string; temResultado: boolean; sigiloso: boolean };
 
 /** Converte um resultado da busca do PNCP; plataforma = sistema que publicou (só o Compras.gov.br traz código de catálogo). */
 export function mapSearchItem(i: any): Tender {
@@ -48,7 +48,7 @@ export const pncp = {
       const { data } = await http(`https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${seq}/itens?pagina=${p}&tamanhoPagina=100`, o.fresh ? FRESH : {});
       const arr = Array.isArray(data) ? data : [];
       for (const i of arr) out.push({
-        numero: i.numeroItem, descricao: i.descricao ?? '', quantidade: i.quantidade, valorEstimado: i.valorUnitarioEstimado || null,
+        numero: i.numeroItem, descricao: i.descricao ?? '', quantidade: i.quantidade, unidade: i.unidadeMedida ?? undefined, valorEstimado: i.valorUnitarioEstimado || null,
         catalogCode: i.catalogoCodigoItem ? Number(i.catalogoCodigoItem) : null, beneficio: i.tipoBeneficioNome ?? '',
         criterio: i.criterioJulgamentoNome ?? '', temResultado: !!i.temResultado, sigiloso: !!i.orcamentoSigiloso,
       });

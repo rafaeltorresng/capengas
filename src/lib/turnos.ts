@@ -39,6 +39,10 @@ const ATIVIDADES: Record<string, string> = {
   decide_item: 'Preparando a recomendação por item',
   flag_restrictive: 'Registrando exigência restritiva',
   draft_esclarecimento: 'Rascunhando o pedido de esclarecimento',
+  read_proposal_docs: 'Lendo as regras da proposta no edital',
+  read_proposal_excerpt: 'Lendo o modelo de proposta',
+  record_proposal_rule: 'Registrando as regras da proposta',
+  draft_proposal_document: 'Montando o documento da proposta',
 };
 
 export function atividadeDaFerramenta(nome: string) {

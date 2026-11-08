@@ -11,6 +11,8 @@ import { isDeepStrictEqual } from 'node:util';
 import { inventarioCobertura } from './cobertura.ts';
 import type { LanceStore } from './store.ts';
 import { randomUUID } from 'node:crypto';
+import { buscarNosDocumentos, carregarDocumentos, lerTrecho, preLeitura, registrarRegra, PARAMETROS_REGRA, type Documento, type RegraProposta } from './regras-proposta.ts';
+import { gerarDocumentoProposta, type DocumentoProposta, type ItemProposta } from './documento-proposta.ts';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const parseId = (id: string) => { const [cnpj, ano, seq] = id.split('/'); return { cnpj, ano: +ano, seq: +seq }; };
@@ -22,6 +24,9 @@ export type LanceState = {
   requirements: any[]; fits: Record<string, any>; restrictive: Record<string, any>; decisions: Record<string, any>;
   drafts: Record<string, any>; approvals: Record<string, any>; submissions: any[];
   editalSources?: Record<string, { nome: string; url: string; texto: string }[]>;
+  proposalDocs?: Record<string, Documento[]>;
+  proposalRules?: Record<string, RegraProposta[]>;
+  proposals?: Record<string, DocumentoProposta>;
   /** Sem store, as ferramentas de envio não chamam o portal. */
   store?: LanceStore;
   analysisStore?: Pick<LanceStore, 'openEscalation'>;
@@ -29,7 +34,16 @@ export type LanceState = {
   snapshot?: (tenderId: string, store: LanceStore) => Promise<unknown>;
 };
 export const newState = (company: any, sandboxUrl: string, now = new Date()): LanceState =>
-  ({ company, now, sandboxUrl, tenders: {}, items: {}, editais: {}, requirements: [], fits: {}, restrictive: {}, decisions: {}, drafts: {}, approvals: {}, submissions: [], editalSources: {} });
+  ({ company, now, sandboxUrl, tenders: {}, items: {}, editais: {}, requirements: [], fits: {}, restrictive: {}, decisions: {}, drafts: {}, approvals: {}, submissions: [], editalSources: {},
+    proposalDocs: {}, proposalRules: {}, proposals: {} });
+
+const VIAVEL = new Set(['disputar', 'disputar_com_pendencia']);
+/** Itens do pregão que o decide_item mandou disputar. Regras e documento da proposta só existem para eles. */
+export const itensViaveis = (st: LanceState, tid: string) =>
+  Object.entries(st.decisions).filter(([k, d]) => k.startsWith(tid + '#') && VIAVEL.has(d?.estado)).map(([k, d]) => ({ numero: Number(k.split('#')[1]), decisao: d }));
+const semViabilidade = (st: LanceState, tid: string) => itensViaveis(st, tid).length ? null
+  : { erro: 'pregão sem item viável: use decide_item antes; regras e documento da proposta só valem quando algum item sai como disputar ou disputar_com_pendencia' };
+const documentosDaProposta = (st: LanceState, tid: string) => st.proposalDocs?.[tid];
 
 const product = (st: LanceState, id: string) => { const p = st.company.catalogo.find((p: any) => p.id === id); if (!p) throw new Error(`produto ${id} não existe no catálogo`); return p; };
 const tenderItem = async (st: LanceState, tid: string, n: number) => {
@@ -309,6 +323,73 @@ export const tools: Tool[] = [
       if (!situacaoPrazo.prazo) return { salvo: false, erro: 'abertura do pregão ausente ou ilegível; rascunho não gravado' };
       st.drafts[key(a.tender_id, a.item)] = { texto: a.texto, prazo: situacaoPrazo.prazo };
       return { salvo: true, prazo: situacaoPrazo.prazo, no_prazo: situacaoPrazo.aberto };
+    },
+  },
+  {
+    name: 'read_proposal_docs', description: 'Só para pregão com item viável (decide_item = disputar ou disputar_com_pendencia). Abre todos os documentos do pregão (edital, termo de referência, anexos, modelo de proposta) e procura até 6 tópicos sobre como apresentar a proposta. Na primeira chamada devolve também os trechos pré-selecionados das cláusulas da proposta.',
+    parameters: { type: 'object', required: ['tender_id'], properties: { tender_id: { type: 'string' }, topics: { type: 'array', items: { type: 'string' } } } },
+    async run(a, ctx) {
+      const st = S(ctx); const bloqueio = semViabilidade(st, a.tender_id); if (bloqueio) return bloqueio;
+      let primeira = false;
+      if (!documentosDaProposta(st, a.tender_id)) {
+        const docs = (await carregarDocumentos(a.tender_id)).filter(d => d.texto.trim().length > 0);
+        if (!docs.length) {
+          (st.analysisStore ?? st.store)?.openEscalation({
+            tender: a.tender_id, motivo: 'nenhum documento do pregão com texto para extrair as regras da proposta (ZIP, escaneado ou ausente)',
+            recomendacao: 'Montar a proposta manualmente a partir do modelo do edital.', prazo: new Date(st.now.getTime() + 864e5).toISOString(),
+          }, { reuseOpen: true });
+          return { erro: 'nenhum documento do pregão com texto; proposta escalada para montagem manual', escalar: true };
+        }
+        (st.proposalDocs ??= {})[a.tender_id] = docs; (st.proposalRules ??= {})[a.tender_id] ??= [];
+        primeira = true;
+      }
+      const docs = documentosDaProposta(st, a.tender_id)!;
+      return { ...buscarNosDocumentos(docs, a.topics ?? []), ...(primeira ? { pre_selecionados: preLeitura(docs) } : {}) };
+    },
+  },
+  {
+    name: 'read_proposal_excerpt', description: 'Lê um documento do pregão a partir de uma posição devolvida por read_proposal_docs. Use para ler o modelo de proposta inteiro.',
+    parameters: { type: 'object', required: ['tender_id', 'arquivo', 'posicao'], properties: {
+      tender_id: { type: 'string' }, arquivo: { type: 'string' }, posicao: { type: 'number' }, tamanho: { type: 'number', description: 'padrão 2000, máximo 4000' } } },
+    async run(a, ctx) {
+      const st = S(ctx); const bloqueio = semViabilidade(st, a.tender_id); if (bloqueio) return bloqueio;
+      const docs = documentosDaProposta(st, a.tender_id);
+      if (!docs) return { erro: 'abra os documentos com read_proposal_docs antes' };
+      return lerTrecho(docs, a.arquivo, a.posicao, a.tamanho);
+    },
+  },
+  {
+    name: 'record_proposal_rule', description: 'Registra uma regra de como a proposta deve ser apresentada (modelo, validade, prazo e forma de envio, colunas da tabela, casas decimais, dados da empresa, declarações, anexos, marca, registro ANVISA, dados bancários, assinatura, quantidade). A citação precisa ser literal e falar do campo; ela é conferida. Uma chamada por regra; uma por declaração.',
+    parameters: { type: 'object', required: ['tender_id', 'campo', 'valor', 'citacao'], properties: { tender_id: { type: 'string' }, ...PARAMETROS_REGRA } },
+    async run(a, ctx) {
+      const st = S(ctx); const bloqueio = semViabilidade(st, a.tender_id); if (bloqueio) return bloqueio;
+      const docs = documentosDaProposta(st, a.tender_id);
+      if (!docs) return { erro: 'abra os documentos com read_proposal_docs antes' };
+      return registrarRegra(docs, ((st.proposalRules ??= {})[a.tender_id] ??= []), a);
+    },
+  },
+  {
+    name: 'draft_proposal_document', description: 'Monta o documento da proposta de preços com os itens viáveis, as regras registradas e os dados da empresa. Não envia. Devolve pendências (dados a preencher) e lacunas (campos que o edital não especifica).',
+    parameters: { type: 'object', required: ['tender_id'], properties: { tender_id: { type: 'string' } } },
+    async run(a, ctx) {
+      const st = S(ctx); const bloqueio = semViabilidade(st, a.tender_id); if (bloqueio) return bloqueio;
+      const regras = st.proposalRules?.[a.tender_id] ?? [];
+      const itens: ItemProposta[] = []; const semPreco: number[] = [];
+      for (const { numero, decisao } of itensViaveis(st, a.tender_id)) {
+        if (!(decisao.precoProposto > 0)) { semPreco.push(numero); continue; }
+        const it = await tenderItem(st, a.tender_id, numero); const p = product(st, decisao.produto);
+        let fabricante: string | undefined;
+        try { fabricante = anvisa.byRegistro(p.registroAnvisa)?.NOME_FABRICANTE || undefined; } catch { fabricante = undefined; }
+        itens.push({ numero, descricao: it.descricao, unidade: it.unidade, quantidade: it.quantidade, marca: p.marca, modelo: p.nome, fabricante,
+          registroAnvisa: p.registroAnvisa, precoUnitario: decisao.precoProposto });
+      }
+      const t = st.tenders[a.tender_id] ?? {};
+      const doc = gerarDocumentoProposta({ pregao: { id: a.tender_id, orgao: t.orgao ?? '', municipio: t.municipio, uf: t.uf, abertura: t.abertura },
+        empresa: st.company.empresa, itens: itens.sort((x, y) => x.numero - y.numero), regras, hoje: st.now });
+      (st.proposals ??= {})[a.tender_id] = doc;
+      return { gerado: true, itens: itens.map(i => i.numero), itens_sem_preco: semPreco, regras: regras.length, total: doc.total, colunas: doc.colunas,
+        pendencias: doc.pendencias, lacunas: doc.lacunas, anexos: doc.anexos,
+        ...(regras.length ? {} : { aviso: 'nenhuma regra registrada: registre as regras com record_proposal_rule antes de montar o documento' }) };
     },
   },
   {
