@@ -289,18 +289,23 @@ function DossierScreen({ data }: { data: Dossier }) {
     {data.pendencias.length > 0 && <div className="notice">
       <ul>{data.pendencias.map(text => <li key={text}>{text}</li>)}</ul><Internal path="escaladas">Ver escaladas</Internal>
     </div>}
-    {data.retificacao && <section className="panel"><h2>Versão desta retificação</h2>
+    {data.retificacao && <section className="panel"><h2>Retificação {data.retificacao.versao}</h2>
       {data.retificacao.aviso && <p>{data.retificacao.aviso}</p>}
-      <p>Abertura {data.retificacao.abertura}. Publicada antes: {data.retificacao.aberturaPublicadaAntes ?? 'sem data'}. Publicada depois: {data.retificacao.aberturaPublicadaDepois ?? 'sem data'}. Chamadas de modelo evitadas: {data.retificacao.chamadasEvitadas}.
-        {data.retificacao.custoEvitadoUsd == null ? ' Custo evitado sem medição.' : ' Custo evitado US$ ' + data.retificacao.custoEvitadoUsd + '.'}</p>
+      <p>Abertura {data.retificacao.abertura}. Publicada antes: {data.retificacao.aberturaPublicadaAntes ?? 'sem data'}. Publicada depois: {data.retificacao.aberturaPublicadaDepois ?? 'sem data'}. Itens com evidência reaproveitada: {data.retificacao.itensSemReleitura}.
+        {' Economia de chamadas e custo sem medição.'}</p>
       <ul>{data.retificacao.linhas.map((linha, index) => <li key={index}>Item {linha.item}: {linha.estado}. {linha.motivo}
         {linha.quantidadeNova != null && <> Quantidade {linha.quantidadeAnterior} para {linha.quantidadeNova}.</>}
         {linha.precoUnitario !== undefined && <> Preço unitário {money(linha.precoUnitario, 'BRL')}. Total {money(linha.valorTotal ?? null, 'BRL')}.</>}
         {linha.escalarLimite ? ' Não libera decisão automática.' : ''}
         {linha.chamarAgente ? ' O agente relê este item.' : ''}{linha.discordancia ? ' ' + linha.discordancia : ''}</li>)}</ul>
-      <ul>{data.retificacao.pauta.map((linha, index) => <li key={index}>{linha.artigo ? linha.artigo + '. ' : ''}{linha.oQueMudou}. {linha.oQueFazer}
-        {linha.quem ? ' Responsável: ' + linha.quem + '.' : ''}{linha.ateQuando ? ' Até ' + linha.ateQuando + '.' : ''}
-        {linha.ofereceAcao ? '' : ' Sem ação oferecida.'} Origem: {linha.origem}.</li>)}</ul>
+      {data.reavaliar && <p role="status">Envio bloqueado: reavaliação pendente. Os dados da análise anterior permanecem no dossiê para auditoria.</p>}
+      <ol className="agenda-lines">{data.retificacao.pauta.map(linha => <AgendaLine key={linha.id} line={linha} />)}</ol>
+      {!!data.retificacoes?.length && <details><summary>Histórico de retificações ({data.retificacoes.length})</summary>
+        {data.retificacoes.map(v => <div key={v.versao}><h3>Retificação {v.versao}</h3>
+          <p>{v.sintetica ? 'Caso sintético. ' : ''}Abertura: {v.aberturaPublicadaDepois ?? 'desconhecida'}.</p>
+          <ul>{v.linhas.map((l, i) => <li key={i}>Item {l.item}: {l.estado}. {l.motivo} {l.discordancia}</li>)}</ul>
+        </div>)}
+      </details>}
     </section>}
     <section className="panel"><h2>Checklist</h2>
       <ul className="checklist">{data.checklist.map((row, index) => <li key={index}>

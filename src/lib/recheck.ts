@@ -56,6 +56,7 @@ export async function snapshotTender(tenderId: string, store: LanceStore, d: Rec
     situacao: c?.situacaoCompraNome ?? 'desconhecida', plataforma: d.base?.plataforma ?? prev?.plataforma ?? c?.usuarioNome ?? '',
     arquivosHash: filesHash(files), ultimoCheck: now().toISOString(), reavaliar: false,
   };
+  row.aberturaAnalise = row.abertura;
   store.upsertTender(row);
   return row;
 }

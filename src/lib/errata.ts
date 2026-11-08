@@ -22,6 +22,8 @@ export type DiffItem = {
 export type DiffExigencia = { tipo: string; citacao: string; estado: 'reaproveitada' | 'citacao_orfa' | 'ilegivel'; fonte?: { nome: string; url: string } };
 export type DiffErrata = {
   tenderId: string; sintetico: boolean;
+  /** Publicação observada, distinta da foto que autoriza o recheque. Ausente em diffs antigos/sintéticos. */
+  publicacao?: { arquivosHash: string; abertura: string | null; observadoEm: string };
   /** Estável é o mesmo dia em Recife (o art. 164 conta dias). Hora diferente no mesmo dia é só informativa. */
   abertura: { antes: string | null; depois: string | null; estado: 'estavel' | 'mudou' | 'desconhecida'; horaMudou: boolean };
   itens: DiffItem[];
@@ -65,7 +67,8 @@ export function mesmaAbertura(a: string | null, b: string | null) {
 
 function citacoesDoEncaixe(f: FitRow): string[] {
   const attrs = (f.atributos as { attributes?: { citacao_item?: unknown }[] } | null)?.attributes;
-  return Array.isArray(attrs) ? attrs.map(a => a?.citacao_item).filter((q): q is string => typeof q === 'string' && q.length > 0) : [];
+  // Uma citação faltando invalida o reaproveitamento do encaixe inteiro.
+  return Array.isArray(attrs) ? attrs.map(a => typeof a?.citacao_item === 'string' ? a.citacao_item : '') : [];
 }
 
 export function diffErrata(e: EntradaDiff): DiffErrata {
@@ -78,7 +81,7 @@ export function diffErrata(e: EntradaDiff): DiffErrata {
     const a = antes.get(n), d = depois.get(n);
     const fits = e.antes.fits.filter(f => f.item === n);
     const decisao = e.antes.decisoes.find(x => x.item === n);
-    if (!a && d) { itens.push({ item: n, mudancas: [], novo: true, evidencia: null, preco: null }); continue; }
+    if (!a && d) { itens.push({ item: n, mudancas: [], novo: true, evidencia: d.descricao.trim() ? null : 'ilegivel', preco: null }); continue; }
     if (a && !d) { itens.push({ item: n, mudancas: [], removido: true, evidencia: null, motivo: 'item removido do pregão: a decisão anterior não vale', preco: null }); continue; }
     if (!a || !d) continue;
 
@@ -91,7 +94,10 @@ export function diffErrata(e: EntradaDiff): DiffErrata {
     // Reaproveitar exige as duas coisas: descrição igual e cada citação ainda no texto (mínimo de 8 caracteres,
     // o mesmo do record_fit). Órfã é a citação que continua no texto com a descrição mudada.
     let evidencia: DiffItem['evidencia'] = null, motivo: string | undefined;
-    if (fits.length) {
+    if (!d.descricao.trim()) {
+      evidencia = 'ilegivel';
+      motivo = 'texto novo ilegível; não reaproveitar evidência nem liberar decisão';
+    } else if (fits.length) {
       const igual = normal(a.descricao) === normal(d.descricao);
       const citacoes = fits.flatMap(citacoesDoEncaixe);
       const achadas = citacoes.filter(q => verifyQuote(q, d.descricao, 8).found);
@@ -115,8 +121,10 @@ export function diffErrata(e: EntradaDiff): DiffErrata {
         preco = { estado: 'reaproveitada', produto: decisao.produto, antes: decisao.precoProposto, depois: decisao.precoProposto,
           quantidade: d.quantidade, total, viavel: decisao.precoProposto == null ? null : true, motivo: 'quantidade e estimativa sem mudança' };
       } else {
-        const pc = priceCheck({ custo: custo ?? 0, margemMinima: e.politica.margemMinima, margemAlvo: e.politica.margemAlvo,
-          estimativa: d.valorEstimado, sigiloso: d.sigiloso });
+        const pc = custo == null || !Number.isFinite(custo) || custo < 0
+          ? { viavel: null, precoProposto: null, motivo: 'custo do produto ausente ou inválido; escalar' }
+          : priceCheck({ custo, margemMinima: e.politica.margemMinima, margemAlvo: e.politica.margemAlvo,
+            estimativa: d.valorEstimado, sigiloso: d.sigiloso });
         preco = { estado: 'recalculada', produto: decisao.produto, antes: decisao.precoProposto, depois: pc.precoProposto,
           quantidade: d.quantidade, total: pc.precoProposto == null ? null : centavos(pc.precoProposto * d.quantidade),
           viavel: pc.viavel, motivo: pc.motivo };

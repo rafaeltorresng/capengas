@@ -161,3 +161,23 @@ describe('outras linhas', () => {
     assert.equal(new Set(p.linhas.map(l => l.id)).size, p.linhas.length);
   });
 });
+
+test('reanálise concluída mantém a memória da errata sem repetir tarefas técnicas', () => {
+  const diff = diffQuantidade(7000);
+  diff.itens[0].evidencia = 'pendente_agente';
+  diff.itens[0].motivo = 'citação ausente';
+  const pending = montarPauta({ hoje, pregoes: [pregao({ tender: { ...tender, reavaliar: true }, diff })], sancoes: [] });
+  assert.ok(pending.linhas.some(l => l.estado === 'pendente_agente' && l.acionavel));
+  const done = montarPauta({ hoje, pregoes: [pregao({ tender: { ...tender, reavaliar: false }, diff })], sancoes: [] });
+  assert.ok(done.linhas.some(l => l.estado === 'pendente_agente'));
+  assert.ok(done.linhas.filter(l => l.tipo === 'errata' && !l.id.endsWith(':art55')).every(l => !l.acionavel));
+  assert.equal(done.linhas.find(l => l.id.endsWith(':art55'))?.acionavel, true, 'a obrigação jurídica não é resolvida pela reanálise técnica');
+});
+
+test('errata histórica não reabre ação de sanção para sessão passada', () => {
+  const p = montarPauta({ hoje: '2026-11-24', pregoes: [pregao({ diff: diffQuantidade() })], sancoes: [{
+    categoria: 'Inidoneidade', tipo: 'inidoneidade', esfera: 'federal', uf: null, orgao: 'Fonte de teste', inicio: '2026-01-01', fim: '2026-12-31',
+  }] });
+  assert.ok(p.linhas.some(l => l.tipo === 'errata'));
+  assert.ok(p.linhas.every(l => !l.acionavel));
+});

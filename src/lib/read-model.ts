@@ -7,14 +7,18 @@ import type { EntePregao, Sancao } from './carteira.ts';
 import type { SemaforoFiscal } from './siconfi.ts';
 import type { buildDossie, DossierSource } from './dossie.ts';
 import type { EvidenceValidation } from '../server/contract.ts';
+import type { VersaoRetificacao } from './versao.ts';
 
 export type ReadStore = Pick<Store, 'events' | 'openEscalations' | 'getTender' | 'getItems' | 'getDecisions' | 'getDossie' | 'resolveEscalation'>
-  & Partial<Pick<Store, 'getTenders' | 'getRequirements'>> & { getErrataDiff?(tenderId: string): DiffErrata | undefined };
+  & Partial<Pick<Store, 'getTenders' | 'getRequirements'>> & {
+    getErrataDiff?(tenderId: string): DiffErrata | undefined;
+    getRetificacoes?(tenderId: string): VersaoRetificacao[];
+  };
 export type Proof = {
   fonte: string; avaliacoes: { nome: string; valor: string }[]; cenarios: { nome: string; resultado: string }[];
   concordancia: number | null; custoUsd: number | null; duracaoMs: number | null;
 };
-type Dossie = ReturnType<typeof buildDossie>;
+type Dossie = ReturnType<typeof buildDossie> & { retificacao?: VersaoRetificacao; retificacoes?: VersaoRetificacao[]; reavaliar?: boolean };
 const labels: Record<string, string> = { disputar: 'Disputar', disputar_com_pendencia: 'Com pendência', esclarecer: 'Em esclarecimento', escalar: 'Escalar', nao_disputar: 'Não disputar' };
 const fitLabels: Record<string, string> = { atende: 'Atende', nao_atende: 'Não atende', nao_informado: 'Não informado' };
 const localDay = (date: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
@@ -36,11 +40,19 @@ export function createReadModel(store: ReadStore, options: {
 }) {
   if (typeof options.actions !== 'function') throw new Error('forneça a leitura das ações confirmadas');
   const now = options.now ?? (() => new Date());
-  function dossie(tender: string): Dossie | undefined {
+  function dossieSalvo(tender: string): Dossie | undefined {
     const value = store.getDossie(tender) as Dossie | undefined;
     if (!value || value.tender !== tender || !Array.isArray(value.checklist) || !Array.isArray(value.pendencias)
       || !Array.isArray(value.documentos) || !Array.isArray(value.itens)) return undefined;
     return structuredClone(value);
+  }
+  function dossie(tender: string): Dossie | undefined {
+    const value = dossieSalvo(tender);
+    if (!value) return undefined;
+    const retificacoes = store.getRetificacoes?.(tender) ?? [];
+    const retificacao = retificacoes.at(-1) ?? value.retificacao;
+    return { ...value, reavaliar: store.getTender(tender)?.reavaliar === true,
+      ...(retificacao ? { retificacao: { ...retificacao, pauta: pauta().linhas.filter(l => l.tenderId === tender && l.tipo === 'errata') }, retificacoes } : {}) };
   }
   function queue(decision: DecisionRow) {
     const tender = store.getTender(decision.tenderId);
@@ -60,7 +72,7 @@ export function createReadModel(store: ReadStore, options: {
     return [...groups.values()].map(rows => {
       if (rows.length === 1) return rows[0];
       const first = rows[0];
-      const chosen = dossie(first.tenderId)?.itens.find(i => i.item === first.item)?.produto?.id;
+      const chosen = dossieSalvo(first.tenderId)?.itens.find(i => i.item === first.item)?.produto?.id;
       return rows.find(d => d.produto === chosen) ?? { ...first, produto: '', estado: 'escalar' as const, precoProposto: null,
         motivos: ['Há decisões para mais de um produto e nenhuma seleção explícita no dossiê.'] };
     });
@@ -116,9 +128,10 @@ export function createReadModel(store: ReadStore, options: {
     const tenders = store.getTenders?.() ?? [];
     const p = montarPauta({ hoje: day, cofre: alertasCofre(day), sancoes: options.sancoes,
       pregoes: tenders.map(tender => ({ tender, decisoes: selectedDecisions(tender.id), requisitos: store.getRequirements?.(tender.id) ?? [],
-        diff: store.getErrataDiff?.(tender.id) ?? null, ente: options.entes?.[tender.id], semaforo: options.semaforos?.[tender.id] ?? null })) });
+        diff: store.getErrataDiff?.(tender.id) ?? null, ajustes: store.getRetificacoes?.(tender.id).at(-1)?.ajustes,
+        ente: options.entes?.[tender.id], semaforo: options.semaforos?.[tender.id] ?? null })) });
     return { ...p, linhas: p.linhas.map(l => ({ ...l,
-      ...(l.tenderId ? { dossie: !!dossie(l.tenderId) } : {}),
+      ...(l.tenderId ? { dossie: !!dossieSalvo(l.tenderId) } : {}),
       ...(l.tenderId && l.item !== undefined ? { itemDisponivel: itemDisponivel(l.tenderId, String(l.item)) } : {}) })) };
   }
   function hoje() {

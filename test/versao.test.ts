@@ -1,151 +1,131 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { versaoDaRetificacao, type ItemAntes } from '../src/lib/versao.ts';
+import { readFileSync } from 'node:fs';
+import { versaoDaRetificacao, type AjusteHumano } from '../src/lib/versao.ts';
+import { diffErrata, type EntradaDiff } from '../src/lib/errata.ts';
 
-const TID = '77816510000166/2026/348';
+const T = '77816510000166/2026/348';
 const descricao = 'Cabo de bisturi tamanho: cerca de 13 cm, material: aço inoxidável.';
-const antes = (q: number): ItemAntes => ({
-  numero: 40, descricao, quantidade: q, estimativa: 200, custo: 100,
-  atributos: [{ atributo: 'tamanho', citacao_item: 'tamanho: cerca de 13 cm' }],
-});
-const politica = { valorMaxAutomatico: 50_000, margemMinima: 0.15, margemAlvo: 0.2 };
-const base = { tenderId: TID, versao: 2, aberturaAntes: '2026-11-23T09:00', aberturaDepois: '2026-11-23T09:00', agora: new Date('2026-11-07T12:00:00-03:00'), politica, custoPorChamadaUsd: 0.01 };
+const politica = { ...JSON.parse(readFileSync(new URL('../fixtures/company.json', import.meta.url), 'utf8')).politica,
+  margemMinima: 0.15, margemAlvo: 0.2, valorMaxAutomatico: 50_000 };
+function entrada(): EntradaDiff {
+  return { tenderId: T, hoje: '2026-11-07', politica, custos: { P1: 100 },
+    antes: { abertura: '2026-11-23T09:00', requisitos: [],
+      itens: [{ tenderId: T, numero: 40, descricao, quantidade: 10, estimativa: 200, sigiloso: false, catalogCode: null }],
+      fits: [{ tenderId: T, item: 40, produto: 'P1', fit: 'atende', atributos: { attributes: [{ citacao_item: 'tamanho: cerca de 13 cm' }] } }],
+      decisoes: [{ tenderId: T, item: 40, produto: 'P1', estado: 'disputar', motivos: ['Sintético'], precoProposto: 120 }] },
+    depois: { abertura: '2026-11-23T09:00', textos: null,
+      itens: [{ numero: 40, descricao, quantidade: 40, valorEstimado: 200, sigiloso: false }] } };
+}
+function versao(e = entrada(), o: { hoje?: string; versao?: number; ajustes?: AjusteHumano[] } = {}) {
+  return versaoDaRetificacao({ diff: diffErrata(e), versao: o.versao ?? 2, hoje: o.hoje ?? e.hoje, ajustes: o.ajustes });
+}
+const art55 = (v: ReturnType<typeof versao>) => v.pauta.find(l => l.id.endsWith(':art55'));
 
-test('quantidade nova reaproveita a evidência, recalcula pelo código e não chama o modelo', () => {
-  const v = versaoDaRetificacao({ ...base, sintetica: true, antes: [antes(10)], depois: [{ numero: 40, descricao, quantidade: 40, estimativa: 200 }] });
-  assert.equal(v.sintetica, true);
-  assert.match(v.aviso ?? '', /não é uma retificação publicada/);
-  assert.equal(v.abertura, 'estavel');
-  assert.equal(v.linhas.find(l => l.estado === 'reaproveitada')?.chamarAgente, false);
-  const recalculo = v.linhas.find(l => l.estado === 'recalculada');
-  assert.equal(recalculo?.precoUnitario, 120);
-  assert.equal(recalculo?.valorTotal, 4800);
-  assert.equal(recalculo?.escalarLimite, false);
-  assert.equal(v.contagem.reavaliada, 0);
-  assert.equal(v.chamadasEvitadas, 1);
-  assert.equal(v.custoEvitadoUsd, 0.01);
-  const juridica = v.pauta.find(p => p.artigo === 'art. 55, §1º');
-  assert.equal(juridica?.ofereceAcao, true);
-  assert.equal(juridica?.quem, 'juridico');
-  assert.equal(juridica?.ateQuando, '2026-11-17');
-  assert.equal(juridica?.origem, 'calculado');
-});
-
-test('quantidade que estoura o limite escala, ainda sem modelo', () => {
-  const v = versaoDaRetificacao({ ...base, antes: [antes(10)], depois: [{ numero: 40, descricao, quantidade: 500, estimativa: 200 }] });
-  const recalculo = v.linhas.find(l => l.estado === 'recalculada');
-  assert.equal(recalculo?.escalarLimite, true);
-  assert.equal(recalculo?.valorTotal, 60_000);
-  const analista = v.pauta.find(p => p.artigo === 'política');
-  assert.equal(analista?.quem, 'analista');
-  assert.equal(analista?.ofereceAcao, true);
-  assert.equal(analista?.ateQuando, '2026-11-23');
-  assert.equal(v.pauta.find(p => p.artigo === 'art. 55, §1º')?.ateQuando, '2026-11-17');
-  assert.equal(v.linhas.some(l => l.chamarAgente), false);
+test('quantidade reaproveita a evidência, recalcula pelo código e não chama modelo', () => {
+  const e = entrada(); e.sintetico = true;
+  const v = versao(e);
+  assert.equal(v.sintetica, true); assert.match(v.aviso ?? '', /não é uma retificação publicada/);
+  assert.equal(v.abertura, 'estavel'); assert.equal(v.linhas[0].estado, 'reaproveitada');
+  assert.ok(v.linhas.every(l => !l.chamarAgente));
+  const pc = v.linhas.find(l => l.estado === 'recalculada')!;
+  assert.equal(pc.precoUnitario, 120); assert.equal(pc.valorTotal, 4800); assert.equal(pc.escalarLimite, false);
+  assert.equal(v.itensSemReleitura, 1); assert.equal(v.custoEvitadoUsd, null);
+  assert.equal(art55(v)?.ate, '2026-11-17'); assert.equal(art55(v)?.papel, 'juridico'); assert.equal(art55(v)?.acionavel, true);
 });
 
-test('prazo do art. 164 vencido deixa a linha do art. 55 informativa', () => {
-  const v = versaoDaRetificacao({ ...base, agora: new Date('2026-11-20T12:00:00-03:00'), antes: [antes(10)], depois: [{ numero: 40, descricao, quantidade: 40, estimativa: 200 }] });
-  const juridica = v.pauta.find(p => p.artigo === 'art. 55, §1º');
-  assert.equal(juridica?.ofereceAcao, false);
-  assert.equal(juridica?.quem, null);
-  assert.match(juridica?.oQueFazer ?? '', /informativa/);
+test('limite agregado escala mesmo quando cada item isolado cabe no limite', () => {
+  const e = entrada(); e.depois.itens[0].quantidade = 250;
+  e.antes.itens.push({ ...e.antes.itens[0], numero: 41 });
+  e.antes.fits.push({ ...e.antes.fits[0], item: 41 });
+  e.antes.decisoes.push({ ...e.antes.decisoes[0], item: 41 });
+  e.depois.itens.push({ ...e.depois.itens[0], numero: 41 });
+  const v = versao(e);
+  assert.ok(v.linhas.filter(l => l.estado === 'recalculada').every(l => l.valorTotal === 30000 && l.escalarLimite));
+  assert.equal(v.pauta.find(l => l.id.endsWith(':limite'))?.ate, '2026-11-23');
 });
 
-test('descrição nova com a citação antiga ainda no texto é órfã e volta ao agente', () => {
-  const v = versaoDaRetificacao({ ...base, antes: [antes(10)], depois: [{ numero: 40, descricao: descricao + ' tamanho: cerca de 15 cm.', quantidade: 10, estimativa: 200 }] });
-  assert.equal(v.linhas.find(l => l.item === 40)?.estado, 'citacao_orfa');
-  assert.equal(v.linhas.find(l => l.item === 40)?.chamarAgente, true);
-  assert.equal(v.contagem.reaproveitada, 0);
-  assert.equal(v.chamadasEvitadas, 0);
-  assert.equal(v.custoEvitadoUsd, 0);
-  assert.equal(v.pauta.find(p => p.artigo === 'art. 55, §1º')?.oQueMudou, 'especificação mudou e a abertura não andou');
+test('prazo jurídico é conferido na data corrente, não na data do diff', () => {
+  const v = versao(entrada(), { hoje: '2026-11-19' });
+  assert.equal(art55(v)?.acionavel, false); assert.match(art55(v)?.acao ?? '', /informativo/);
 });
 
-test('citação que sumiu não é reaproveitada', () => {
-  const v = versaoDaRetificacao({ ...base, antes: [antes(10)], depois: [{ numero: 40, descricao: 'Cabo de bisturi sem a medida exigida no texto anterior.', quantidade: 10, estimativa: 200 }] });
-  assert.equal(v.linhas[0].estado, 'pendente_agente');
-  assert.equal(v.linhas[0].chamarAgente, true);
-  assert.equal(v.contagem.reaproveitada, 0);
+test('descrição nova com citação antiga ainda presente é órfã', () => {
+  const e = entrada(); e.depois.itens[0].descricao += ' Outro modelo.';
+  const v = versao(e);
+  assert.equal(v.linhas[0].estado, 'citacao_orfa'); assert.equal(v.linhas[0].chamarAgente, true); assert.equal(v.itensSemReleitura, 0);
 });
 
-test('texto ilegível não entra na conta de economia nem de retrabalho do modelo', () => {
-  const v = versaoDaRetificacao({ ...base, antes: [antes(10)], depois: [{ numero: 40, descricao: '', quantidade: 10, estimativa: 200, ilegivel: true }] });
-  assert.equal(v.contagem.ilegivel, 1);
-  assert.equal(v.chamadasEvitadas, 0);
-  assert.equal(v.linhas[0].chamarAgente, false);
+test('citação que sumiu é pendente_agente', () => {
+  const e = entrada(); e.depois.itens[0].descricao = 'Cabo de bisturi sem medida no texto novo.';
+  const v = versao(e);
+  assert.equal(v.linhas[0].estado, 'pendente_agente'); assert.equal(v.linhas[0].chamarAgente, true);
 });
 
-test('ajuste humano da versão anterior reaparece na seguinte', () => {
-  const v = versaoDaRetificacao({ ...base, versao: 3, antes: [antes(10)], depois: [{ numero: 40, descricao, quantidade: 40, estimativa: 200 }],
-    ajustes: [{ item: 40, versao: 2, decisao: 'recusar', motivo: 'a medida de 13 cm não cobre o pedido' }] });
+test('citação curta válida no record_fit continua reaproveitada', () => {
+  const e = entrada(); (e.antes.fits[0].atributos as any).attributes = [{ citacao_item: '13 cm, material' }];
+  assert.equal(versao(e).linhas[0].estado, 'reaproveitada');
+});
+
+test('encaixe sem citação fica pendente', () => {
+  const e = entrada(); e.antes.fits[0].atributos = { attributes: [] };
+  assert.equal(versao(e).linhas[0].estado, 'pendente_agente');
+});
+
+test('ilegível não conta como economia, não chama modelo e recálculo não libera decisão', () => {
+  const e = entrada(); e.depois.itens[0].descricao = '';
+  const v = versao(e);
+  assert.equal(v.linhas[0].estado, 'ilegivel'); assert.equal(v.linhas[0].chamarAgente, false);
+  assert.equal(v.itensSemReleitura, 0); assert.equal(v.linhas[1].escalarLimite, true);
+  assert.match(v.linhas[1].motivo, /não libera decisão/);
+});
+
+test('ajuste humano anterior reaparece; o da versão atual não reaparece nela', () => {
+  const v = versao(entrada(), { versao: 3, ajustes: [
+    { item: 40, versao: 2, decisao: 'recusar', motivo: 'Medida insuficiente' },
+    { item: 40, versao: 3, decisao: 'aprovar', motivo: 'Desta versão' }] });
   assert.match(v.linhas[0].discordancia ?? '', /versão 2: humano recusar/);
-  assert.equal(v.pauta.some(p => p.origem === 'informado_cliente' && p.item === 40 && !p.ofereceAcao), true);
+  assert.doesNotMatch(v.linhas[0].discordancia ?? '', /Desta versão/);
+  assert.equal(v.pauta.filter(l => l.origem === 'informado_cliente').length, 1);
 });
 
-test('ajuste da própria versão não reaparece nela', () => {
-  const v = versaoDaRetificacao({ ...base, versao: 3, antes: [antes(10)], depois: [{ numero: 40, descricao, quantidade: 40, estimativa: 200 }],
-    ajustes: [{ item: 40, versao: 3, decisao: 'recusar', motivo: 'ainda não é da versão seguinte' }] });
-  assert.equal(v.linhas[0].discordancia, undefined);
-  assert.equal(v.pauta.some(p => p.origem === 'informado_cliente'), false);
+test('item removido não chama modelo nem reaproveita evidência', () => {
+  const e = entrada(); e.depois.itens = [];
+  const v = versao(e); assert.deepEqual(v.linhas, []); assert.equal(v.itensSemReleitura, 0);
+  assert.ok(v.pauta.some(l => /removido/.test(l.oQueMudou))); assert.ok(art55(v));
 });
 
-test('item que sai não chama o modelo e o art. 55 fica na versão', () => {
-  const v = versaoDaRetificacao({ ...base, antes: [antes(10)], depois: [] });
-  assert.equal(v.linhas.length, 0);
-  assert.equal(v.chamadasEvitadas, 0);
-  const saida = v.pauta.find(p => p.item === 40);
-  assert.equal(saida?.origem, 'publicado');
-  assert.equal(saida?.ofereceAcao, false);
-  assert.equal(saida?.ateQuando, null);
-  assert.match(v.pauta.find(p => p.artigo === 'art. 55, §1º')?.oQueMudou ?? '', /item saiu/);
+test('item novo chama agente; sem descrição legível fica aguardando humano', () => {
+  const e = entrada(); e.antes.itens = []; e.antes.fits = []; e.antes.decisoes = [];
+  const v = versao(e); assert.equal(v.linhas[0].estado, 'pendente_agente'); assert.equal(v.linhas[0].chamarAgente, true);
+  assert.ok(art55(v));
 });
 
-test('item novo volta ao agente', () => {
-  const v = versaoDaRetificacao({ ...base, antes: [], depois: [{ numero: 7, descricao, quantidade: 1, estimativa: 200 }] });
-  assert.equal(v.linhas[0].estado, 'pendente_agente');
-  assert.equal(v.linhas[0].chamarAgente, true);
-  assert.equal(v.chamadasEvitadas, 0);
-  assert.match(v.pauta.find(p => p.artigo === 'art. 55, §1º')?.oQueMudou ?? '', /item entrou/);
+test('sintético não afirma mudança de quantidade quando ela não ocorreu', () => {
+  const e = entrada(); e.sintetico = true; e.depois.itens[0].quantidade = 10;
+  assert.doesNotMatch(versao(e).aviso ?? '', /quantidade alterada/);
 });
 
-test('texto ilegível com quantidade nova não libera o recálculo', () => {
-  const v = versaoDaRetificacao({ ...base, antes: [antes(10)], depois: [{ numero: 40, descricao: '', quantidade: 40, estimativa: 200, ilegivel: true }] });
-  assert.equal(v.linhas.find(l => l.estado === 'ilegivel')?.chamarAgente, false);
-  assert.equal(v.linhas.find(l => l.estado === 'recalculada')?.escalarLimite, true);
-  assert.match(v.linhas.find(l => l.estado === 'recalculada')?.motivo ?? '', /não libera decisão/);
+test('abertura em outro dia não cria art. 55', () => {
+  const e = entrada(); e.depois.abertura = '2026-11-30T09:00';
+  const v = versao(e); assert.equal(v.abertura, 'mudou'); assert.equal(art55(v), undefined);
+  assert.ok(v.pauta.some(l => l.origem === 'publicado' && !l.acionavel));
 });
 
-test('sintético sem mudança de quantidade não afirma que a quantidade foi alterada', () => {
-  const v = versaoDaRetificacao({ ...base, sintetica: true, antes: [antes(10)], depois: [{ numero: 40, descricao, quantidade: 10, estimativa: 200 }] });
-  assert.match(v.aviso ?? '', /não é uma retificação publicada/);
-  assert.doesNotMatch(v.aviso ?? '', /quantidade alterada/);
+test('hora no mesmo dia mantém art. 55 e aparece como fato informativo', () => {
+  const e = entrada(); e.depois.abertura = '2026-11-23T15:00';
+  const v = versao(e); assert.equal(v.abertura, 'estavel'); assert.equal(art55(v)?.ate, '2026-11-17');
+  assert.ok(v.pauta.some(l => l.id.endsWith(':hora') && !l.acionavel && l.ate === null));
 });
 
-test('abertura em outro dia não vira linha do art. 55', () => {
-  const v = versaoDaRetificacao({ ...base, aberturaDepois: '2026-11-30T09:00', antes: [antes(10)], depois: [{ numero: 40, descricao, quantidade: 40, estimativa: 200 }] });
-  assert.equal(v.abertura, 'mudou');
-  assert.equal(v.aberturaPublicadaDepois, '2026-11-30T09:00');
-  assert.equal(v.pauta.find(p => p.artigo === 'art. 55, §1º'), undefined);
-  const publicada = v.pauta.find(p => p.origem === 'publicado');
-  assert.equal(publicada?.ofereceAcao, false);
-  assert.equal(publicada?.ateQuando, null);
+test('abertura ausente: sem prazo e sem ação', () => {
+  const e = entrada(); e.antes.abertura = null; e.depois.abertura = null; e.depois.itens[0].quantidade = 500;
+  const v = versao(e); assert.equal(v.abertura, 'desconhecida'); assert.equal(art55(v), undefined);
+  assert.ok(v.pauta.every(l => !l.acionavel && l.ate === null));
 });
 
-test('horário no mesmo dia mantém a abertura estável', () => {
-  const v = versaoDaRetificacao({ ...base, aberturaDepois: '2026-11-23T15:00', antes: [antes(10)], depois: [{ numero: 40, descricao, quantidade: 40, estimativa: 200 }] });
-  assert.equal(v.abertura, 'estavel');
-  assert.equal(v.pauta.find(p => p.artigo === 'art. 55, §1º')?.ateQuando, '2026-11-17');
-});
-
-test('sem abertura não inventa prazo', () => {
-  const v = versaoDaRetificacao({ ...base, aberturaAntes: null, aberturaDepois: null, antes: [antes(10)], depois: [{ numero: 40, descricao, quantidade: 500, estimativa: 200 }] });
-  assert.equal(v.abertura, 'desconhecida');
-  const juridica = v.pauta.find(p => p.origem === 'aguardando' && p.item == null);
-  assert.equal(juridica?.ateQuando, null);
-  assert.equal(juridica?.ofereceAcao, false);
-  const analista = v.pauta.find(p => p.artigo === 'política');
-  assert.equal(analista?.ofereceAcao, false);
-  assert.equal(analista?.ateQuando, null);
-  assert.equal(analista?.quem, null);
+test('item novo ilegível não chama modelo nem entra na conta de reaproveitamento', () => {
+  const e = entrada(); e.antes.itens = []; e.antes.fits = []; e.antes.decisoes = []; e.depois.itens[0].descricao = '';
+  const v = versao(e); assert.equal(v.linhas[0].estado, 'ilegivel'); assert.equal(v.linhas[0].chamarAgente, false);
+  assert.equal(v.itensSemReleitura, 0);
 });
