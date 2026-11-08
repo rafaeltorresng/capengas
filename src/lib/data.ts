@@ -2,7 +2,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, statSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -84,6 +84,8 @@ let db: DatabaseSync | null = null;
 function anvisaDb() {
   if (db) return db;
   mkdirSync(CACHE, { recursive: true });
+  // CSV baixado depois da importação: a cópia SQLite é refeita, para nunca consultar registro desatualizado.
+  if (existsSync(DB_PATH) && existsSync(ANVISA_CSV) && statSync(ANVISA_CSV).mtimeMs > statSync(DB_PATH).mtimeMs) rmSync(DB_PATH);
   const fresh = !existsSync(DB_PATH);
   db = new DatabaseSync(DB_PATH);
   if (fresh) {
@@ -105,6 +107,7 @@ function anvisaDb() {
 }
 export const anvisa = {
   count: () => Number((anvisaDb().prepare('SELECT count(*) c FROM p').get() as any).c),
+  linhas: () => anvisaDb().prepare('SELECT * FROM p').iterate() as Iterable<Record<string, string>>,
   byRegistro: (n: string) => anvisaDb().prepare('SELECT * FROM p WHERE NUMERO_REGISTRO_CADASTRO = ?').get(n.replace(/\D/g, '')) as Record<string, string> | undefined,
   searchName: (term: string, limit = 50) => {
     const t = term.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

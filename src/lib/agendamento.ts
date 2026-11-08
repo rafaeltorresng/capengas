@@ -42,13 +42,13 @@ const SEM_EVIDENCIA = 'rascunho de esclarecimento sem evidência no encaixe grav
 
 export async function executarAcoesDoTurno(d: {
   store: LanceStore; company: any; state: LanceState; ids: string[]; sandboxUrl: string;
-  recheck: NonNullable<ActDeps['recheck']>; enviar?: ActDeps['enviar']; consultar?: ActDeps['consultar']; now?: () => Date;
+  recheck: NonNullable<ActDeps['recheck']>; enviar?: ActDeps['enviar']; consultar?: ActDeps['consultar']; anvisa?: ActDeps['anvisa']; now?: () => Date;
 }): Promise<ResumoAcoes> {
   const now = d.now ?? (() => new Date());
   const r: ResumoAcoes = { esclarecimentos: {}, propostas: {}, bloqueados: 0 };
   const conta = (c: Contagem, k: ResultadoAcao['resultado']) => { c[k] = (c[k] ?? 0) + 1; };
   const deps: ActDeps = { store: d.store, politica: d.company.politica, sandboxUrl: d.sandboxUrl, empresa: d.company.empresa?.nome ?? '',
-    catalogo: d.company.catalogo ?? [], now, recheck: d.recheck, enviar: d.enviar, consultar: d.consultar };
+    catalogo: d.company.catalogo ?? [], now, recheck: d.recheck, enviar: d.enviar, consultar: d.consultar, anvisa: d.anvisa };
   for (const id of d.ids) {
     const t = d.store.getTender(id);
     if (!t?.arquivosHash || t.reavaliar === true) {
@@ -82,7 +82,11 @@ export async function executarAcoesDoTurno(d: {
     // Só decisões calculadas nesta análise: uma decisão antiga no store não ganha autorização nova.
     const disputar = [...new Set(d.store.getDecisions(id)
       .filter(x => x.estado === 'disputar' && d.state.decisions[`${id}#${x.item}`]?.estado === 'disputar').map(x => x.item))];
-    if (disputar.length) conta(r.propostas, (await executarAcao({ tipo: 'enviar_proposta', tenderId: id, itens: disputar }, deps)).resultado);
+    if (disputar.length) {
+      const res = await executarAcao({ tipo: 'enviar_proposta', tenderId: id, itens: disputar }, deps);
+      if (res.resultado === 'bloqueada') d.store.logEvent({ tipo: 'bloqueio', resumo: `proposta não enviada: ${res.motivo}`, tender: id });
+      conta(r.propostas, res.resultado);
+    }
   }
   return r;
 }

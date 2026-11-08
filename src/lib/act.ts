@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { evaluate } from './policy.ts';
 import { esclarecimentoDeadline } from './rules.ts';
 import { consultarProtocolo, type Consulta } from './portal.ts';
+import { conferirRegistro } from './catalogo.ts';
 import type { AcaoContexto, ItemDecision, Politica, Recheque } from './contracts.ts';
 import type { LanceStore } from './store.ts';
 
@@ -34,6 +35,8 @@ export type ActDeps = {
   recheck?: (tenderId: string, store: LanceStore) => Promise<Recheque>;
   enviar?: (url: string, body: unknown) => Promise<Envio>;
   consultar?: (baseUrl: string, tipo: 'proposta' | 'esclarecimento', protocolo: string) => Promise<Consulta>;
+  /** Linha da base oficial da ANVISA pelo número do registro. Com ela, proposta só sai se o registro conferir com a marca. */
+  anvisa?: (registro: string) => Record<string, string> | undefined;
 };
 
 type Linha = { numero: number; produto: string; marca: string; registroAnvisa: string; precoUnitario: number; quantidade: number };
@@ -97,6 +100,10 @@ function montar(pedido: PedidoAcao, deps: ActDeps, now: Date): { erro: string } 
     if (!(decision.precoProposto != null && decision.precoProposto > 0)) return { erro: `item ${numero}: preço calculado ausente no store` };
     const produto = deps.catalogo.find(row => row.id === decision.produto);
     if (!produto?.marca || !/^\d{11}$/.test(produto.registroAnvisa ?? '')) return { erro: `item ${numero}: produto sem marca ou registro no catálogo` };
+    if (deps.anvisa) {
+      const conferencia = conferirRegistro(produto, deps.anvisa(produto.registroAnvisa), now);
+      if (conferencia.status !== 'confere') return { erro: `item ${numero}: ${conferencia.motivo}` };
+    }
     linhas.push({ numero, produto: produto.id, marca: produto.marca, registroAnvisa: produto.registroAnvisa, precoUnitario: decision.precoProposto, quantidade: item.quantidade });
     decisoes.push({ estado: decision.estado, motivos: decision.motivos });
   }
