@@ -8,6 +8,7 @@ import {
 } from '@/lib/format';
 import { AppLink, EmptyState, Evidence, Metrics, Page, PageHeader, StatusBadge, Trail } from '@/kit';
 import { TurnDateFilter } from '@/components/turn-date-filter';
+import { PdfButton } from '@/components/pdf-button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -379,7 +380,8 @@ const faseLabel: Record<Plan['linhas'][number]['fase'], string> = {
 const responsavelLabel = { lance: 'Lance', humano: 'Sua equipe', terceiro: 'Fabricante' } as const;
 const planProblem = new Set(['vence_antes', 'ausente', 'irregular', 'pedir_terceiro', 'conferir']);
 
-export function DocumentPlan({ plan }: { plan: Plan }) {
+/** `arquivos` libera o download das declarações geradas; fica de fora quando a análise está desatualizada. */
+export function DocumentPlan({ plan, arquivos }: { plan: Plan; arquivos?: { tender: string; analise?: string } }) {
   const fases = [...new Set(plan.linhas.map(l => l.fase))];
   const faseInicial = plan.linhas.find(l => planProblem.has(l.status))?.fase ?? fases[0];
   return <Card>
@@ -407,6 +409,7 @@ export function DocumentPlan({ plan }: { plan: Plan }) {
                 <ItemDescription>{linha.acao}</ItemDescription>
                 {linha.prazo && <ItemDescription>Prazo: {linha.prazo}</ItemDescription>}
                 {linha.ate && planProblem.has(linha.status) && <ItemDescription>Resolver até a sessão, em {dayOf(linha.ate)}.</ItemDescription>}
+                {linha.declaracao && arquivos && <PdfButton tender={arquivos.tender} analise={arquivos.analise} tipo={`documento-${plan.linhas.indexOf(linha)}`} rotulo="Baixar declaração em PDF" />}
                 {linha.fonte && <Accordion><AccordionItem value="fonte"><AccordionTrigger>Conferir exigência no edital</AccordionTrigger><AccordionContent><Evidence source={{ ...linha.fonte, citacao: linha.citacao }} quote /></AccordionContent></AccordionItem></Accordion>}
               </ItemContent>
             </Item>
@@ -463,7 +466,7 @@ export function DossierScreen({ data }: { data: Dossier }) {
         </Accordion>}
       </CardContent>
     </Card>}
-    {data.planoDocumentos && <DocumentPlan plan={data.planoDocumentos} />}
+    {data.planoDocumentos && <DocumentPlan plan={data.planoDocumentos} arquivos={!data.reavaliar && !data.desatualizado ? { tender: data.tender, analise: data.analiseId } : undefined} />}
     <Card>
       <CardHeader><CardTitle><h2>Checklist</h2></CardTitle></CardHeader>
       <CardContent>

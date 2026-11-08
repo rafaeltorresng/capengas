@@ -9,7 +9,7 @@ import { gerarDocumentoProposta } from '../src/lib/documento-proposta.ts';
 import { createReadModel } from '../src/lib/read-model.ts';
 import { createIntegratedStore } from '../src/server/integrated.ts';
 import { createServer } from '../src/server/api.ts';
-import { prepararDocumento, renderizarPdf } from '../src/server/documentos.ts';
+import { prepararDocumento, prepararDocumentoGerado, renderizarPdf } from '../src/server/documentos.ts';
 import type { Dossier } from '../src/server/contract.ts';
 import { eventoTurno } from '../src/lib/turnos.ts';
 
@@ -77,4 +77,34 @@ test('PDF suporta acentos, tabela extensa e fonte longa, sem consulta externa', 
   const pdf = await renderizarPdf({ titulo: 'Caso sintético de paginação', markdown, nomeArquivo: 'teste.pdf', paisagem: false });
   assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
   assert.ok(pdf.length > 10_000);
+});
+test('declaração em arquivo: PDF da minuta persistida no plano, com aviso de dado sintético e as mesmas travas da proposta', async t => {
+  // Caso sintético: o edital de teste pede a declaração de menor fora do sistema e não traz modelo.
+  const state = caso();
+  state.documentRequirements![tid] = [{ tipo: 'declaracao_menor', fase: 'proposta_inicial', condicoes: ['sempre'], origem: 'agente',
+    citacao: 'declaração de que não emprega menor de 18 anos', fonte: { nome: 'Edital', url: 'https://x/edital.pdf' } }];
+  const store = openStore(':memory:', { now }); t.after(() => store.close());
+  persistAnalysis(state, store, { analiseId: 'execucao-teste' });
+  const model = createReadModel(store, { now, actions: () => [] });
+  const dossier = model.dossie(tid)!;
+  const indice = dossier.planoDocumentos!.linhas.findIndex(l => l.tipo === 'declaracao_menor');
+  assert.equal(dossier.planoDocumentos!.linhas[indice].status, 'lance_gera');
+  const arquivo = prepararDocumentoGerado(dossier, indice);
+  assert.match(arquivo.markdown, /MINUTA PARA REVISÃO E ASSINATURA/);
+  assert.match(arquivo.markdown, /sintétic/);
+  assert.match(arquivo.markdown, /não emprega menor de 18 \(dezoito\) anos/);
+  assert.match(arquivo.nomeArquivo, /^lance-declaracao-menor-/);
+  assert.throws(() => prepararDocumentoGerado({ ...dossier, desatualizado: true }, indice), /nova análise/);
+  assert.throws(() => prepararDocumentoGerado(dossier, dossier.planoDocumentos!.linhas.findIndex(l => l.tipo === 'proposta_precos')), /não tem arquivo/);
+  const app = createServer(createIntegratedStore(store, model));
+  app.listen(0, '127.0.0.1'); await once(app, 'listening'); t.after(() => new Promise<void>(r => app.close(() => r())));
+  const base = `http://127.0.0.1:${(app.address() as { port: number }).port}/api/dossies/${encodeURIComponent(tid)}`;
+  assert.equal((await fetch(`${base}/documento-${indice}.pdf?analise=execucao-teste`)).status, 409, 'análise não concluída');
+  store.logEvent(eventoTurno({ turno: 'execucao-teste', tipo: 'inicio', pregoes: [tid] }));
+  store.logEvent(eventoTurno({ turno: 'execucao-teste', tipo: 'fim', status: 'concluido', resultados: [] }));
+  const r = await fetch(`${base}/documento-${indice}.pdf?analise=execucao-teste`);
+  assert.equal(r.status, 200);
+  assert.equal(Buffer.from(await r.arrayBuffer()).subarray(0, 5).toString(), '%PDF-');
+  assert.equal((await fetch(`${base}/documento-999.pdf`)).status, 404);
+  assert.deepEqual(store.getActions(), []);
 });

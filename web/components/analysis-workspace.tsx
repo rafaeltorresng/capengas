@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Lexer } from 'marked';
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, FileDownIcon, FileTextIcon, InboxIcon, SearchIcon, TriangleAlertIcon } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, FileTextIcon, InboxIcon, SearchIcon, TriangleAlertIcon } from 'lucide-react';
 import type { Dossier, Escalation, Pauta, ResultadoPregao, Turno, Turnos } from '../../src/server/contract.ts';
 import { concluirAnalise, resumirProgresso } from '../../src/lib/experiencia-analise.ts';
 import { useApi, View } from '@/lib/api';
@@ -16,10 +16,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item';
-import { Spinner } from '@/components/ui/spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OperationalConditions } from '@/components/operational-conditions';
+import { PdfButton } from '@/components/pdf-button';
 
 const estadoFase: Record<string, string> = { aguardando: 'A seguir', consultada: 'Percorrida', concluida: 'Conferida', atencao: 'Com pendência', em_andamento: 'Em curso' };
 
@@ -74,29 +74,6 @@ function AgentProgress({ turno }: { turno: Turno }) {
   </Card>;
 }
 
-function PdfButton({ tender, analise, tipo }: { tender: string; analise: string; tipo: 'proposta' | 'relatorio' }) {
-  const [busy, setBusy] = useState(false);
-  const [erro, setErro] = useState('');
-  async function baixar() {
-    setBusy(true); setErro('');
-    try {
-      const response = await fetch(`/api/dossies/${encodeURIComponent(tender)}/${tipo}.pdf?analise=${encodeURIComponent(analise)}`, { signal: AbortSignal.timeout(30_000) });
-      if (!response.ok) throw new Error((await response.json()).erro ?? 'Não foi possível gerar o PDF.');
-      const url = URL.createObjectURL(await response.blob());
-      const link = document.createElement('a'); link.href = url; link.download = `lance-${tipo}-${tender.replaceAll('/', '-')}.pdf`; link.click();
-      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
-    } catch (failure) { setErro(failure instanceof Error ? failure.message : 'Não foi possível baixar o documento.'); }
-    finally { setBusy(false); }
-  }
-  return <div className="flex flex-col items-start gap-2">
-    <Button variant={tipo === 'proposta' ? 'default' : 'outline'} disabled={busy} onClick={() => void baixar()}>
-      {busy ? <Spinner data-icon="inline-start" aria-hidden="true" /> : <FileDownIcon data-icon="inline-start" />}
-      {busy ? 'Preparando PDF…' : tipo === 'proposta' ? 'Baixar minuta em PDF' : 'Baixar análise em PDF'}
-    </Button>
-    {erro && <p role="alert" className="max-w-sm text-sm text-destructive">{erro}</p>}
-  </div>;
-}
-
 const plain = (s: string) => s.replace(/\*\*|__/g, '').replace(/\\\|/g, '|');
 /** Apenas texto e componentes: HTML vindo de uma fonte nunca é executado. */
 function DocumentPreview({ markdown }: { markdown: string }) {
@@ -130,7 +107,7 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{veredito.detalhe}</p>
         <p className="mt-2 text-xs text-muted-foreground">Nenhuma proposta enviada.</p>
       </div>
-      {atual && recurso.data?.origem === 'integrado' && <PdfButton tender={resultado.tender} analise={turno.id} tipo="relatorio" />}
+      {atual && recurso.data?.origem === 'integrado' && <PdfButton tender={resultado.tender} analise={turno.id} tipo="relatorio" rotulo="Baixar análise em PDF" />}
     </section>
     {recurso.error && <Alert><AlertDescription>Não foi possível atualizar os documentos. {recurso.error}</AlertDescription></Alert>}
     {dossier?.analiseId && !atual && <Alert><AlertDescription>Uma análise mais recente substituiu o dossiê. Este resultado é o histórico desta execução; os documentos atuais estão na análise mais recente. <AppLink href="#/turnos">Ver editais</AppLink></AlertDescription></Alert>}
@@ -175,11 +152,11 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
               <h4 className="mb-2 font-medium">Complete antes de utilizar</h4>
               <ul className="list-disc space-y-1 pl-5 text-muted-foreground">{proposta.pendencias.map(p => <li className="wrap-anywhere" key={p}>{p}</li>)}</ul>
             </div>}
-            {!dossier?.reavaliar && !dossier?.desatualizado && <PdfButton tender={resultado.tender} analise={turno.id} tipo="proposta" />}
+            {!dossier?.reavaliar && !dossier?.desatualizado && <PdfButton tender={resultado.tender} analise={turno.id} tipo="proposta" rotulo="Baixar minuta em PDF" destaque />}
             <Accordion><AccordionItem value="previa"><AccordionTrigger>Abrir prévia da minuta</AccordionTrigger><AccordionContent><DocumentPreview markdown={proposta.markdown} /></AccordionContent></AccordionItem></Accordion>
           </CardContent>
         </Card> : <EmptyState icon={<FileTextIcon />} title="Proposta ainda não preparada" description={veredito.liberados + veredito.condicionados > 0 ? 'Há itens candidatos, mas esta execução ainda não produziu um documento. Nenhum arquivo será preenchido com dados inventados.' : 'A proposta é preparada quando existe um item viável. Resolva as pendências técnicas antes de avançar.'} />}
-        {atual && dossier?.planoDocumentos && <DocumentPlan plan={dossier.planoDocumentos} />}
+        {atual && dossier?.planoDocumentos && <DocumentPlan plan={dossier.planoDocumentos} arquivos={!dossier.reavaliar && !dossier.desatualizado ? { tender: resultado.tender, analise: turno.id } : undefined} />}
       </TabsContent>
       <TabsContent value="evidencias" className="mt-4 flex flex-col gap-4">
         <h3 className="text-base font-semibold">Fontes do edital</h3>

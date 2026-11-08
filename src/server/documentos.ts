@@ -79,6 +79,23 @@ export function prepararDocumento(dossie: Dossier, tipo: 'proposta' | 'relatorio
   return { titulo: 'Relatório da análise', markdown: linhas.join('\n\n'), nomeArquivo, paisagem: false };
 }
 
+/** Declaração gerada com o plano de documentos. Mesmas travas da proposta: análise atual e linha com minuta persistida. */
+export function prepararDocumentoGerado(dossie: Dossier, indice: number): Exportacao {
+  const linha = dossie.planoDocumentos?.linhas[indice];
+  if (!linha) throw new DocumentoError(404, 'Documento não encontrado no plano desta análise.');
+  if (!linha.declaracao) throw new DocumentoError(409, 'Este documento não tem arquivo gerado pelo Lance.');
+  if (dossie.reavaliar) throw new DocumentoError(409, 'O edital mudou. Reavalie antes de preparar as declarações.');
+  if (dossie.desatualizado) throw new DocumentoError(409, 'Os dados ou as decisões mudaram. Gere uma nova análise antes de preparar as declarações.');
+  const d = linha.declaracao;
+  const origem = d.origemDados === 'sinteticos'
+    ? 'Cadastro sintético de demonstração. Este arquivo não representa uma empresa real.'
+    : 'Dados da declarante conforme cadastro, sem verificação independente de sua autenticidade.';
+  const pendencias = d.pendencias.length ? `## Complete antes de assinar\n\n${d.pendencias.map(p => '- ' + p).join('\n')}\n\n` : '';
+  const nome = linha.tipo === 'declaracao_outra' ? `declaracao-${indice}` : linha.tipo.replace(/_/g, '-');
+  return { titulo: `${d.titulo} - minuta`, nomeArquivo: `lance-${nome}-${dossie.tender.replace(/[^\w-]/g, '-')}.pdf`, paisagem: false,
+    markdown: `# MINUTA PARA REVISÃO E ASSINATURA\n\n${origem}\n\nDocumento não assinado e não enviado. ${d.modelo ? 'Preenchido sobre o modelo do edital, sem alterar a redação do órgão.' : 'O edital não traz modelo; redação legal.'} Só assine o que for verdade para a empresa.\n\n${dossie.publicacao && !dossie.publicacao.conferida ? dossie.publicacao.motivo : ''}\n\nAnálise: ${dossie.analiseId ?? 'legada'} · Dados de ${dataHora(dossie.geradoEm)}.\n\n${pendencias}${d.markdown}` };
+}
+
 const texto = (raw: string) => raw.replace(/\*\*|__/g, '').replace(/\\\|/g, '|').replace(/(^|\s)_([^_]+)_($|\s)/g, '$1$2$3');
 /** PDF real, paginado no servidor. Não executa HTML nem interpreta conteúdo do edital como código. */
 export async function renderizarPdf(arquivo: Exportacao): Promise<Buffer> {
