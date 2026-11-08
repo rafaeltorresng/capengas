@@ -24,6 +24,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { OperationalConditions } from '@/components/operational-conditions';
 import { Trace as TraceList, TraceDescription, TraceIcon, TraceLine, TraceTitle } from '@/components/ui/trace';
 
 export function Historico({ rows }: { rows: HistoricoPregao[] }) {
@@ -420,6 +421,7 @@ export function DocumentPlan({ plan }: { plan: Plan }) {
 export function DossierScreen({ data }: { data: Dossier }) {
   return <Page>
     <PageHeader title="Dossiê" detail={data.pregao + ' / versão ' + data.versao} />
+    <OperationalConditions operacao={data.operacao} />
     {data.desatualizado && <Alert><AlertDescription>Os dados ou as decisões mudaram após esta análise. A proposta anterior está bloqueada até atualizar o dossiê.</AlertDescription></Alert>}
     {data.pendencias.length > 0 && <Alert>
       <AlertTitle>Pendências</AlertTitle>

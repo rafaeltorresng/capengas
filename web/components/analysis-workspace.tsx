@@ -18,6 +18,7 @@ import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/comp
 import { Spinner } from '@/components/ui/spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { OperationalConditions } from '@/components/operational-conditions';
 
 const estadoFase: Record<string, string> = { aguardando: 'A seguir', consultada: 'Consultada', concluida: 'Conferida', atencao: 'Verificação pendente', em_andamento: 'Em andamento' };
 
@@ -112,7 +113,7 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
   const recurso = useApi<Dossier>('dossies/' + encodeURIComponent(resultado.tender));
   const dossier = recurso.data?.dados;
   const atual = dossier?.analiseId === turno.id;
-  const veredito = concluirAnalise(resultado.itens, atual && dossier?.reavaliar, atual && dossier?.desatualizado, atual && dossier?.publicacao?.conferida === false, atual ? dossier?.escopo?.naoAnalisados.length : 0);
+  const veredito = concluirAnalise(resultado.itens, atual && dossier?.reavaliar, atual && dossier?.desatualizado, atual && dossier?.publicacao?.conferida === false, atual ? dossier?.escopo?.naoAnalisados.length : 0, atual && dossier?.operacao?.requerRevisao);
   const proposta = atual ? dossier?.proposta : undefined;
   const revisao = veredito.estado === 'revisao_necessaria' || veredito.estado === 'com_pendencias';
   if (!recurso.data && !recurso.error) return <p role="status" className="text-sm text-muted-foreground">Conferindo a versão da análise e os documentos…</p>;
@@ -158,6 +159,7 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
             </Accordion>
           </CardContent>
         </Card>
+        {atual && <OperationalConditions operacao={dossier?.operacao} />}
         <TenderActions tender={resultado.tender} />
       </TabsContent>
       <TabsContent value="documentos" className="mt-4 flex flex-col gap-6">
@@ -166,6 +168,7 @@ function AnalysisResult({ resultado, turno }: { resultado: ResultadoPregao; turn
           <CardContent className="flex flex-col gap-4">
             <Alert><AlertDescription>{proposta.origemDados === 'sinteticos' ? 'O cadastro, o catálogo e as condições comerciais atuais são sintéticos. O PDF identifica essa origem e não representa uma empresa real.' : 'Dados cadastrais sem verificação independente de autenticidade.'}</AlertDescription></Alert>
             {dossier?.publicacao?.conferida === false && <Alert><AlertDescription>{dossier.publicacao.motivo}</AlertDescription></Alert>}
+            {dossier?.operacao?.requerRevisao && <Alert><AlertDescription>Há condições operacionais a confirmar. Confira “Condições para fornecer” no resultado antes de utilizar a minuta.</AlertDescription></Alert>}
             {proposta.pendencias.length > 0 && <Alert>
               <AlertTitle>Complete antes de utilizar</AlertTitle><AlertDescription><ul className="list-disc pl-4">{proposta.pendencias.map(p => <li key={p}>{p}</li>)}</ul></AlertDescription>
             </Alert>}
