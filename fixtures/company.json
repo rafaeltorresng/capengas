@@ -1,4 +1,5 @@
 {
+  "origemDados": "sinteticos",
   "_nota": "Empresa FICTÍCIA. Números de registro ANVISA são reais (base aberta TA_PRODUTO_SAUDE_SITE); custos, fichas técnicas, documentos do cofre e política são sintéticos. validade null = documento sem vencimento (AFE). termos = palavras que um item precisa conter para ser candidato ao produto (pré-filtro; o encaixe técnico é do agente).",
   "empresa": {
     "nome": "Distribuidora Modelo Ltda (fictícia)",

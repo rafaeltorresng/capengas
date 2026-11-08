@@ -9,6 +9,7 @@ import type { buildDossie, DossierSource } from './dossie.ts';
 import type { EvidenceValidation } from '../server/contract.ts';
 import type { VersaoRetificacao } from './versao.ts';
 import { agruparResultados, pncpUrl, projetarTurnos } from './turnos.ts';
+import { gerarDocumentoProposta } from './documento-proposta.ts';
 
 export type ReadStore = Pick<Store, 'events' | 'openEscalations' | 'getTender' | 'getItems' | 'getDecisions' | 'getDossie' | 'resolveEscalation'>
   & Partial<Pick<Store, 'getTenders' | 'getRequirements'>> & {
@@ -19,7 +20,8 @@ export type Proof = {
   fonte: string; avaliacoes: { nome: string; valor: string }[]; cenarios: { nome: string; resultado: string }[];
   concordancia: number | null; custoUsd: number | null; duracaoMs: number | null;
 };
-type Dossie = ReturnType<typeof buildDossie> & { retificacao?: VersaoRetificacao; retificacoes?: VersaoRetificacao[]; reavaliar?: boolean };
+type Dossie = ReturnType<typeof buildDossie> & { retificacao?: VersaoRetificacao; retificacoes?: VersaoRetificacao[]; reavaliar?: boolean; desatualizado?: boolean;
+  publicacao?: { conferida: boolean; motivo: string } };
 const labels: Record<string, string> = { disputar: 'Disputar', disputar_com_pendencia: 'Com pendência', esclarecer: 'Em esclarecimento', escalar: 'Escalar', nao_disputar: 'Não disputar' };
 const fitLabels: Record<string, string> = { atende: 'Atende', nao_atende: 'Não atende', nao_informado: 'Não informado' };
 const localDay = (date: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
@@ -52,7 +54,26 @@ export function createReadModel(store: ReadStore, options: {
     if (!value) return undefined;
     const retificacoes = store.getRetificacoes?.(tender) ?? [];
     const retificacao = retificacoes.at(-1) ?? value.retificacao;
-    return { ...value, reavaliar: store.getTender(tender)?.reavaliar === true,
+    // Documento e conclusão não acompanham silenciosamente decisões/itens alterados após a análise.
+    const atuais = value.analiseId ? selectedDecisions(tender) : [];
+    const itensAtuais = value.analiseId ? store.getItems(tender) : [];
+    const divergente = !!value.analiseId && value.itens.some(i => {
+      const d = atuais.find(d => d.item === i.item);
+      const item = itensAtuais.find(row => row.numero === i.item);
+      return !d || d.estado !== i.estado || d.produto !== i.produto?.id || d.precoProposto !== i.precoUnitario
+        || !item || item.descricao !== i.descricao || item.quantidade !== i.quantidade;
+    });
+    const registro = store.getTender(tender);
+    const conferida = !!registro?.arquivosHash && !!registro.ultimoCheck && Date.parse(registro.ultimoCheck) >= Date.parse(value.geradoEm) && !registro.reavaliar;
+    // A prévia/PDF usa o modelo de apresentação atual sobre as entradas persistidas.
+    // Não refaz decisões, não consulta fontes e não substitui o documento original no store.
+    const proposta = Array.isArray(value.proposta?.itens) && Array.isArray(value.proposta?.regras) && typeof value.proposta?.empresa?.nome === 'string' && Number.isFinite(Date.parse(value.proposta.geradoEm))
+      ? gerarDocumentoProposta({ pregao: { id: tender, orgao: value.orgao, abertura: value.sessao ?? undefined },
+        empresa: value.proposta.empresa, itens: value.proposta.itens, regras: value.proposta.regras,
+        hoje: new Date(value.proposta.geradoEm), origemDados: value.proposta.origemDados }) : value.proposta;
+    return { ...value, reavaliar: registro?.reavaliar === true, desatualizado: divergente,
+      proposta,
+      publicacao: { conferida, motivo: conferida ? 'Publicação conferida ao finalizar a análise.' : 'A atualidade da publicação não está confirmada. Confira o PNCP antes de utilizar a proposta. Nenhum envio está liberado por este documento.' },
       ...(retificacao ? { retificacao: { ...retificacao, pauta: pauta().linhas.filter(l => l.tenderId === tender && l.tipo === 'errata') }, retificacoes } : {}) };
   }
   function queue(decision: DecisionRow) {

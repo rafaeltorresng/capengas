@@ -6,21 +6,21 @@ export const pncpUrl = (tender: string) =>
 
 export function agruparResultados(rows: QueueItem[], dossie: (tender: string) => { pregao: string } | undefined) {
   const resultados = new Map<string, ResultadoPregao>();
-  for (const { tender, pregao, orgao, item, descricao, estado, motivo } of rows) {
+  for (const { tender, pregao, orgao, item, descricao, estado, estadoCodigo, motivo } of rows) {
     let resultado = resultados.get(tender);
     if (!resultado) {
       const documento = dossie(tender);
       resultado = { tender, pregao: documento?.pregao ?? pregao, orgao, dossie: !!documento, itens: [] };
       resultados.set(tender, resultado);
     }
-    resultado.itens.push({ item, descricao, estado, motivo });
+    resultado.itens.push({ item, descricao, estado, ...(estadoCodigo ? { estadoCodigo } : {}), motivo });
   }
   return [...resultados.values()];
 }
 
 export type TurnoEvento =
   | { tipo: 'inicio'; pregoes: string[]; nomesEditais?: Record<string, string> }
-  | { tipo: 'atividade'; atividade: string }
+  | { tipo: 'atividade'; atividade: string; ferramenta?: string }
   | { tipo: 'resultado'; concluida: boolean }
   | { tipo: 'sinal' }
   | { tipo: 'fim'; status: 'concluido' | 'incompleto' | 'falhou'; resultados: ResultadoPregao[] };
@@ -89,13 +89,14 @@ export function projetarTurnos(events: Event[], agora: Date, resultadoLegado: (e
       const etapa = turno.etapas.at(-1);
       if (data.tipo === 'atividade' && (etapa?.atividade !== data.atividade || etapa.estado !== 'em_andamento')) {
         if (etapa?.estado === 'em_andamento') delete etapa.estado;
-        turno.etapas.push({ horario: event.horario, atividade: data.atividade, estado: 'em_andamento' });
+        turno.etapas.push({ horario: event.horario, atividade: data.atividade, ...(data.ferramenta ? { ferramenta: data.ferramenta } : {}), estado: 'em_andamento' });
       }
       if (data.tipo === 'resultado' && etapa?.estado === 'em_andamento') {
         etapa.estado = data.concluida ? 'concluida' : 'pendente';
       }
       if (data.tipo === 'fim') {
         turno.status = data.status;
+        turno.resultados = data.resultados;
         if (etapa?.estado === 'em_andamento') etapa.estado = data.status === 'concluido' ? 'concluida' : 'pendente';
         if (data.status === 'concluido') publicar(turno, data.resultados);
       }

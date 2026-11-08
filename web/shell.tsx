@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { ActivityIcon, CircleCheckIcon, FlaskConicalIcon, HistoryIcon, ListChecksIcon, ListIcon, SunIcon } from 'lucide-react';
+import { FilesIcon, CircleCheckIcon } from 'lucide-react';
 import type { OnboardingData } from '../src/server/onboarding.ts';
 import { useApi } from '@/lib/api';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
@@ -16,23 +17,10 @@ import {
 
 const groups = [
   {
-    label: 'Operação',
+    label: 'Sua operação',
     items: [
-      { id: 'turnos', title: 'Acompanhamento', icon: ActivityIcon },
-      { id: 'hoje', title: 'Hoje', icon: SunIcon },
-      { id: 'pauta', title: 'Pauta', icon: ListChecksIcon },
-      { id: 'fila', title: 'Fila', icon: ListIcon },
-    ],
-  },
-  {
-    label: 'Decisão',
-    items: [{ id: 'escaladas', title: 'Aprovações', icon: CircleCheckIcon }],
-  },
-  {
-    label: 'Registro',
-    items: [
-      { id: 'historico', title: 'Histórico', icon: HistoryIcon },
-      { id: 'prova', title: 'Prova', icon: FlaskConicalIcon },
+      { id: 'turnos', title: 'Editais', icon: FilesIcon },
+      { id: 'escaladas', title: 'Pendências', icon: CircleCheckIcon },
     ],
   },
 ] as const;
@@ -41,11 +29,11 @@ function crumbs(path: string) {
   if (path === 'turnos' || path.startsWith('turnos/')) {
     const nested = path.startsWith('turnos/');
     return nested
-      ? [{ href: '#/turnos', label: 'Acompanhamento' }, { label: 'Turno' }]
-      : [{ label: 'Acompanhamento' }];
+      ? [{ href: '#/turnos', label: 'Editais' }, { label: 'Análise' }]
+      : [{ label: 'Editais' }];
   }
   const known: Record<string, string> = {
-    hoje: 'Hoje', pauta: 'Pauta', fila: 'Fila', escaladas: 'Aprovações', historico: 'Histórico', prova: 'Prova',
+    hoje: 'Atividade do dia', pauta: 'Agenda completa', fila: 'Todos os itens', escaladas: 'Pendências', historico: 'Histórico', prova: 'Dados da execução',
   };
   if (known[path]) return [{ label: known[path] }];
   if (path.startsWith('itens/')) return [{ href: '#/fila', label: 'Fila' }, { label: 'Item' }];
@@ -111,6 +99,16 @@ function ShellContent({ path, pending, amostra, mainRef, children }: ShellProps)
         </SidebarGroup>)}
       </SidebarContent>
       <SidebarFooter>
+        <Accordion className="group-data-[collapsible=icon]:hidden">
+          <AccordionItem value="diagnostico">
+            <AccordionTrigger>Informações da execução</AccordionTrigger>
+            <AccordionContent>
+              <div className="flex flex-col items-start gap-2 text-sm text-muted-foreground">
+                {[['hoje', 'Atividade do dia'], ['pauta', 'Agenda completa'], ['fila', 'Todos os itens'], ['prova', 'Medições e avaliações']].map(([id, label]) => <a key={id} href={'#/' + id} onClick={closeMobile}>{label}</a>)}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
         <SidebarSeparator />
         <SidebarMenu>
           <SidebarMenuItem>

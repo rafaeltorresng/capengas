@@ -1,0 +1,55 @@
+{
+  "data": "2026-11-08",
+  "fuso": "America/Recife",
+  "origem": "execução real iniciada no onboarding; banco temporário sem resultado pré-carregado",
+  "modelo": "moonshotai/Kimi-K2.6",
+  "tender": "77816510000166/2026/348",
+  "analiseId": "4ab3963b-5194-419d-ab04-a491ca7aecd6",
+  "inicio": "2026-11-08T04:31:42.018Z",
+  "fim": "2026-11-08T04:47:30.958Z",
+  "duracaoMs": 948940,
+  "chamadasModelo": 25,
+  "custoUsd": 0.11373776,
+  "tokensEntrada": null,
+  "tokensSaida": null,
+  "concordanciaHumana": null,
+  "economia": null,
+  "itens": [
+    {
+      "numero": 4,
+      "estado": "disputar_com_pendencia",
+      "precoCalculado": 7.5
+    },
+    {
+      "numero": 39,
+      "estado": "nao_disputar",
+      "precoCalculado": 27.5
+    }
+  ],
+  "proposta": {
+    "itens": [
+      4
+    ],
+    "regras": 4,
+    "total": 150,
+    "origemDados": "sinteticos"
+  },
+  "plano": {
+    "total": 11,
+    "prontos": 4,
+    "lance": 6,
+    "humano": 5,
+    "terceiro": 0,
+    "problemas": 5,
+    "condicionais": 2
+  },
+  "acoes": 0,
+  "publicacaoConferida": false,
+  "falhaFonte": "foto final não gravada: timeout após quatro tentativas nos arquivos do PNCP",
+  "metaTresMinutosCumprida": false,
+  "limites": [
+    "Empresa, catálogo, custos, cofre e política sintéticos; fontes do pregão e execução reais.",
+    "Rodou sobre árvore em desenvolvimento; últimos ajustes de validação de regras, modelo de apresentação e PDF foram conferidos depois sem outro turno pago.",
+    "Tokens não persistidos no rastro; nenhuma revisão humana completa ou medição de economia."
+  ]
+}

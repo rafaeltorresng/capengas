@@ -20,7 +20,7 @@ const labels: Record<DocStatus, string> = {
 };
 const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
 
-export function buildDossie(st: LanceState, tenderId: string, options: { documentos?: DossierDocCheck[]; versao?: string } = {}) {
+export function buildDossie(st: LanceState, tenderId: string, options: { documentos?: DossierDocCheck[]; versao?: string; analiseId?: string } = {}) {
   const tender = st.tenders[tenderId];
   if (!tender) throw new Error(`pregão ${tenderId} não está no estado`);
   const requirements = st.requirements.filter(r => (r.tender_id ?? r.tenderId) === tenderId)
@@ -77,6 +77,7 @@ export function buildDossie(st: LanceState, tenderId: string, options: { documen
   return {
     tender: tenderId, pregao: tender.numeroCompra ?? tenderId, versao: options.versao ?? '1',
     geradoEm: st.now.toISOString(), orgao: tender.orgao ?? '', sessao: tender.abertura ?? null,
+    analiseId: options.analiseId, proposta: st.proposals?.[tenderId] ? structuredClone(st.proposals[tenderId]) : undefined,
     empresa: st.company.empresa?.nome ?? '', checklist, pendencias: [...pendencias], documentos: documents,
     exigencias: requirements.map(r => ({ ...r })), itens,
     planoDocumentos: planoDoEstado(st, tenderId) ?? undefined,
@@ -84,3 +85,4 @@ export function buildDossie(st: LanceState, tenderId: string, options: { documen
     envioAutomaticoLiberado: false,
   };
 }
+export type DossierItem = ReturnType<typeof buildDossie>['itens'][number];

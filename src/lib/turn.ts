@@ -8,7 +8,7 @@ import { agruparResultados, eventoTurno, type TurnoEvento } from './turnos.ts';
 import type { LanceState } from './tools.ts';
 import type { LanceStore } from './store.ts';
 
-type AoVivo = { atividade(nome: string): void; resultado(concluida: boolean): void };
+type AoVivo = { atividade(nome: string, ferramenta?: string): void; resultado(concluida: boolean): void };
 const aoVivo = new WeakMap<object, AoVivo>();
 
 /** O agente consulta isto no momento da ferramenta. O turno preenche antes de chamar o modelo. */
@@ -49,7 +49,7 @@ export async function runAnalysisTurn(o: {
     registrar({ tipo: 'inicio', pregoes, nomesEditais });
     registrar({ tipo: 'atividade', atividade: 'Preparando a análise dos pregões' });
     aoVivo.set(o.state, {
-      atividade: nome => registrar({ tipo: 'atividade', atividade: nome }),
+      atividade: (nome, ferramenta) => registrar({ tipo: 'atividade', atividade: nome, ferramenta }),
       resultado: concluida => registrar({ tipo: 'resultado', concluida }),
     });
     sinal = setInterval(() => registrar({ tipo: 'sinal' }), 15_000);
@@ -59,7 +59,9 @@ export async function runAnalysisTurn(o: {
   try {
     o.state.analysisStore = { openEscalation: (request, options) => o.store.openEscalation(request, options) };
     const result = await o.run();
-    const saved = persistAnalysis(o.state, o.store);
+    registrar({ tipo: 'atividade', atividade: 'Salvando as conclusões e os documentos', ferramenta: 'salvar_analise' });
+    const saved = persistAnalysis(o.state, o.store, { analiseId: turno });
+    registrar({ tipo: 'resultado', concluida: true });
     if (o.snapshot) {
       for (const tenderId of Object.keys(o.state.tenders)) {
         if (!o.state.items[tenderId]?.length) continue;
@@ -68,8 +70,10 @@ export async function runAnalysisTurn(o: {
           o.store.logEvent({ tipo: 'bloqueio', resumo: 'análise sem decisão nova: a foto não foi renovada e o pregão continua pendente de reavaliação', tender: tenderId });
           continue;
         }
-        try { await o.snapshot(tenderId, o.store); }
+        registrar({ tipo: 'atividade', atividade: 'Conferindo a publicação antes de finalizar', ferramenta: 'conferir_publicacao' });
+        try { await o.snapshot(tenderId, o.store); registrar({ tipo: 'resultado', concluida: true }); }
         catch (error: any) {
+          registrar({ tipo: 'resultado', concluida: false });
           o.store.logEvent({ tipo: 'erro_fonte', resumo: `foto da análise não gravada (${String(error?.message ?? error).slice(0, 120)}); o recheque bloqueia até haver foto`, tender: tenderId });
         }
       }

@@ -15,7 +15,7 @@ export type Event = {
 export type DeadlineKind = 'sessao' | 'esclarecimento' | 'decisao_humana' | 'desconhecido';
 export type QueueItem = {
   tender: string; pregao: string; item: string; descricao: string; orgao: string;
-  prazo: string | null; prazoTipo?: DeadlineKind; estado: string; motivo: string;
+  prazo: string | null; prazoTipo?: DeadlineKind; estado: string; estadoCodigo?: string; motivo: string;
 };
 export type EvidenceValidation = {
   citacoes: 'conferidas' | 'nao_verificadas';
@@ -37,7 +37,12 @@ export type Dossier = {
   checklist: { exigencia: string; documento: string | null; status: string; detalhe?: string; fonte?: Source }[];
   pendencias: string[]; documentos: Source[];
   planoDocumentos?: import('../lib/plano-documentos.ts').PlanoDocumentos;
+  proposta?: import('../lib/documento-proposta.ts').DocumentoProposta;
+  analiseId?: string; geradoEm?: string; empresa?: string; orgao?: string; sessao?: string | null;
+  itens?: import('../lib/dossie.ts').DossierItem[];
   reavaliar?: boolean;
+  desatualizado?: boolean;
+  publicacao?: { conferida: boolean; motivo: string };
   retificacao?: import('../lib/versao.ts').VersaoRetificacao;
   retificacoes?: import('../lib/versao.ts').VersaoRetificacao[];
 };
@@ -65,10 +70,11 @@ export type TurnoStatus = 'ativo' | 'sem_atualizacao' | 'concluido' | 'incomplet
 export type Turno = {
   nomesEditais?: Record<string, string>;
   id: string; inicio: string; atualizadoEm: string; status: TurnoStatus;
-  pregoes: string[]; etapas: { horario: string; atividade: string; estado?: 'em_andamento' | 'concluida' | 'pendente' }[]; legado?: boolean;
+  pregoes: string[]; etapas: { horario: string; atividade: string; ferramenta?: string; estado?: 'em_andamento' | 'concluida' | 'pendente' }[]; legado?: boolean;
+  resultados?: ResultadoPregao[];
 };
 export type Turnos = { turnos: Turno[]; aprovacoes: number };
-export type HistoricoItem = Pick<QueueItem, 'item' | 'descricao' | 'estado' | 'motivo'>;
+export type HistoricoItem = Pick<QueueItem, 'item' | 'descricao' | 'estado' | 'estadoCodigo' | 'motivo'>;
 export type ResultadoPregao = Pick<QueueItem, 'tender' | 'pregao' | 'orgao'> & {
   itens: HistoricoItem[]; dossie: boolean;
 };

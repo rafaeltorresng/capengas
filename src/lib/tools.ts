@@ -409,7 +409,7 @@ export const tools: Tool[] = [
       }
       const t = st.tenders[a.tender_id] ?? {};
       const doc = gerarDocumentoProposta({ pregao: { id: a.tender_id, orgao: t.orgao ?? '', municipio: t.municipio, uf: t.uf, abertura: t.abertura },
-        empresa: st.company.empresa, itens: itens.sort((x, y) => x.numero - y.numero), regras, hoje: st.now });
+        empresa: st.company.empresa, itens: itens.sort((x, y) => x.numero - y.numero), regras, hoje: st.now, origemDados: st.company.origemDados });
       (st.proposals ??= {})[a.tender_id] = doc;
       return { gerado: true, itens: itens.map(i => i.numero), itens_sem_preco: semPreco, regras: regras.length, total: doc.total, colunas: doc.colunas,
         pendencias: doc.pendencias, lacunas: doc.lacunas, anexos: doc.anexos,
