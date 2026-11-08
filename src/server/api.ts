@@ -51,11 +51,13 @@ async function readDecision(req: IncomingMessage): Promise<Decision> {
 
 const contentTypes: Record<string, string> = {
   '.pdf': 'application/pdf', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
+  '.woff2': 'font/woff2', '.png': 'image/png',
 };
 
 async function staticFile(root: string, pathname: string, res: ServerResponse) {
-  // The app uses hash navigation. Only the entry point and Vite assets are served.
-  if (pathname !== '/' && pathname !== '/edital-exemplo.pdf' && !/^\/assets\/[\w.-]+$/.test(pathname)) return false;
+  // The app uses hash navigation. Only the entry point, the brand, the interface font and Vite assets are served.
+  const files = new Set(['/edital-exemplo.pdf', '/fonts/halden.woff2', '/logo.png', '/mark.png']);
+  if (pathname !== '/' && !files.has(pathname) && !/^\/assets\/[\w.-]+$/.test(pathname)) return false;
   const path = resolve(root, pathname === '/' ? 'index.html' : '.' + pathname);
   if (!path.startsWith(resolve(root) + sep)) return false;
   const contentType = contentTypes[extname(path)];

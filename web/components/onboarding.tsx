@@ -1,8 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, FileSpreadsheet, ExternalLink } from 'lucide-react';
-import { Button } from './ui/button.tsx';
-import { Input } from './ui/input.tsx';
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, ExternalLinkIcon, FileSpreadsheetIcon } from 'lucide-react';
 import type { AnalysisStarted, OnboardingData } from '../../src/server/onboarding.ts';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Attachment, AttachmentContent, AttachmentDescription, AttachmentMedia, AttachmentTitle } from '@/components/ui/attachment';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemSeparator, ItemTitle } from '@/components/ui/item';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Spinner } from '@/components/ui/spinner';
 
 const sessionKey = 'lance-demo-confirmado';
 function confirmado() { try { return sessionStorage.getItem(sessionKey) === 'sim'; } catch { return false; } }
@@ -13,6 +22,8 @@ const abertura = (raw: string | null) => {
     timeZone: 'America/Recife', dateStyle: 'short', timeStyle: 'short',
   }).format(date) : 'Abertura não informada';
 };
+const percent = new Intl.NumberFormat('pt-BR', { style: 'percent' });
+const steps = ['Empresa', 'Produtos', 'Edital'];
 
 export function Onboarding({ data, escolherEdital, iniciar }: {
   data: OnboardingData; escolherEdital: boolean; iniciar: (id: string) => Promise<AnalysisStarted>;
@@ -35,78 +46,149 @@ export function Onboarding({ data, escolherEdital, iniciar }: {
       setBusy(false);
     }
   }
-  return <div className="onboarding-flow">
-    <ol className="onboarding-steps" aria-label="Etapas de preparação">
-      {['Empresa', 'Produtos', 'Edital'].map((nome, i) => <li key={nome} aria-current={passo === i + 1 ? 'step' : undefined}>
-        {passo > i + 1 ? <Check size={18} aria-hidden="true" /> : <span aria-hidden="true">{i + 1}</span>}{nome}
+  return <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
+    <ol className="flex flex-wrap items-center gap-3" aria-label="Etapas de preparação">
+      {steps.map((nome, index) => <li key={nome} className="flex items-center gap-3" aria-current={passo === index + 1 ? 'step' : undefined}>
+        <Badge variant={passo === index + 1 ? 'default' : passo > index + 1 ? 'secondary' : 'outline'}>
+          {passo > index + 1 ? <CheckIcon /> : index + 1}
+        </Badge>
+        <span className="text-sm">{nome}</span>
       </li>)}
     </ol>
-    <header className="onboarding-heading">
-      <h1 ref={title} tabIndex={-1}>{passo === 1 ? 'Sua empresa' : passo === 2 ? 'Seu catálogo' : 'Escolha um edital'}</h1>
-      <p>{passo === 1 ? 'Confirme os dados para conhecer o Lance.' : passo === 2
-        ? 'A lista de produtos já está anexada. Confira para continuar.'
-        : 'Estes editais têm itens candidatos para o catálogo. O agente vai conferir o encaixe.'}</p>
+    <header className="flex flex-col gap-2">
+      <h1 ref={title} tabIndex={-1} className="font-heading text-3xl font-semibold tracking-tight outline-none">
+        {passo === 1 ? 'Sua empresa' : passo === 2 ? 'Seu catálogo' : 'Escolha um edital'}
+      </h1>
+      <p className="max-w-xl text-sm text-muted-foreground">{passo === 1
+        ? 'Confirme os dados para conhecer o Lance.'
+        : passo === 2
+          ? 'A lista de produtos já está anexada. Confira para continuar.'
+          : 'Estes editais têm itens candidatos para o catálogo. O agente vai conferir o encaixe.'}</p>
     </header>
     {passo === 1 && <>
-      <p className="onboarding-disclosure">Empresa, catálogo e condições comerciais simulados para esta demonstração.</p>
-      <form className="onboarding-form" onSubmit={e => { e.preventDefault(); setPasso(2); }}>
-        <div className="onboarding-fields">
-          <label className="onboarding-wide">Nome da empresa<Input readOnly value={data.empresa.nome} /></label>
-          <label>Porte<Input readOnly value={data.empresa.porte} /></label>
-          <label>UF<Input readOnly value={data.empresa.uf} /></label>
-          <label>Margem mínima<Input readOnly value={new Intl.NumberFormat('pt-BR', { style: 'percent' }).format(data.empresa.margemMinima)} /></label>
-          <label>Prazo de entrega<Input readOnly value={`${data.empresa.prazoEntregaDias} dias`} /></label>
+      <Alert>
+        <AlertDescription>Empresa, catálogo e condições comerciais simulados para esta demonstração.</AlertDescription>
+      </Alert>
+      <form onSubmit={event => { event.preventDefault(); setPasso(2); }}>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="empresa-nome">Nome da empresa</FieldLabel>
+            <Input id="empresa-nome" readOnly value={data.empresa.nome} />
+          </Field>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="empresa-porte">Porte</FieldLabel>
+              <Input id="empresa-porte" readOnly value={data.empresa.porte} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="empresa-uf">UF</FieldLabel>
+              <Input id="empresa-uf" readOnly value={data.empresa.uf} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="empresa-margem">Margem mínima</FieldLabel>
+              <Input id="empresa-margem" readOnly value={percent.format(data.empresa.margemMinima)} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="empresa-prazo">Prazo de entrega</FieldLabel>
+              <Input id="empresa-prazo" readOnly value={`${data.empresa.prazoEntregaDias} dias`} />
+            </Field>
+          </div>
+        </FieldGroup>
+        <div className="mt-6 flex justify-end">
+          <Button type="submit">Confirmar empresa <ArrowRightIcon data-icon="inline-end" /></Button>
         </div>
-        <div className="onboarding-actions"><Button size="lg" type="submit">Confirmar empresa <ArrowRight /></Button></div>
       </form>
     </>}
     {passo === 2 && <>
-      <div className="onboarding-file">
-        <FileSpreadsheet size={32} aria-hidden="true" />
-        <div><strong>{data.arquivo}</strong><p>Arquivo ilustrativo, já anexado.</p></div>
-        <Check size={22} aria-label="Arquivo selecionado" />
-      </div>
-      {!revelado ? <div className="onboarding-actions">
-        <Button variant="ghost" size="lg" onClick={() => setPasso(1)}><ArrowLeft /> Voltar</Button>
-        <Button size="lg" onClick={() => setRevelado(true)}>Conferir produtos <ArrowRight /></Button>
+      <Attachment>
+        <AttachmentMedia><FileSpreadsheetIcon /></AttachmentMedia>
+        <AttachmentContent>
+          <AttachmentTitle>{data.arquivo}</AttachmentTitle>
+          <AttachmentDescription>Arquivo ilustrativo, já anexado.</AttachmentDescription>
+        </AttachmentContent>
+        <CheckIcon aria-label="Arquivo selecionado" />
+      </Attachment>
+      {!revelado ? <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button variant="ghost" onClick={() => setPasso(1)}><ArrowLeftIcon data-icon="inline-start" /> Voltar</Button>
+        <Button onClick={() => setRevelado(true)}>Conferir produtos <ArrowRightIcon data-icon="inline-end" /></Button>
       </div> : <>
-        <div className="onboarding-products" role="region" aria-label="Produtos do catálogo">
-          <ul>{data.produtos.map(p => <li key={p.id}>
-            <div><strong>{p.nome}</strong><p>{p.marca}</p></div>
-            <p><span>Registro ANVISA</span>{p.registroAnvisa}</p>
-          </li>)}</ul>
-        </div>
-        <p className="onboarding-note">Os números de registro são reais. A conferência regulatória é feita na análise.</p>
-        <div className="onboarding-actions">
-          <Button variant="ghost" size="lg" onClick={() => setPasso(1)}><ArrowLeft /> Voltar</Button>
-          <Button size="lg" onClick={() => { try { sessionStorage.setItem(sessionKey, 'sim'); } catch { /* navegação segue sem armazenamento */ } setPasso(3); }}>Confirmar catálogo <ArrowRight /></Button>
+        <ItemGroup>
+          {data.produtos.map((produto, index) => <div key={produto.id}>
+            {index > 0 && <ItemSeparator />}
+            <Item>
+              <ItemContent>
+                <ItemTitle>{produto.nome}</ItemTitle>
+                <ItemDescription>{produto.marca}</ItemDescription>
+              </ItemContent>
+              <ItemContent>
+                <ItemDescription>Registro ANVISA</ItemDescription>
+                <ItemTitle>{produto.registroAnvisa}</ItemTitle>
+              </ItemContent>
+            </Item>
+          </div>)}
+        </ItemGroup>
+        <p className="text-sm text-muted-foreground">Os números de registro são reais. A conferência regulatória é feita na análise.</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Button variant="ghost" onClick={() => setPasso(1)}><ArrowLeftIcon data-icon="inline-start" /> Voltar</Button>
+          <Button onClick={() => { try { sessionStorage.setItem(sessionKey, 'sim'); } catch { /* navegação segue sem armazenamento */ } setPasso(3); }}>
+            Confirmar catálogo <ArrowRightIcon data-icon="inline-end" />
+          </Button>
         </div>
       </>}
     </>}
     {passo === 3 && <>
-      <p className="onboarding-note">Seleção de editais públicos preparada em {new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Recife', dateStyle: 'short' }).format(new Date(data.geradoEm))}.</p>
-      <form className="onboarding-form" onSubmit={e => { e.preventDefault(); void analisar(); }}>
-        <fieldset className="onboarding-tenders" disabled={busy}>
-          <legend className="sr-only">Escolha um dos editais preparados</legend>
-          {data.pregoes.map(p => <article key={p.id} className={'onboarding-tender' + (selecionado === p.id ? ' selected' : '')}>
-            <label className="onboarding-tender-choice">
-              <input type="radio" name="edital" value={p.id} checked={selecionado === p.id} onChange={() => { setSelecionado(p.id); setError(''); }} required />
-              <span><strong>{p.orgao}</strong><span>{p.municipio ? p.municipio + ' · ' : ''}{p.uf} · Abertura {abertura(p.abertura)}</span><span>{p.situacao}</span></span>
-            </label>
-            <div className="onboarding-tender-detail">
-              <details><summary>{new Set(p.matches.map(m => m.item)).size} itens candidatos</summary>
-                <ul>{p.matches.map(m => <li key={`${m.item}-${m.produto}`}><strong>Item {m.item}</strong> · {m.descricao}
-                  <span>Produto candidato: {data.produtos.find(prod => prod.id === m.produto)?.nome ?? m.produto}</span></li>)}</ul>
-              </details>
-              <a href={p.url} target="_blank" rel="noreferrer">Ver no PNCP <ExternalLink size={16} aria-hidden="true" /></a>
-            </div>
-          </article>)}
-        </fieldset>
-        {!data.analise.disponivel && <p role="status" className="onboarding-disclosure">{data.analise.motivo}</p>}
-        {error && <p role="alert" className="onboarding-error">{error} <a href="#/turnos">Abrir acompanhamento</a></p>}
-        <div className="onboarding-actions">
-          <Button type="button" variant="ghost" size="lg" disabled={busy} onClick={() => setPasso(2)}><ArrowLeft /> Voltar</Button>
-          <Button size="lg" type="submit" disabled={busy || !selecionado || !data.analise.disponivel}>{busy ? 'Iniciando análise…' : 'Analisar edital'}{!busy && <ArrowRight />}</Button>
+      <p className="text-sm text-muted-foreground">Seleção de editais públicos preparada em {new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Recife', dateStyle: 'short' }).format(new Date(data.geradoEm))}.</p>
+      <form className="flex flex-col gap-4" onSubmit={event => { event.preventDefault(); void analisar(); }}>
+        <FieldSet disabled={busy}>
+          <FieldLegend className="sr-only">Escolha um dos editais preparados</FieldLegend>
+          <RadioGroup value={selecionado} onValueChange={value => { setSelecionado(value); setError(''); }} className="gap-3">
+            {data.pregoes.map(pregao => <Card key={pregao.id} size="sm">
+              <CardHeader>
+                <Field orientation="horizontal">
+                  <RadioGroupItem value={pregao.id} id={'edital-' + pregao.id} />
+                  <div className="flex flex-col gap-1">
+                    <FieldLabel htmlFor={'edital-' + pregao.id}>{pregao.orgao}</FieldLabel>
+                    <FieldDescription>{pregao.municipio ? pregao.municipio + ' · ' : ''}{pregao.uf} · Abertura {abertura(pregao.abertura)}</FieldDescription>
+                    <FieldDescription>{pregao.situacao}</FieldDescription>
+                  </div>
+                </Field>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                <Collapsible>
+                  <CollapsibleTrigger className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+                    {new Set(pregao.matches.map(match => match.item)).size} itens candidatos
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <ul className="mt-3 flex flex-col gap-3">
+                      {pregao.matches.map(match => <li key={`${match.item}-${match.produto}`} className="text-sm">
+                        <span className="font-medium">Item {match.item}</span> · {match.descricao}
+                        <span className="mt-1 block text-muted-foreground">Produto candidato: {data.produtos.find(produto => produto.id === match.produto)?.nome ?? match.produto}</span>
+                      </li>)}
+                    </ul>
+                  </CollapsibleContent>
+                </Collapsible>
+              </CardContent>
+              <CardFooter>
+                <Button variant="link" nativeButton={false} render={<a href={pregao.url} target="_blank" rel="noreferrer" />}>
+                  Ver no PNCP <ExternalLinkIcon data-icon="inline-end" />
+                </Button>
+              </CardFooter>
+            </Card>)}
+          </RadioGroup>
+        </FieldSet>
+        {!data.analise.disponivel && <Alert><AlertDescription>{data.analise.motivo}</AlertDescription></Alert>}
+        {error && <Alert variant="destructive"><AlertDescription>
+          {error} <a href="#/turnos">Abrir acompanhamento</a>
+        </AlertDescription></Alert>}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Button type="button" variant="ghost" disabled={busy} onClick={() => setPasso(2)}>
+            <ArrowLeftIcon data-icon="inline-start" /> Voltar
+          </Button>
+          <Button type="submit" disabled={busy || !selecionado || !data.analise.disponivel}>
+            {busy && <Spinner data-icon="inline-start" />}
+            {busy ? 'Iniciando análise…' : 'Analisar edital'}
+            {!busy && <ArrowRightIcon data-icon="inline-end" />}
+          </Button>
         </div>
       </form>
     </>}
