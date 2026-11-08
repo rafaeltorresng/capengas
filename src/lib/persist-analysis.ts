@@ -5,7 +5,7 @@ import { checkDocs } from './rules.ts';
 import type { QueueItem } from '../server/contract.ts';
 
 // Persiste somente o resultado da análise; não autoriza ou executa ações no portal.
-export function persistAnalysis(state: LanceState, store: Store) {
+export function persistAnalysis(state: LanceState, store: Store, options: { analiseId?: string } = {}) {
   let decisions = 0;
   const items: Pick<QueueItem, 'tender' | 'item'>[] = [];
   for (const [id, tender] of Object.entries(state.tenders)) {
@@ -25,7 +25,7 @@ export function persistAnalysis(state: LanceState, store: Store) {
         atributos: { attributes: fit.attributes, validacao: fit.validacao, restritivo: state.restrictive[key]?.evidence ?? null, varianteNaoCoberta: fit.varianteNaoCoberta === true } });
     }
     const docs = tender.abertura ? checkDocs(state.company.cofre, requirements.map(r => ({ tipo: r.requirement, citacao: r.quote })), tender.abertura.slice(0, 10)) : [];
-    store.upsertDossie(id, buildDossie(state, id, { documentos: docs }));
+    store.upsertDossie(id, buildDossie(state, id, { documentos: docs, analiseId: options.analiseId }));
     for (const [key, d] of Object.entries(state.decisions)) {
       if (!key.startsWith(id + '#') || !d.estado) continue;
       const item = Number(key.split('#')[1]);

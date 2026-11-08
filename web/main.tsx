@@ -8,7 +8,8 @@ import { AppLink, EmptyState, Page, PageHeader } from '@/kit';
 import { Onboarding } from '@/components/onboarding';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { OnboardingFrame, Shell } from '@/shell';
-import { Acompanhamento, AgendaScreen, DossierScreen, EscalationScreen, Historico, ItemScreen, ProofScreen, QueueScreen, TodayScreen } from '@/screens';
+import { AgendaScreen, DossierScreen, Historico, ItemScreen, ProofScreen, QueueScreen, TodayScreen } from '@/screens';
+import { Acompanhamento, PendingWorkspace } from '@/components/analysis-workspace';
 import { dossierRoute, itemRoute, turnoRoute } from '@/lib/routes';
 import './style.css';
 
@@ -53,7 +54,7 @@ function App() {
   else if (path === 'hoje') view = <View<Today> key={path} path={path}>{data => <TodayScreen data={data} />}</View>;
   else if (path === 'pauta') view = <View<Pauta> key={path} path={path}>{data => <AgendaScreen data={data} />}</View>;
   else if (path === 'fila') view = <View<QueueItem[]> key={path} path={path}>{rows => <QueueScreen rows={rows} />}</View>;
-  else if (path === 'escaladas') view = <ApiView resource={approvals}>{(rows, refresh) => <EscalationScreen rows={rows} refresh={refresh} />}</ApiView>;
+  else if (path === 'escaladas') view = <ApiView resource={approvals}>{(rows, refresh) => <PendingWorkspace rows={rows} refresh={refresh} />}</ApiView>;
   else if (path === 'prova') view = <View<Proof> key={path} path={path} poll={false}>{data => <ProofScreen data={data} />}</View>;
   else if (item) view = <View<Item> key={item.api} path={item.api}>{entry => <ItemScreen item={entry} />}</View>;
   else if (dossier) view = <View<Dossier> key={dossier.api} path={dossier.api}>{data => <DossierScreen data={data} />}</View>;

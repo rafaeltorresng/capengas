@@ -95,11 +95,20 @@ export function lerTrecho(docs: Documento[], arquivo: string, posicao: number, t
   return { arquivo: d.nome, posicao: de, trecho: plano.slice(de, ate), ...(ate < plano.length ? { proxima_posicao: ate } : {}) };
 }
 
+export function numerosConferem(valor: string, citacao: string) {
+  const numeros = (texto: string) => (texto.match(/\b\d+(?:[.,]\d+)*\b/g) ?? []).map(n => n.replace(/^0+(?=\d)/, '').replace(',', '.'));
+  const citados = new Set(numeros(citacao));
+  return numeros(valor).every(n => citados.has(n));
+}
+
 export function registrarRegra(docs: Documento[], regras: RegraProposta[], a: { campo: Campo; valor: string; citacao: string }) {
   const doc = docs.find(d => verifyQuote(a.citacao, d.texto).found);
   if (!doc) return { aceito: false, motivo: `citação rejeitada: ${verifyQuote(a.citacao, docs.map(d => d.texto).join(' ')).reason}. Copie o trecho literal.` };
   const assunto = ASSUNTO[a.campo];
   if (assunto && !assunto.re.test(norm(a.citacao))) return { aceito: false, motivo: `a citação não fala de ${assunto.nome}; registre só o que o trecho diz.` };
+  if (!numerosConferem(a.valor, a.citacao)) return { aceito: false, motivo: 'o resumo contém número que a citação não sustenta; copie os números do trecho, sem inferir prazo ou valor.' };
+  const emails = a.valor.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) ?? [];
+  if (emails.some(email => !a.citacao.toLowerCase().includes(email.toLowerCase()))) return { aceito: false, motivo: 'o endereço de e-mail não está na citação; registre o trecho que o sustenta.' };
   if (!regras.some(r => r.campo === a.campo && r.citacao === a.citacao)) {
     regras.push({ campo: a.campo, valor: a.valor, citacao: a.citacao, fonte: { nome: doc.nome, url: doc.url } });
   }

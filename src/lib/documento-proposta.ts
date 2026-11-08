@@ -3,7 +3,7 @@
 import { lacunasDe, type Campo, type RegraProposta } from './regras-proposta.ts';
 
 export type EmpresaProposta = {
-  nome: string; cnpj?: string; endereco?: string; telefone?: string; email?: string; porte?: string; inscricaoEstadual?: string;
+  nome: string; cnpj?: string; endereco?: string; municipio?: string; telefone?: string; email?: string; porte?: string; inscricaoEstadual?: string;
   representante?: { nome?: string; cargo?: string; cpf?: string; rg?: string };
   banco?: { banco?: string; agencia?: string; conta?: string };
 };
@@ -15,6 +15,8 @@ export type PregaoProposta = { id: string; orgao: string; municipio?: string; uf
 export type DocumentoProposta = {
   markdown: string; colunas: string[]; casasDecimais: number; total: number;
   pendencias: string[]; lacunas: Campo[]; anexos: string[]; declaracoesNoSistema: string[];
+  tender: string; geradoEm: string; empresa: EmpresaProposta; itens: ItemProposta[]; regras: RegraProposta[];
+  origemDados: 'sinteticos' | 'nao_verificada';
 };
 
 const PREENCHER = '[preencher]';
@@ -68,8 +70,8 @@ export function escolherColunas(regras: RegraProposta[]) {
 const EXTENSO: Record<string, number> = { uma: 1, um: 1, duas: 2, dois: 2, tres: 3, quatro: 4 };
 export function casasDecimaisDe(regras: RegraProposta[]) {
   for (const r of doCampo(regras, 'casas_decimais')) {
-    const t = norm(`${r.valor} ${r.citacao}`);
-    const m = /(\d)\s*(\(\w+\)\s*)?casas/.exec(t) ?? /(\d)/.exec(norm(r.valor));
+    const t = norm(r.citacao);
+    const m = /\b(\d+)\s*(\(\w+\)\s*)?casas/.exec(t);
     if (m) return Number(m[1]);
     const palavra = Object.keys(EXTENSO).find(p => new RegExp(`\\b${p}\\b[^.]{0,15}casas`).test(t));
     if (palavra) return EXTENSO[palavra];
@@ -96,6 +98,7 @@ const DADOS: { rotulo: string; re: RegExp; valor: (e: EmpresaProposta) => string
 
 export function gerarDocumentoProposta(o: {
   pregao: PregaoProposta; empresa: EmpresaProposta; itens: ItemProposta[]; regras: RegraProposta[]; hoje: Date;
+  origemDados?: DocumentoProposta['origemDados'];
 }): DocumentoProposta {
   const { pregao, empresa, itens, regras } = o;
   const pendencias: string[] = [];
@@ -122,7 +125,7 @@ export function gerarDocumentoProposta(o: {
   add('');
 
   add('## 2. Itens cotados', '');
-  if (!doEdital) pendente('colunas da tabela não especificadas no edital; conferir com o modelo do órgão');
+  if (!doEdital) pendente('colunas da tabela não identificadas na análise; conferir com o modelo do órgão');
   add(`| ${colunas.map(celula).join(' | ')} |`, `| ${colunas.map(() => '---').join(' | ')} |`);
   let total = 0;
   for (const it of itens) {
@@ -152,7 +155,7 @@ export function gerarDocumentoProposta(o: {
 
   add('## 3. Condições', '');
   const validade = doCampo(regras, 'validade_proposta');
-  add(`- **Validade da proposta:** ${validade.length ? validade.map(r => r.valor).join('; ') : 'não especificada no edital (conferir)'}.`);
+  add(`- **Validade da proposta:** ${validade.length ? validade.map(r => r.citacao).join('; ') : 'não identificada na análise (conferir)'}.`);
   for (const r of doCampo(regras, 'quantidade')) add(`- **Quantidade:** ${r.valor}.`);
   for (const r of doCampo(regras, 'marca_fabricante')) add(`- **Marca e fabricante:** ${r.valor}.`);
   if (doCampo(regras, 'registro_anvisa').length) add(`- **Registro na ANVISA:** informado por item na tabela acima.`);
@@ -174,7 +177,7 @@ export function gerarDocumentoProposta(o: {
   }
 
   const data = o.hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Recife', day: '2-digit', month: 'long', year: 'numeric' });
-  add('---', '', `${pregao.municipio ?? PREENCHER}, ${data}.`, '', '', '______________________________________');
+  add('---', '', `${empresa.municipio || pendente('local da assinatura')}, ${data}.`, '', '', '______________________________________');
   add(empresa.representante?.nome || pendente('dado da empresa: Representante legal'));
   add([empresa.representante?.cargo, empresa.representante?.cpf ? `CPF ${empresa.representante.cpf}` : null].filter(Boolean).join(' — ') || PREENCHER);
   add(empresa.nome);
@@ -190,14 +193,15 @@ export function gerarDocumentoProposta(o: {
     if (itensLista.length) for (const i of itensLista) add(`- ${i}`); else add(`- ${vazio}`);
     add('');
   };
-  lista('Prazo e forma de envio', [...doCampo(regras, 'prazo_envio'), ...doCampo(regras, 'forma_envio')].map(r => r.valor), 'não especificados no edital');
-  lista('Documentos a anexar com a proposta', anexos, 'nenhum exigido no edital');
+  lista('Prazo e forma de envio', [...doCampo(regras, 'prazo_envio'), ...doCampo(regras, 'forma_envio')].map(r => r.citacao), 'não identificados nesta análise');
+  lista('Documentos a anexar com a proposta', anexos, 'nenhuma exigência registrada nesta análise');
   lista('Declarações a marcar no sistema', declaracoesNoSistema, 'nenhuma identificada');
   lista('Outras regras', doCampo(regras, 'outro').map(r => r.valor), 'nenhuma');
-  lista('Campos essenciais que o edital não especifica', lacunas, 'nenhum');
+  lista('Campos essenciais não identificados nesta análise', lacunas, 'nenhum');
   lista('Pendências para completar o documento', pendencias, 'nenhuma');
-  add('**Fontes das regras**', '', '| Campo | Regra | Arquivo | Citação |', '| --- | --- | --- | --- |');
+  add('**Fontes das regras**', '', '| Campo | Resumo do modelo | Arquivo | Citação conferida |', '| --- | --- | --- | --- |');
   for (const r of regras) add(`| ${r.campo} | ${celula(r.valor)} | ${celula(r.fonte?.nome ?? '')} | ${celula(r.citacao.length > 180 ? r.citacao.slice(0, 180) + '…' : r.citacao)} |`);
 
-  return { markdown: linhas.join('\n') + '\n', colunas, casasDecimais: casas, total: arred(total, casas), pendencias, lacunas, anexos, declaracoesNoSistema };
+  return { markdown: linhas.join('\n') + '\n', colunas, casasDecimais: casas, total: arred(total, casas), pendencias, lacunas, anexos, declaracoesNoSistema,
+    tender: pregao.id, geradoEm: o.hoje.toISOString(), empresa: structuredClone(empresa), itens: structuredClone(itens), regras: structuredClone(regras), origemDados: o.origemDados ?? 'nao_verificada' };
 }

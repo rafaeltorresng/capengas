@@ -26,82 +26,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Trace as TraceList, TraceDescription, TraceIcon, TraceLine, TraceTitle } from '@/components/ui/trace';
 
-function etapaAtual(estado: string | undefined, status: TurnoStatus) {
-  return estado === 'em_andamento' && status === 'sem_atualizacao' ? 'sem_atualizacao' : estado;
-}
-
-const etapaLabel: Record<string, string> = {
-  concluida: 'Concluída', pendente: 'Pendente', em_andamento: 'Em andamento', sem_atualizacao: 'Sem atualização',
-};
-
-export function Acompanhamento({ data, lastRead, expandir = false }: { data: Turnos; lastRead?: number; expandir?: boolean }) {
-  const [date, setDate] = useState('');
-  const visible = data.turnos.filter(turno => !date || localDay.format(new Date(turno.inicio)) === date);
-  const feed = new Map<string, (typeof visible)[number]>();
-  for (const turno of visible) {
-    for (const edital of turno.pregoes) {
-      if (!feed.has(edital)) feed.set(edital, turno);
-    }
-  }
-  const editais = [...feed].sort(([, a], [, b]) => Date.parse(b.atualizadoEm) - Date.parse(a.atualizadoEm));
-  return <Page>
-    <PageHeader
-      title="Acompanhamento"
-      detail="Acompanhe os editais e abra cada processo para consultar as etapas da análise."
-      actions={<>
-        {expandir && <Button variant="ghost" nativeButton={false} render={<a href="#/turnos" />}>Ver todos os turnos</Button>}
-        <Button variant="outline" nativeButton={false} render={<a href="#/onboarding/editais" />}>Escolher outro edital</Button>
-        <TurnDateFilter dates={data.turnos.map(turno => localDay.format(new Date(turno.inicio)))} value={date} onChange={setDate} />
-        {date && <Button variant="ghost" onClick={() => setDate('')}>Mostrar todos os turnos</Button>}
-      </>}
-    />
-    {lastRead && <p className="text-xs text-muted-foreground">Última consulta às {time.format(lastRead)}</p>}
-    {!editais.length && <EmptyState icon={<InboxIcon />} title={date ? 'Nenhum edital nesta data' : 'Nenhuma análise iniciada'} description={date ? 'Nenhum edital teve análise iniciada nesta data.' : 'Os editais aparecem aqui assim que uma análise começa.'} />}
-    <div className={expandir ? 'grid gap-3' : 'grid gap-3 md:grid-cols-2 xl:grid-cols-3'}>
-      {editais.map(([edital, turno]) => {
-        const etapa = turno.etapas.at(-1);
-        const nome = turno.nomesEditais?.[edital] || 'Edital ' + edital.split('/').at(-1);
-        const codigoPncp = /^\d{14}\/\d{4}\/\d+$/.test(edital);
-        const emAndamento = turno.status === 'ativo';
-        return <Card key={edital} size="sm">
-          <CardHeader>
-            <CardTitle><h2><a href={'#/turnos/' + encodeURIComponent(turno.id)} className="hover:underline">{nome}</a></h2></CardTitle>
-            <CardDescription>{codigoPncp ? 'PNCP ' + edital : 'Código PNCP indisponível'}</CardDescription>
-            <div className="col-start-2 row-span-2 row-start-1 justify-self-end">
-              <StatusBadge status={turno.status} label={statusTurno[turno.status]} />
-            </div>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <p className="text-sm">{etapa ? etapa.atividade : statusTurno[turno.status]}</p>
-            <p className="text-xs text-muted-foreground">
-              Início em <time dateTime={turno.inicio}>{dateTime.format(new Date(turno.inicio))}</time>
-              {' · '}atualizado em <time dateTime={turno.atualizadoEm}>{dateTimeWithSeconds.format(new Date(turno.atualizadoEm))}</time>
-            </p>
-            {turno.pregoes.length > 1 && <p className="text-sm text-muted-foreground">Este turno analisa {turno.pregoes.length} editais. As etapas mostram o progresso do turno.</p>}
-            {turno.legado && <p className="text-sm text-muted-foreground">O progresso deste turno antigo está indisponível.</p>}
-            {turno.status === 'falhou' && <p className="text-sm text-destructive">A execução foi interrompida por uma falha.</p>}
-            {turno.etapas.length > 0 && <Collapsible defaultOpen={expandir}>
-              <CollapsibleTrigger render={<Button variant="ghost" size="sm" />}>Histórico de etapas</CollapsibleTrigger>
-              <CollapsibleContent>
-                <TraceList className="mt-3" aria-label="Etapas da análise em ordem cronológica">
-                  {turno.etapas.map(({ horario, atividade, estado }, index) => {
-                    const atual = etapaAtual(estado, turno.status) ?? 'registrada';
-                    return <TraceLine key={index} status={atual === 'em_andamento' ? 'running' : atual === 'pendente' || atual === 'sem_atualizacao' ? 'pending' : undefined}>
-                      <TraceIcon>{atual === 'concluida' ? <CheckIcon /> : <CircleIcon />}</TraceIcon>
-                      <TraceTitle>{atividade}</TraceTitle>
-                      <TraceDescription>{etapaLabel[atual] ?? 'Registrada'} · {time.format(new Date(horario))}</TraceDescription>
-                    </TraceLine>;
-                  })}
-                </TraceList>
-              </CollapsibleContent>
-            </Collapsible>}
-          </CardContent>
-        </Card>;
-      })}
-    </div>
-  </Page>;
-}
-
 export function Historico({ rows }: { rows: HistoricoPregao[] }) {
   const [search, setSearch] = useState('');
   const query = normalize(search);
@@ -228,7 +152,7 @@ export function TodayScreen({ data }: { data: Today }) {
   </Page>;
 }
 
-function AgendaLine({ line }: { line: LinhaPauta }) {
+export function AgendaLine({ line }: { line: LinhaPauta }) {
   return <Item>
     <ItemContent>
       <div className="flex flex-wrap items-center gap-2">
@@ -452,22 +376,22 @@ const faseLabel: Record<Plan['linhas'][number]['fase'], string> = {
   proposta_inicial: 'Proposta inicial (antes da sessão)', proposta_ajustada: 'Proposta ajustada (após o último lance)',
   habilitacao: 'Habilitação', nao_informada: 'Fase não informada no edital',
 };
-const responsavelLabel = { lance: 'Lance', humano: 'Humano', terceiro: 'Fabricante' } as const;
+const responsavelLabel = { lance: 'Lance', humano: 'Sua equipe', terceiro: 'Fabricante' } as const;
 const planProblem = new Set(['vence_antes', 'ausente', 'irregular', 'pedir_terceiro', 'conferir']);
 
-function DocumentPlan({ plan }: { plan: Plan }) {
+export function DocumentPlan({ plan }: { plan: Plan }) {
   const fases = [...new Set(plan.linhas.map(l => l.fase))];
   return <Card>
     <CardHeader>
       <CardTitle><h2>Documentos para disputar</h2></CardTitle>
       <CardDescription>
-        Itens viáveis: {plan.itens.join(', ')}. {plan.resumo.total} documentos: {plan.resumo.lance} com o Lance, {plan.resumo.humano} com um humano,
-        {' '}{plan.resumo.terceiro} com o fabricante. {plan.resumo.problemas} pendentes, {plan.resumo.condicionais} condicionais.
+        {plan.resumo.total} exigências registradas, {plan.resumo.problemas} pendências. Confira o responsável e as condições em cada documento.
       </CardDescription>
     </CardHeader>
     <CardContent className="flex flex-col gap-6">
-      {fases.map(fase => <section key={fase} className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium">{faseLabel[fase]}</h3>
+      <Accordion>{fases.map(fase => <AccordionItem key={fase} value={fase}>
+        <AccordionTrigger>{faseLabel[fase]} <Badge variant="secondary">{plan.linhas.filter(l => l.fase === fase).length}</Badge></AccordionTrigger>
+        <AccordionContent>
         <ItemGroup>
           {plan.linhas.filter(l => l.fase === fase).map((linha, index) => <div key={linha.tipo + index}>
             {index > 0 && <ItemSeparator />}
@@ -482,12 +406,13 @@ function DocumentPlan({ plan }: { plan: Plan }) {
                 <ItemDescription>{linha.acao}</ItemDescription>
                 {linha.prazo && <ItemDescription>Prazo: {linha.prazo}</ItemDescription>}
                 {linha.ate && planProblem.has(linha.status) && <ItemDescription>Resolver até a sessão, em {dayOf(linha.ate)}.</ItemDescription>}
-                {linha.fonte && <Evidence source={{ ...linha.fonte, citacao: linha.citacao }} quote />}
+                {linha.fonte && <Accordion><AccordionItem value="fonte"><AccordionTrigger>Conferir exigência no edital</AccordionTrigger><AccordionContent><Evidence source={{ ...linha.fonte, citacao: linha.citacao }} quote /></AccordionContent></AccordionItem></Accordion>}
               </ItemContent>
             </Item>
           </div>)}
         </ItemGroup>
-      </section>)}
+        </AccordionContent>
+      </AccordionItem>)}</Accordion>
     </CardContent>
   </Card>;
 }
@@ -495,6 +420,7 @@ function DocumentPlan({ plan }: { plan: Plan }) {
 export function DossierScreen({ data }: { data: Dossier }) {
   return <Page>
     <PageHeader title="Dossiê" detail={data.pregao + ' / versão ' + data.versao} />
+    {data.desatualizado && <Alert><AlertDescription>Os dados ou as decisões mudaram após esta análise. A proposta anterior está bloqueada até atualizar o dossiê.</AlertDescription></Alert>}
     {data.pendencias.length > 0 && <Alert>
       <AlertTitle>Pendências</AlertTitle>
       <AlertDescription>
@@ -572,7 +498,7 @@ const decisionOptions = [
   { value: 'ajustar', label: 'Solicitar ajuste', detail: 'Descrever o que precisa mudar', Icon: PencilIcon },
 ] as const;
 
-function EscalationCard({ row, onResolved }: { row: Escalation; onResolved: (message: string) => void }) {
+export function EscalationCard({ row, onResolved }: { row: Escalation; onResolved: (message: string) => void }) {
   const [choice, setChoice] = useState<Decision['decisao'] | ''>('');
   const [adjustment, setAdjustment] = useState('');
   const [busy, setBusy] = useState(false);

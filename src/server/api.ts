@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import type { Decision, DemoStore } from './contract.ts';
 import { OnboardingError, type Onboarding } from './onboarding.ts';
+import { DocumentoError, prepararDocumento, renderizarPdf } from './documentos.ts';
 
 class RequestError extends Error {
   status: number;
@@ -77,7 +78,7 @@ export function createServer(store: DemoStore, webRoot?: string, onboarding?: On
   return createHttpServer(async (req, res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     try {
-      const { pathname } = new URL(req.url ?? '/', 'http://localhost');
+      const { pathname, searchParams } = new URL(req.url ?? '/', 'http://localhost');
       const [prefix, route, ...params] = pathname.slice(1).split('/').map(decodeURIComponent);
       if (prefix !== 'api') {
         if (req.method === 'GET' && webRoot && await staticFile(webRoot, pathname, res)) return;
@@ -97,6 +98,19 @@ export function createServer(store: DemoStore, webRoot?: string, onboarding?: On
 
       let dados: unknown;
       if (req.method === 'GET') {
+        if (route === 'dossies' && params.length === 2 && ['proposta.pdf', 'relatorio.pdf'].includes(params[1])) {
+          const dossie = store.dossie(params[0]);
+          if (!dossie || store.origem !== 'integrado') throw new RequestError(404, 'Não há documento de análise persistida para este edital.');
+          const analise = searchParams.get('analise');
+          if (analise && analise !== dossie.analiseId) throw new RequestError(409, 'Este dossiê pertence a outra análise. Abra o resultado mais recente.');
+          if (params[1] === 'proposta.pdf' && dossie.analiseId && !store.turnos().turnos.some(t => t.id === dossie.analiseId && t.status === 'concluido')) {
+            throw new RequestError(409, 'A análise ainda não foi concluída.');
+          }
+          const arquivo = prepararDocumento(dossie, params[1] === 'proposta.pdf' ? 'proposta' : 'relatorio');
+          const pdf = await renderizarPdf(arquivo);
+          res.writeHead(200, { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${arquivo.nomeArquivo}"`, 'Cache-Control': 'no-store' });
+          res.end(pdf); return;
+        }
         if (!params.length) {
           if (route === 'hoje') dados = store.hoje();
           if (route === 'fila') dados = store.fila();
@@ -119,7 +133,7 @@ export function createServer(store: DemoStore, webRoot?: string, onboarding?: On
       if (dados === undefined) throw new RequestError(404, 'Registro ou rota indisponível.');
       json(res, 200, { origem: store.origem, dados });
     } catch (error) {
-      if (error instanceof RequestError || error instanceof OnboardingError) json(res, error.status, { erro: error.message });
+      if (error instanceof RequestError || error instanceof OnboardingError || error instanceof DocumentoError) json(res, error.status, { erro: error.message });
       else if (error instanceof URIError) json(res, 400, { erro: 'Endereço inválido.' });
       else json(res, 500, { erro: 'Não foi possível consultar o estado. Tente novamente.' });
     }

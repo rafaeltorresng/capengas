@@ -36,7 +36,7 @@ test('sem colunas no edital usa o padrão e marca a pendência; marca e registro
   const { colunas } = escolherColunas([regra('colunas_itens', 'Item, Especificação, Valor Unitário R$, Valor Total R$'), regra('marca_fabricante', 'informar marca'), regra('registro_anvisa', 'número do registro')]);
   assert.deepEqual(colunas.slice(-2), ['Marca', 'Registro ANVISA']);
   const doc = gerarDocumentoProposta({ pregao, empresa, hoje, itens: [item], regras: [] });
-  assert.ok(doc.pendencias.some(p => p.startsWith('colunas da tabela não especificadas')));
+  assert.ok(doc.pendencias.some(p => p.startsWith('colunas da tabela não identificadas na análise')));
   assert.ok(doc.colunas.includes('Registro ANVISA'));
 });
 
@@ -123,7 +123,7 @@ test('com item viável: lê o edital, registra regras e monta o documento com o 
   assert.ok(r.lacunas.includes('prazo_envio'));
   const md = ctx.state.proposals![tid].markdown;
   assert.match(md, /\| 1 \| Cabo de bisturi nº 4 \| Unidade \| 10 \| Straumed \| STRAUMED IND \| 82936150004 \| 7,50 \| 75,00 \|/);
-  assert.match(md, /Validade da proposta:\*\* 120 dias corridos\./);
+  assert.match(md, /Validade da proposta:\*\* A validade desta proposta e de 120 \(cento e vinte\) dias corridos\./);
 });
 
 test('item disputável sem preço calculado fica fora do documento e é informado', async () => {

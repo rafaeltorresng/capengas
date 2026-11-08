@@ -1,6 +1,6 @@
 import type { DeadlineKind, Origem, Papel, TurnoStatus, Urgencia } from '../../src/server/contract.ts';
 
-export const fortaleza = 'America/Fortaleza';
+export const fortaleza = 'America/Recife';
 export const time = new Intl.DateTimeFormat('pt-BR', { timeZone: fortaleza, timeStyle: 'medium' });
 export const dateTime = new Intl.DateTimeFormat('pt-BR', { timeZone: fortaleza, dateStyle: 'short', timeStyle: 'short' });
 export const dateTimeWithSeconds = new Intl.DateTimeFormat('pt-BR', { timeZone: fortaleza, dateStyle: 'short', timeStyle: 'medium' });

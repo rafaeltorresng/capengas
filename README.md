@@ -25,6 +25,7 @@ Projeto da equipe Capengas para o Converge Challenge 2026 (Recife, 7–8/11/2026
 | [docs/dev2-analise-produto.md](docs/dev2-analise-produto.md) | Revisão de produto, concorrência, limites das evidências e prioridades do agente |
 | [docs/dev2-retificacao-persistida.md](docs/dev2-retificacao-persistida.md) | Monitor → diff único → histórico do dossiê → Pauta, migração e reprodução sintética |
 | [docs/dev2-onboarding-demo.md](docs/dev2-onboarding-demo.md) | Entrada Empresa → Produtos → Edital, análise real e limites da demonstração |
+| [docs/dev2-experiencia-analise.md](docs/dev2-experiencia-analise.md) | Editais e Pendências, acompanhamento agrupado, veredito por item e documentos em PDF |
 | [docs/dev2-integracao.md](docs/dev2-integracao.md) | Contrato do dossiê e da projeção para a tela, amostra e verificação da integração |
 
 ## Números principais

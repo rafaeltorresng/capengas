@@ -141,10 +141,10 @@ export function registrarExigencia(docs: Documento[], lista: ExigenciaDocumental
   const doc = docs.find(d => verifyQuote(a.citacao, d.texto).found);
   if (!doc) return { aceito: false, motivo: `citação rejeitada: ${verifyQuote(a.citacao, docs.map(d => d.texto).join(' ')).reason}. Copie o trecho literal.` };
   if (!TIPOS_DOCUMENTO[tipo].assunto.test(norm(a.citacao))) return { aceito: false, motivo: `a citação não fala de ${TIPOS_DOCUMENTO[tipo].nome}; registre só o que o trecho diz.` };
-  const condicoes = (a.condicoes ?? []).filter((c): c is Condicao => CONDICOES.includes(c as Condicao));
+  const condicoes = condicoesDe(a.citacao);
   const e: ExigenciaDocumental = {
     tipo, fase: FASES.includes(a.fase as Fase) ? a.fase as Fase : faseDe(tipo, a.citacao, false),
-    condicoes: condicoes.length ? condicoes : condicoesDe(a.citacao), prazo: a.prazo || prazoDe(a.citacao), resumo: a.resumo,
+    condicoes, prazo: prazoDe(a.citacao), resumo: a.resumo,
     citacao: a.citacao, fonte: { nome: doc.nome, url: doc.url }, origem: 'agente',
     ...(tipo.startsWith('declaracao') && noSistema(a.citacao) ? { noSistema: true } : {}),
   };
