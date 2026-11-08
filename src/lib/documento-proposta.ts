@@ -1,6 +1,6 @@
 // Monta o documento da proposta de preços a partir das regras citadas do edital, das decisões e dos dados da empresa.
 // Sem modelo: o que não tem dado vira [preencher] e entra nas pendências; o que o edital não diz entra nas lacunas.
-import { lacunasDe, type Campo, type RegraProposta } from './regras-proposta.ts';
+import { clausulaDeEfeito, lacunasDe, type Campo, type RegraProposta } from './regras-proposta.ts';
 
 export type EmpresaProposta = {
   nome: string; cnpj?: string; endereco?: string; municipio?: string; telefone?: string; email?: string; porte?: string; inscricaoEstadual?: string;
@@ -202,7 +202,7 @@ export function gerarDocumentoProposta(o: {
   add('- Nos preços estão incluídos todos os custos e despesas diretos e indiretos, tributos, encargos, frete e demais ônus para o fornecimento.', '');
 
   const declaracoes = doCampo(regras, 'declaracoes');
-  const noDocumento = declaracoes.filter(r => !noSistema(r));
+  const noDocumento = declaracoes.filter(r => !noSistema(r) && !clausulaDeEfeito(r));
   if (noDocumento.length) {
     add('## 4. Declarações', '', 'A proponente declara:', '');
     for (const r of noDocumento) add(`- ${semPonto(r.valor.replace(/^declara(ção)?( de)?( que)?\s*/i, ''))}.`);

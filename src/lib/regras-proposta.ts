@@ -95,6 +95,10 @@ export function lerTrecho(docs: Documento[], arquivo: string, posicao: number, t
   return { arquivo: d.nome, posicao: de, trecho: plano.slice(de, ate), ...(ate < plano.length ? { proxima_posicao: ate } : {}) };
 }
 
+/** "A apresentação da proposta implicará a aceitação..." é efeito do envio, não declaração a produzir.
+ *  Plano de documentos e minuta usam a mesma regra para não divergirem. */
+export const clausulaDeEfeito = (r: RegraProposta) => r.campo === 'declaracoes' && /implicar[aá]|\bimplica\b/.test(norm(r.citacao));
+
 export function numerosConferem(valor: string, citacao: string) {
   const numeros = (texto: string) => (texto.match(/\b\d+(?:[.,]\d+)*\b/g) ?? []).map(n => n.replace(/^0+(?=\d)/, '').replace(',', '.'));
   const citados = new Set(numeros(citacao));

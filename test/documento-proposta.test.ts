@@ -200,3 +200,13 @@ test('texto copiado do edital não sai com pontuação dobrada', () => {
   assert.match(condicoes, /PREGAO ELETRONICO; Podera ser solicitado .* 30 \(trinta\) dias\./);
   assert.match(condicoes, /\*\*Quantidade:\*\* mínimo de 10% da quantidade total do item\./);
 });
+
+test('cláusula de efeito do envio não vira declaração da empresa na minuta, como já não vira no plano', () => {
+  // Citações reais do edital 77816510000166/2026/348. A primeira é efeito ("implicará"), não pedido de declaração.
+  const doc = gerarDocumentoProposta({ pregao, empresa, hoje, itens: [item], regras: [
+    regra('declaracoes', 'aceitação plena e total das condições do edital e anexos', 'A apresentação da proposta implicará na plena aceitação das condições estabelecidas neste edital e seus anexos.'),
+    regra('declaracoes', 'atende aos requisitos de habilitação', 'Declaro que a proponente atende aos requisitos de habilitaçao e o declarante atesta a veracidade das informaçoes prestadas (art. 63, I, da Lei nº 14.133/2021).')] });
+  const declaracoes = doc.markdown.split('A proponente declara:')[1]?.split('##')[0] ?? '';
+  assert.ok(!/aceitação plena/.test(declaracoes), declaracoes);
+  assert.match(declaracoes, /atende aos requisitos de habilitação/);
+});

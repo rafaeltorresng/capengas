@@ -3,7 +3,7 @@
 import { checkDocs, verifyQuote } from './rules.ts';
 import type { Schema } from './schema.ts';
 import type { CofreDoc } from './contracts.ts';
-import type { Documento, RegraProposta } from './regras-proposta.ts';
+import { clausulaDeEfeito, type Documento, type RegraProposta } from './regras-proposta.ts';
 import type { LanceState } from './tools.ts';
 
 export type Classe = 'gerado' | 'cofre' | 'produto' | 'terceiro' | 'evento' | 'humano';
@@ -99,8 +99,7 @@ export function deRegrasProposta(regras: RegraProposta[]): ExigenciaDocumental[]
     const base = { citacao: r.citacao, fonte: r.fonte, origem: 'regra_proposta' as const, resumo: r.valor };
     const citado = norm(r.citacao); const ambos = norm(`${r.valor} ${r.citacao}`);
     if (r.campo === 'modelo_proposta') out.push(exigencia('proposta_precos', r.citacao, base));
-    // "A apresentação da proposta implicará a aceitação..." é efeito do envio, não documento a produzir.
-    else if (r.campo === 'declaracoes' && /implicar[aá]|\bimplica\b/.test(citado)) continue;
+    else if (clausulaDeEfeito(r)) continue;
     else if (r.campo === 'declaracoes') out.push({ ...exigencia(primeiro(citado, ORDEM_DECLARACOES) ?? primeiro(ambos, ORDEM_DECLARACOES) ?? 'declaracao_outra', r.citacao, base), ...(comModelo ? { naProposta: true } : {}) });
     else if (r.campo === 'documentos_anexos') out.push(exigencia(primeiro(citado, ORDEM_ANEXOS) ?? primeiro(ambos, ORDEM_ANEXOS) ?? 'documento_outro', r.citacao, base));
     else if (r.campo === 'registro_anvisa') {
